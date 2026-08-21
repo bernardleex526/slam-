@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>第十周学习教材：全局规划器 + 四足通过性</title>
+<style>
+:root {{
+  --bg: #f7f5f0;
+  --card: #ffffff;
+  --ink: #1f2430;
+  --muted: #6b7280;
+  --accent: #b45309;
+  --accent-soft: #fef3c7;
+  --line: #e5e0d6;
+  --code-bg: #f4f1ea;
+  --table-head: #f0ece2;
+  --link: #92400e;
+}}
+* {{ box-sizing: border-box; }}
+html {{ -webkit-text-size-adjust: 100%; }}
+body {{
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-size: 16px;
+  line-height: 1.85;
+  word-break: break-word;
+}}
+.wrap {{ max-width: 46rem; margin: 0 auto; padding: 1.2rem 1.1rem 4rem; }}
+header.hero {{
+  background: linear-gradient(135deg, #7c2d12 0%, #b45309 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 1.6rem 1.4rem;
+  margin-bottom: 1.4rem;
+  box-shadow: 0 4px 14px rgba(124, 45, 18, .25);
+}}
+header.hero h1 {{ margin: 0 0 .4rem; font-size: 1.4rem; line-height: 1.4; }}
+header.hero p {{ margin: .2rem 0; font-size: .9rem; opacity: .92; }}
+.nav {{
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  margin-bottom: 1.4rem;
+}}
+.nav a {{
+  display: inline-block; padding: .3rem .7rem; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line);
+  color: var(--link); text-decoration: none; font-size: .82rem;
+}}
+.nav a.on {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
+.toc {{
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 1rem 1.2rem; margin-bottom: 1.6rem; font-size: .92rem;
+}}
+.toc summary {{ cursor: pointer; font-weight: 600; color: var(--accent); }}
+.toc a {{ color: var(--link); text-decoration: none; }}
+.toc a:hover {{ text-decoration: underline; }}
+h1 {{ font-size: 1.5rem; margin: 2.2rem 0 .8rem; padding-bottom: .4rem; border-bottom: 2px solid var(--accent); }}
+h2 {{ font-size: 1.22rem; margin: 1.8rem 0 .6rem; color: #7c2d12; }}
+h3 {{ font-size: 1.05rem; margin: 1.4rem 0 .5rem; }}
+h4 {{ font-size: .98rem; margin: 1.1rem 0 .4rem; color: #444; }}
+p {{ margin: .55rem 0; }}
+ul, ol {{ padding-left: 1.5rem; margin: .5rem 0; }}
+li {{ margin: .28rem 0; }}
+strong {{ color: #7c2d12; }}
+code {{
+  background: var(--code-bg); border-radius: 4px; padding: .12em .35em;
+  font-family: "SF Mono", Consolas, "Courier New", monospace; font-size: .88em; color: #8b4513;
+}}
+pre {{
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px;
+  padding: .9rem 1rem; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  font-size: .84rem; line-height: 1.6;
+}}
+pre code {{ background: none; padding: 0; color: inherit; }}
+blockquote {{
+  margin: .8rem 0; padding: .6rem 1rem; background: var(--accent-soft);
+  border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0;
+}}
+blockquote p {{ margin: .3rem 0; }}
+table {{
+  width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .9rem;
+  display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+}}
+th, td {{ border: 1px solid var(--line); padding: .45rem .6rem; text-align: left; vertical-align: top; }}
+th {{ background: var(--table-head); font-weight: 600; white-space: nowrap; }}
+hr {{ border: none; border-top: 1px solid var(--line); margin: 2rem 0; }}
+input[type="checkbox"] {{ transform: scale(1.2); margin-right: .4em; }}
+footer {{
+  margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: .82rem; text-align: center;
+}}
+</style>
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f8f8f8; }
+.codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+.codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #E40000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #008400 } /* Generic.Inserted */
+.codehilite .go { color: #717171 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #687822 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #800 } /* Name.Constant */
+.codehilite .nd { color: #A2F } /* Name.Decorator */
+.codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #00F } /* Name.Function */
+.codehilite .nl { color: #767600 } /* Name.Label */
+.codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #00F } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<h1>第十周学习教材：全局规划器 + 四足通过性</h1>
+<p>四足机器狗导航算法工程师 · 三个月学习计划</p>
+<p>零基础自包含版 · 手机阅读 · 单文件离线可用</p>
+</header>
+<nav class="nav">
+<a class="" href="第一周学习教材.html">W1</a>
+<a class="" href="第二周学习教材.html">W2</a>
+<a class="" href="第三周学习教材.html">W3</a>
+<a class="" href="第四周学习教材.html">W4</a>
+<a class="" href="第五周学习教材.html">W5</a>
+<a class="" href="第六周学习教材.html">W6</a>
+<a class="" href="第七周学习教材.html">W7</a>
+<a class="" href="第八周学习教材.html">W8</a>
+<a class="" href="第九周学习教材.html">W9</a>
+<a class="on" href="第十周学习教材.html">W10</a>
+<a class="" href="第十一周学习教材.html">W11</a>
+<a class="" href="第十二周学习教材.html">W12</a>
+</nav>
+<details class="toc" open>
+<summary>📑 目录（点击收起）</summary>
+<div id="toc-placeholder"></div>
+</details>
+<h1 id="_1">第十周学习教材：全局规划器 + 四足通过性（零基础版）</h1>
+<blockquote>
+<p>定位：四足机器狗（云深处）导航算法工程师
+周期：第 10 周（共 12 周）· 工作日 1.5~2h + 周六 4~5h 实验 + 周日 1~2h 复盘
+本周目标：<strong>理解 Smac Planner；把四足约束写进全局规划认知。</strong>
+本周交付：全局规划实验记录 + 通过性检查清单 + Bug 案例 #9</p>
+</blockquote>
+<hr />
+<h1 id="0">第 0 章 开课前必读</h1>
+<h2 id="01">0.1 本周学什么（一句话）</h2>
+<p>上周的 A<em> 把机器人当"一个点"走格子。但</em><em>机器狗不是点</em><em>——它有长宽、不能横着走、转弯有讲究。本周学</em><em>Smac Planner（Nav2 的高级全局规划器）</em><em>和</em><em>四足通过性</em>*（哪些地方狗能过、哪些不能）。</p>
+<h2 id="02">0.2 学习进度表</h2>
+<table>
+<thead>
+<tr>
+<th>天</th>
+<th>读什么</th>
+<th>学完能干什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>周一</td>
+<td>1.0 + 2.0</td>
+<td>懂 Hybrid A* 思想；读 Smac 的 hybrid_a_star 段</td>
+</tr>
+<tr>
+<td>周二</td>
+<td>1.1 + 2.1</td>
+<td>懂 Lattice；读 Smac 参数定义</td>
+</tr>
+<tr>
+<td>周三</td>
+<td>1.2 + 2.2</td>
+<td>懂路径平滑；读 smoother 插件</td>
+</tr>
+<tr>
+<td>周四</td>
+<td>1.3 + 2.3</td>
+<td>懂四足全局约束；写通过性检查清单</td>
+</tr>
+<tr>
+<td>周五</td>
+<td>1.4 + 2.4</td>
+<td>浏览 ANYmal 论文；画地形感知构想图</td>
+</tr>
+<tr>
+<td>周六</td>
+<td>第 3 章 实验</td>
+<td>规划器对比 + 路径突变/绕路复现</td>
+</tr>
+<tr>
+<td>周日</td>
+<td>第 4 章 复盘 + 第 5 章 验收</td>
+<td>Bug 案例 #9、对照表 v2</td>
+</tr>
+</tbody>
+</table>
+<h2 id="03">0.3 本周主线问题</h2>
+<blockquote>
+<p><strong>机器狗能走的路径，和"一个点"能走的路径有什么区别？</strong> —— 宽度（要留身子）、转弯（不能直角拐）、坡度/台阶（脚能爬但要有约束）。规划器要想"狗的形态"。</p>
+</blockquote>
+<hr />
+<h1 id="1">第 1 章 全局规划器：让路径"像机器人能走的样子"</h1>
+<h2 id="10-hybrid-aa">1.0 Hybrid A<em>：A</em> 遇上运动学</h2>
+<h3 id="101-a">1.0.1 问题：A* 的路径狗走不了</h3>
+<p>A*（第 9 周）搜出的是"格子路径"：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>A* 路径（直角转折，狗没法这样走）：
+S ─→ ┐
+     ├─→ G     ← 直角拐弯需要&quot;原地转&quot;或大圆角
+</code></pre></div>
+
+<p><strong>狗的问题</strong>：它有运动学约束（最小转弯半径、不能横着走）。<strong>路径转折太急 = 局部规划器追不上 = 走走停停 = 卡死。</strong></p>
+<h3 id="102-hybrid-a">1.0.2 Hybrid A* 的答案</h3>
+<p><strong>Hybrid A<em> = A</em> + 运动学模型</strong>：搜索的每一步，不是"移到相邻格子"，而是"<strong>按车辆/狗的运动学模型向前开一小段</strong>"：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>搜索节点 = (x, y, yaw)    ← 多了朝向！
+扩展 = 直行 / 左转固定角 / 右转固定角（用运动学模型算）
+节点落地的格子 = 离散化后的 (x,y)
+</code></pre></div>
+
+<p><strong>结果</strong>：搜出来的路径天然满足"狗能开出来"（平滑的弧线，不是直角）。</p>
+<h3 id="103">1.0.3 代价（为什么不是处处用它）</h3>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>A*（NavFn）</th>
+<th>Hybrid A*</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>状态</td>
+<td>2D (x,y)</td>
+<td>3D (x,y,yaw)</td>
+</tr>
+<tr>
+<td>搜索空间</td>
+<td>大格子</td>
+<td>3D 网格（大）</td>
+</tr>
+<tr>
+<td>路径质量</td>
+<td>格子路径（有折角）</td>
+<td>运动学可行（弧线）</td>
+</tr>
+<tr>
+<td>速度</td>
+<td>快</td>
+<td>慢（状态多）</td>
+</tr>
+<tr>
+<td>适用</td>
+<td>简单环境/低配硬件</td>
+<td>复杂环境/要求平滑</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>一句话总结：<strong>Hybrid A<em> = A</em> 的每个扩展步骤按运动学模型来（多了朝向 yaw），路径天然"车能开"；比 A* 慢但路径质量高。</strong></p>
+</blockquote>
+<h3 id="10">1.0 自测</h3>
+<ol>
+<li>A* 路径为什么狗走不了？</li>
+<li>Hybrid A<em> 的状态比 A</em> 多什么？</li>
+<li>什么时候用 A<em> 什么时候用 Hybrid A</em>？</li>
+</ol>
+<hr />
+<h2 id="11-lattice-planner">1.1 Lattice planner：提前算好"动作库"</h2>
+<h3 id="111">1.1.1 思想</h3>
+<p><strong>Lattice = 离线生成一堆"标准动作"（格子模板），在线搜索时直接套用</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>动作库（离线生成，预计算）：
+ → 直行 1m / 直行 2m
+ → 左转 30° 走 1m / 右转 30° 走 1m
+ → 左转 60° 走 2m ...
+（每个动作都是一段符合运动学的弧线）
+
+在线搜索：状态空间 (x,y,yaw)，扩展 = 从动作库选动作
+</code></pre></div>
+
+<h3 id="112-vs-hybrid-a">1.1.2 vs Hybrid A*</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Hybrid A*</th>
+<th>Lattice</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>动作</td>
+<td>在线算（每步积分运动学）</td>
+<td>离线库（查表）</td>
+</tr>
+<tr>
+<td>灵活性</td>
+<td>高（任意转向角）</td>
+<td>中（受动作库粒度限制）</td>
+</tr>
+<tr>
+<td>速度</td>
+<td>慢</td>
+<td>较快</td>
+</tr>
+<tr>
+<td>效果</td>
+<td>路径更细</td>
+<td>动作平滑但可能略绕</td>
+</tr>
+</tbody>
+</table>
+<p><strong>工程选型</strong>：Smac Planner 里两者都有插件（<code>hybrid_a_star</code> 和 <code>lattice</code>），配置切换。</p>
+<h2 id="12-smoother">1.2 路径平滑（smoother）：把折角"捋直"</h2>
+<h3 id="121">1.2.1 问题</h3>
+<p>规划器输出的路径可能还有小折角、抖动。<strong>smoother（平滑器）</strong>在规划器和控制器之间加一层，把路径捋顺：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>平滑前：●●●●●●      平滑后：●●●
+              ●●●●●●            ●●●●●●
+</code></pre></div>
+
+<p><strong>原理（gradient-based smoother）</strong>：一个优化问题——<strong>最小化"路径弯曲程度"，同时约束"别太偏离原路径、别撞障碍"</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>代价 = 平滑项（曲率小）+ 距离项（别偏离太远）+ 障碍项（别撞）
+用梯度下降/最小二乘迭代求解（第 4 周学的优化！）
+</code></pre></div>
+
+<h3 id="122">1.2.2 和机器狗的关系</h3>
+<p><strong>平滑路径 = 少急停、少晃动</strong>。四足狗对"急转弯"尤其敏感（会侧滑、需要重新迈步）——smoother 让 cmd_vel 更顺，第 11 周还要在控制器端再处理一次。</p>
+<blockquote>
+<p>一句话总结：<strong>smoother = 把路径的折角捋直：优化"弯曲+偏离+碰撞"三个代价；路径顺了狗走着才稳。</strong></p>
+</blockquote>
+<h3 id="12">1.2 自测</h3>
+<ol>
+<li>smoother 优化哪三部分代价？</li>
+<li>平滑路径对四足狗为什么重要？</li>
+</ol>
+<hr />
+<h2 id="13">1.3 四足全局约束：狗不是车（周四，重点）</h2>
+<h3 id="131">1.3.1 四个方面</h3>
+<p><strong>① footprint（脚印/外形）</strong></p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>车：矩形（长×宽）
+狗：也要声明外形（如 1.1m × 0.5m 或圆形近似）
+→ costmap 膨胀用 footprint 算（第 9 周 footprint 参数实验）
+→ 窄通道能不能过 = 通道宽 vs footprint 宽
+</code></pre></div>
+
+<p><strong>② 最小转弯</strong></p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>狗可以原地转（半径≈0）→ 但&quot;边转边走&quot;有曲率限制
+→ Hybrid A* 里 min_turning_radius 参数
+→ 原地转 vs 弧线转：都要在规划里考虑
+</code></pre></div>
+
+<p><strong>③ 原地转向开关</strong></p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>有的场景要求&quot;先原地转好，再直走&quot;（更稳）vs &quot;边转边走&quot;（更快）
+→ 规划器/控制器模式切换
+→ 四足常见：旋转和前进分开执行（避免步态混乱）
+</code></pre></div>
+
+<p><strong>④ 坡度/台阶</strong>（四足特有！）</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>轮式车：坡度 &gt; 阈值 = 不可通行
+四足狗：能爬台阶（但有限制：台阶高度 &lt; 腿长，坡度 &lt; 极限）
+→ 2D costmap 看不出来 → 需要地形信息（1.4 节）
+</code></pre></div>
+
+<h3 id="132">1.3.2 通过性检查清单（周四输出，本周交付物）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>四足路径通过性检查清单（2026-xx-xx）
+□ 1. 宽度：路径最小宽度 ≥ footprint 宽 + 2×安全边距？
+□ 2. 曲率：路径最大曲率 ≤ 狗的最小转弯能力（含速度相关）？
+□ 3. 原地转：需要原地转的场景是否明确（转好再走）？
+□ 4. 坡度：路径最大坡度 ≤ 平台极限？
+□ 5. 台阶：台阶高度 ≤ 平台可爬高度？
+□ 6. 悬空：路径下方/上方障碍（2D 看不到的）是否已考虑？
+□ 7. 地形：地面材质（草地/沙地）是否影响打滑/通过？
+</code></pre></div>
+
+<blockquote>
+<p>一句话总结：<strong>四足全局约束 = 外形宽度 + 转弯能力 + 原地转策略 + 坡度台阶；通过性清单把这四条落成可检查项。</strong></p>
+</blockquote>
+<h3 id="13_1">1.3 自测</h3>
+<ol>
+<li>footprint 影响什么？</li>
+<li>狗"原地转"和"边转边走"各适合什么场景？</li>
+<li>为什么 2D costmap 看不出坡度？</li>
+</ol>
+<hr />
+<h2 id="14-costmap">1.4 地形感知如何进入 costmap（周五，构想）</h2>
+<h3 id="141-anymal">1.4.1 ANYmal 论文（浏览）</h3>
+<p><strong>ANYmal</strong>（ETH 的四足机器人）做地形感知：把 3D 点云投影成<strong>地形网格</strong>，每个格子估计"坡度、粗糙度、台阶高度"，生成<strong>地形代价地图</strong>——坡度大的格子代价高。</p>
+<p><strong>论文浏览方法</strong>（30 分钟）：
+1. 搜 "ANYmal legged robot navigation / terrain costmap"（ETH RSL 主页）。
+2. 看图（系统框图、地形图）→ 3 个印象：输入、处理、输出。
+3. 记 3 句话：它比我现在的系统多了什么？</p>
+<h3 id="142">1.4.2 你的构想图（周五输出）</h3>
+<p>画一页"地形感知如何进入 costmap"构想图：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>3D 点云 → 地面分割 → 地形网格（坡度/粗糙度/台阶）
+                              ↓
+                        地形代价层（新 layer 插件！）
+                              ↓
+             与静态/障碍/膨胀层叠加 → 全局 costmap → 规划器
+</code></pre></div>
+
+<p><strong>思考题</strong>：如果你要做这个插件，接口是什么？（第 4 周插件三步 + 第 2 周 layer 结构）</p>
+<hr />
+<h1 id="2">第 2 章 实操部分</h1>
+<h2 id="20-smac-planner-hybrid_a_star-20">2.0 读 Smac Planner hybrid_a_star（周一 20 分钟）</h2>
+<p>文件：<code>navigation2/nav2_smac_planner/src/smac_planner_hybrid.cpp</code></p>
+<p><strong>读法</strong>：
+1. 找插件注册（三步，第 4 周）。
+2. 找 <code>createPlan</code> 主函数。
+3. 找搜索循环（<code>a_star.Search</code> 或类似）。
+4. 记录：搜索状态维度、扩展方式、终点回溯。</p>
+<h2 id="21-smac-planner-20">2.1 读 Smac Planner 参数定义（周二 20 分钟）</h2>
+<p>文件：<code>navigation2/nav2_smac_planner/params/smac_planner_hybrid.yaml</code></p>
+<p><strong>逐个查含义</strong>（至少 8 个）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">motion_model</span>:<span style="color: #BBB"> </span>DUBINS / REEDS_SHEPP<span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic"># 运动模型（车/带倒车）</span>
+<span style="color: #008000; font-weight: bold">minimum_turning_radius</span>:<span style="color: #BBB"> </span>0.2<span style="color: #BBB">             </span><span style="color: #3D7B7B; font-style: italic"># 最小转弯半径</span>
+<span style="color: #008000; font-weight: bold">max_planning_time</span>:<span style="color: #BBB"> </span>5.0<span style="color: #BBB">                  </span><span style="color: #3D7B7B; font-style: italic"># 规划超时</span>
+<span style="color: #008000; font-weight: bold">lookup_table_size</span>:<span style="color: #BBB"> </span>20.0<span style="color: #BBB">                 </span><span style="color: #3D7B7B; font-style: italic"># 查表精度</span>
+<span style="color: #008000; font-weight: bold">analytic_expansion_ratio</span>:<span style="color: #BBB"> </span>3.5<span style="color: #BBB">           </span><span style="color: #3D7B7B; font-style: italic"># 直线收尾加速</span>
+<span style="color: #008000; font-weight: bold">cost_travel_multiplier</span>:<span style="color: #BBB"> </span>0.01<span style="color: #BBB">            </span><span style="color: #3D7B7B; font-style: italic"># 路程代价权重</span>
+<span style="color: #008000; font-weight: bold">angle_quantization_bins</span>:<span style="color: #BBB"> </span>72<span style="color: #BBB">             </span><span style="color: #3D7B7B; font-style: italic"># 朝向离散格数</span>
+<span style="color: #00F; font-weight: bold">...</span>
+</code></pre></div>
+
+<p><strong>每个参数问三个问题</strong>：什么意思？调大会怎样？调小会怎样？</p>
+<h2 id="22-smoother-20">2.2 读 smoother 插件（周三 20 分钟）</h2>
+<p>文件：<code>navigation2/nav2_smoother/</code>（<code>simple_smoother.cpp</code> / <code>gradient_based_smoother</code> 等）</p>
+<p><strong>读法</strong>：找残差函数（<code>addResidual</code> / cost functions）——smoother 本质是 Ceres 优化（第 4 周学的），你会看到熟悉的残差结构。</p>
+<h2 id="23">2.3 平台手册查运动约束（周四）</h2>
+<p>查云深处手册并记录：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>平台运动约束（2026-xx-xx）
+- footprint 尺寸：长×宽（或直径）：
+- 最小转弯半径：原地转？转弯最小半径？
+- 原地转向：支持吗？速度多少？
+- 极限坡度：可爬坡度：
+- 台阶高度：最大可上：
+- 步态切换速度：慢走/小跑切换速度：
+</code></pre></div>
+
+<p><strong>对照 1.3.2 清单逐项打勾</strong>。</p>
+<h2 id="24-anymal-141">2.4 ANYmal 论文浏览（周五，见 1.4.1）</h2>
+<hr />
+<h1 id="3-45h">第 3 章 周六实验手册（4~5h）</h1>
+<h2 id="31-190">3.1 任务 1：全局规划器对比实验（90 分钟，核心）</h2>
+<p><strong>Smac Planner 插件对比（或 NavFn vs Hybrid A*）</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>实验矩阵：
+| 规划器 | 运动模型 | 场景 | 路径特点 |
+| NavFn（A*） | 无 | 拐角/窄道 | ？ |
+| Smac Hybrid | DUBINS | 同上 | ？ |
+| Smac Hybrid | REEDS_SHEPP | 同上 | ？ |
+| Smac Lattice | 默认库 | 同上 | ？ |
+</code></pre></div>
+
+<p><strong>记录</strong>（每组合）：
+- 路径形状（截图）：直线弧线？有无折角？
+- 规划耗时（<code>ros2 topic echo /plan</code> 或日志）。
+- 导航是否顺畅（机器狗实际走起来）。</p>
+<p><strong>结论 ≥3 条</strong>：哪个路径最平滑？哪个最快？拐角场景谁更优？</p>
+<h2 id="32-260">3.2 任务 2：复现"路径突变"（60 分钟）</h2>
+<p><strong>现象</strong>：导航中路径突然大改（跳一条线）。</p>
+<p><strong>排查</strong>（五步法）：
+1. 复现：放一个动态障碍（行人/移动障碍物）在路径上。
+2. 观察：全局路径什么时候跳？跳得多大？
+3. 假设：重规划频率？代价突变？
+4. 验证：调 <code>max_planning_time</code>、代价图更新频率等参数。
+5. 记录：哪个参数让"突变"变"平滑过渡"？</p>
+<p><strong>输出</strong>：现象截图 + 参数→行为结论。</p>
+<h2 id="33-360">3.3 任务 3：复现"绕远路/走回头路"（60 分钟）</h2>
+<p><strong>现象</strong>：路径明明可以近路直走，规划器却绕远/走回头路。</p>
+<p><strong>排查</strong>：
+1. 复现：制造"近路代价偏高"的地图（把近路 inflate 大一点）。
+2. 假设：启发式不准？costmap 代价异常？footprint 太大？
+3. 验证：逐参数对比（cost 权重、footprint、膨胀参数）。
+4. 记录根因 + 修复参数。</p>
+<h2 id="34-460">3.4 任务 4：四足通过性实验（60 分钟）</h2>
+<p>在仿真里做（有地形/障碍场景最佳）：
+1. 窄通道：宽度 = footprint × 1.1 / 1.5 / 2.0 → 记录能通过的最小宽度。
+2. 台阶/斜坡（如仿真支持）：对比有/无地形代价时的路径。
+3. 记录"狗"与"车"行为差异：狗会不会选择爬坡路线？</p>
+<h2 id="35-5-v230">3.5 任务 5：更新对照表 v2（30 分钟）</h2>
+<p>在 v1 基础上加 Smac/smoother 参数（≥15 个）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>| 参数 | 调大 | 调小 | 原理 | 验证 |
+| minimum_turning_radius | 转弯平缓但绕 | 转弯灵活 | 运动学限制 | 实验1 |
+| max_planning_time | 规划更久更优 | 更快返回 | 时间预算 | 实验2 |
+| cost_travel_multiplier | 更短路优先 | 更安全优先 | 代价权重 | 实验3 |
+| ... |
+</code></pre></div>
+
+<h2 id="36">3.6 周六检查清单</h2>
+<ul>
+<li>[ ] 规划器对比实验（≥4 组合）</li>
+<li>[ ] 路径突变复现 + 修复参数</li>
+<li>[ ] 绕远路复现 + 根因</li>
+<li>[ ] 通过性实验记录</li>
+<li>[ ] 对照表 v2（≥15 参数）</li>
+<li>[ ] git 提交 ≥ 4 次</li>
+</ul>
+<hr />
+<h1 id="4-12h">第 4 章 周日复盘（1~2h）</h1>
+<h2 id="41">4.1 本周总结（一页）</h2>
+<ol>
+<li>Hybrid A* / Lattice：把运动学带进搜索。</li>
+<li>smoother：路径捋直（优化三代价）。</li>
+<li>四足约束：宽度、转弯、原地转、坡度台阶 + 通过性清单。</li>
+<li>地形感知：3D 信息进 costmap 的构想。</li>
+<li>对照表 v2 完成。</li>
+</ol>
+<h2 id="42-bug-9">4.2 Bug 案例 #9（必须完成）</h2>
+<p><strong>全局路径突变/绕路问题</strong>：用周六复现，走五步法，填 <code>bug_cases/bug_009.md</code>。</p>
+<h2 id="43-15">4.3 下周预习（15 分钟）</h2>
+<p>第 11 周：局部规划器（DWA/TEB）+ 四足平滑控制。先想：<strong>"路径画好了，但每 0.1 秒给多少速度？遇到突然出现的障碍怎么办？"</strong> —— 让 AI 讲讲 DWA。</p>
+<h2 id="44">4.4 周日自测</h2>
+<ol>
+<li>Hybrid A<em> 比 A</em> 多什么状态？</li>
+<li>Lattice 和 Hybrid A* 的动作哪来的？</li>
+<li>smoother 优化什么？</li>
+<li>四足通过性清单 7 条？</li>
+<li>地形代价层怎么进 costmap？</li>
+</ol>
+<hr />
+<h1 id="5">第 5 章 第十周验收清单</h1>
+<ul>
+<li>[ ] Hybrid A*/Lattice 概念</li>
+<li>[ ] Smac 参数 ≥8 个查过含义</li>
+<li>[ ] smoother 原理 + 残差结构</li>
+<li>[ ] 四足约束 4 方面 + 通过性清单</li>
+<li>[ ] 平台运动约束记录</li>
+<li>[ ] ANYmal 浏览 3 印象</li>
+<li>[ ] 规划器对比实验</li>
+<li>[ ] 路径突变/绕路复现</li>
+<li>[ ] 对照表 v2（≥15）</li>
+<li>[ ] Bug 案例 #9</li>
+<li>[ ] 每日自测 ≥ 60%</li>
+</ul>
+<p><strong>未达标</strong>：砍 1.4 ANYmal 深读（保构想图）。<strong>规划器对比实验和通过性记录不可砍。</strong></p>
+<hr />
+<h1 id="10_1">附录：术语表（第 10 周新增）</h1>
+<table>
+<thead>
+<tr>
+<th>术语</th>
+<th>大白话解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hybrid A*</td>
+<td>A* + 运动学：搜索带朝向的弧线路径</td>
+</tr>
+<tr>
+<td>Lattice</td>
+<td>预计算动作库的路径搜索</td>
+</tr>
+<tr>
+<td>运动学模型</td>
+<td>描述"怎么走合法"的数学（转弯半径等）</td>
+</tr>
+<tr>
+<td>DUBINS</td>
+<td>只能前进的运动模型</td>
+</tr>
+<tr>
+<td>REEDS_SHEPP</td>
+<td>可前进可倒车的运动模型</td>
+</tr>
+<tr>
+<td>smoother</td>
+<td>路径平滑器（捋直折角）</td>
+</tr>
+<tr>
+<td>曲率</td>
+<td>路径弯曲程度（半径倒数）</td>
+</tr>
+<tr>
+<td>footprint</td>
+<td>机器人外形（影响能不能通过）</td>
+</tr>
+<tr>
+<td>最小转弯半径</td>
+<td>转弯时最小的圆半径</td>
+</tr>
+<tr>
+<td>原地转向</td>
+<td>不前进只旋转</td>
+</tr>
+<tr>
+<td>通过性</td>
+<td>某地形能不能通过</td>
+</tr>
+<tr>
+<td>地形代价</td>
+<td>坡度/粗糙度换算成的危险值</td>
+</tr>
+<tr>
+<td>ANYmal</td>
+<td>ETH 的四足机器人（地形导航）</td>
+</tr>
+<tr>
+<td>网格地形</td>
+<td>用格子描述地形的坡度等信息</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>教材说明：本教材自包含、零基础友好。外部资料（Smac Planner 文档、ANYmal 论文、LaValle）仅作加深。每天学习结束后按"每日学习检测协议"让 AI 追问验证。</em></p>
+<footer>
+<p>四足机器狗导航算法 · 三个月学习计划 · 第 10 周教材</p>
+<p>每天学习结束后，按清单文末「每日学习检测协议」让 AI 追问验证</p>
+</footer>
+</div>
+<script>
+(function(){{
+  var toc = document.getElementById('toc-placeholder');
+  var heads = document.querySelectorAll('h2');
+  var list = document.createElement('ul');
+  heads.forEach(function(h){{
+    var id = h.id || ('h-' + h.textContent.replace(/[^\w\u4e00-\u9fa5]/g, '-').slice(0, 30));
+    h.id = id;
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    list.appendChild(li);
+  }});
+  toc.appendChild(list);
+}})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>第一周学习教材：线性代数 + Eigen + FAST-LIO2</title>
+<style>
+:root {{
+  --bg: #f7f5f0;
+  --card: #ffffff;
+  --ink: #1f2430;
+  --muted: #6b7280;
+  --accent: #b45309;
+  --accent-soft: #fef3c7;
+  --line: #e5e0d6;
+  --code-bg: #f4f1ea;
+  --table-head: #f0ece2;
+  --link: #92400e;
+}}
+* {{ box-sizing: border-box; }}
+html {{ -webkit-text-size-adjust: 100%; }}
+body {{
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-size: 16px;
+  line-height: 1.85;
+  word-break: break-word;
+}}
+.wrap {{ max-width: 46rem; margin: 0 auto; padding: 1.2rem 1.1rem 4rem; }}
+header.hero {{
+  background: linear-gradient(135deg, #7c2d12 0%, #b45309 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 1.6rem 1.4rem;
+  margin-bottom: 1.4rem;
+  box-shadow: 0 4px 14px rgba(124, 45, 18, .25);
+}}
+header.hero h1 {{ margin: 0 0 .4rem; font-size: 1.4rem; line-height: 1.4; }}
+header.hero p {{ margin: .2rem 0; font-size: .9rem; opacity: .92; }}
+.nav {{
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  margin-bottom: 1.4rem;
+}}
+.nav a {{
+  display: inline-block; padding: .3rem .7rem; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line);
+  color: var(--link); text-decoration: none; font-size: .82rem;
+}}
+.nav a.on {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
+.toc {{
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 1rem 1.2rem; margin-bottom: 1.6rem; font-size: .92rem;
+}}
+.toc summary {{ cursor: pointer; font-weight: 600; color: var(--accent); }}
+.toc a {{ color: var(--link); text-decoration: none; }}
+.toc a:hover {{ text-decoration: underline; }}
+h1 {{ font-size: 1.5rem; margin: 2.2rem 0 .8rem; padding-bottom: .4rem; border-bottom: 2px solid var(--accent); }}
+h2 {{ font-size: 1.22rem; margin: 1.8rem 0 .6rem; color: #7c2d12; }}
+h3 {{ font-size: 1.05rem; margin: 1.4rem 0 .5rem; }}
+h4 {{ font-size: .98rem; margin: 1.1rem 0 .4rem; color: #444; }}
+p {{ margin: .55rem 0; }}
+ul, ol {{ padding-left: 1.5rem; margin: .5rem 0; }}
+li {{ margin: .28rem 0; }}
+strong {{ color: #7c2d12; }}
+code {{
+  background: var(--code-bg); border-radius: 4px; padding: .12em .35em;
+  font-family: "SF Mono", Consolas, "Courier New", monospace; font-size: .88em; color: #8b4513;
+}}
+pre {{
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px;
+  padding: .9rem 1rem; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  font-size: .84rem; line-height: 1.6;
+}}
+pre code {{ background: none; padding: 0; color: inherit; }}
+blockquote {{
+  margin: .8rem 0; padding: .6rem 1rem; background: var(--accent-soft);
+  border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0;
+}}
+blockquote p {{ margin: .3rem 0; }}
+table {{
+  width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .9rem;
+  display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+}}
+th, td {{ border: 1px solid var(--line); padding: .45rem .6rem; text-align: left; vertical-align: top; }}
+th {{ background: var(--table-head); font-weight: 600; white-space: nowrap; }}
+hr {{ border: none; border-top: 1px solid var(--line); margin: 2rem 0; }}
+input[type="checkbox"] {{ transform: scale(1.2); margin-right: .4em; }}
+footer {{
+  margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: .82rem; text-align: center;
+}}
+</style>
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f8f8f8; }
+.codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+.codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #E40000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #008400 } /* Generic.Inserted */
+.codehilite .go { color: #717171 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #687822 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #800 } /* Name.Constant */
+.codehilite .nd { color: #A2F } /* Name.Decorator */
+.codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #00F } /* Name.Function */
+.codehilite .nl { color: #767600 } /* Name.Label */
+.codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #00F } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<h1>第一周学习教材：线性代数 + Eigen + FAST-LIO2</h1>
+<p>四足机器狗导航算法工程师 · 三个月学习计划</p>
+<p>零基础自包含版 · 手机阅读 · 单文件离线可用</p>
+</header>
+<nav class="nav">
+<a class="on" href="第一周学习教材.html">W1</a>
+<a class="" href="第二周学习教材.html">W2</a>
+<a class="" href="第三周学习教材.html">W3</a>
+<a class="" href="第四周学习教材.html">W4</a>
+<a class="" href="第五周学习教材.html">W5</a>
+<a class="" href="第六周学习教材.html">W6</a>
+<a class="" href="第七周学习教材.html">W7</a>
+<a class="" href="第八周学习教材.html">W8</a>
+<a class="" href="第九周学习教材.html">W9</a>
+<a class="" href="第十周学习教材.html">W10</a>
+<a class="" href="第十一周学习教材.html">W11</a>
+<a class="" href="第十二周学习教材.html">W12</a>
+</nav>
+<details class="toc" open>
+<summary>📑 目录（点击收起）</summary>
+<div id="toc-placeholder"></div>
+</details>
+<h1 id="eigen-fast-lio2">第一周学习教材：线性代数 + Eigen + FAST-LIO2（零基础版）</h1>
+<blockquote>
+<p>定位：四足机器狗（云深处）导航算法工程师
+周期：第 1 周（共 12 周）· 工作日 1.5~2h + 周六 4~5h 实验 + 周日 1~2h 复盘
+本周目标：<strong>看懂机器狗是怎么"认路"的数学原理；会写一点 Eigen 代码；画出 FAST-LIO2 的整体流程。</strong>
+本周交付：<code>eigen_practice</code> 工程（git 全程提交）+ FAST-LIO2 数据流图 + 一页笔记</p>
+</blockquote>
+<p><strong>这本教材是写给"零基础"的你</strong>：只要你会初中数学（知道坐标、函数、sin/cos 是什么），能看懂简单 C++（变量、for 循环），就能读得懂。所有概念都从"这是什么、为什么需要"讲起，全程用大白话和比喻。</p>
+<p><strong>本教材自包含</strong>：不需要看任何视频或教程，所有要学的知识都写在书里。外部资料（3B1B 视频、《C++ Primer》、Eigen 文档、FAST-LIO2 源码）只在你想加深理解时作为补充。</p>
+<hr />
+<h1 id="0-10">第 0 章 开课前必读（10 分钟）</h1>
+<h2 id="01">0.1 你只需要两样东西</h2>
+<ol>
+<li><strong>初中数学</strong>：坐标、函数、sin/cos。如果你已经忘了，第 1.0 节帮你 10 分钟捡回来。</li>
+<li><strong>能看懂简单 C++</strong>：变量、for 循环。如果你的记忆模糊了，第 2.0 节帮你快速复习。</li>
+</ol>
+<h2 id="02">0.2 这本书怎么读</h2>
+<ul>
+<li>每天按"学习进度表"读对应章节 → 做每节末尾的自测 → 晚上让 AI 按"每日学习检测协议"追问验证。</li>
+<li>每个新概念都按三步走：<strong>先打比方（直觉）→ 再给定义（数学）→ 最后写公式（符号）</strong>。</li>
+<li>遇到看不懂的地方：<strong>先抄下来，再往下读</strong>。书里的比喻会在后面反复出现，第二次见到就熟了。</li>
+<li>每节末尾的"一句话总结"是复习的抓手：合上书能说出这句话 = 这一节掌握了。</li>
+</ul>
+<h2 id="03">0.3 一周地图</h2>
+<table>
+<thead>
+<tr>
+<th>天</th>
+<th>读什么</th>
+<th>学完能干什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>周一</td>
+<td>1.0–1.3 + 2.0–2.2 + 4.1</td>
+<td>知道"向量/坐标/基"是啥；会看简单 C++；认识 FAST-LIO2 的文件</td>
+</tr>
+<tr>
+<td>周二</td>
+<td>1.4–1.6 + 2.3 + 4.2</td>
+<td>看懂"矩阵/旋转/行列式"；会用 vector；认识核心数据结构</td>
+</tr>
+<tr>
+<td>周三</td>
+<td>1.7–1.8 + 2.4 + 4.3</td>
+<td>懂"逆矩阵/解方程/秩"；会写判断循环；看懂点云预处理</td>
+</tr>
+<tr>
+<td>周四</td>
+<td>1.9–1.11 + 3.1–3.5 + 4.4</td>
+<td>懂"点积/叉积/换坐标系"；会用 Eigen；看懂主循环</td>
+</tr>
+<tr>
+<td>周五</td>
+<td>1.12–1.14 + 2.5–2.6 + 费曼笔记</td>
+<td>懂"特征值/SVD"；会写函数和 lambda；输出一页总结</td>
+</tr>
+<tr>
+<td>周六</td>
+<td>第 5 章 实验</td>
+<td>亲手写出跑通的 Eigen 程序</td>
+</tr>
+<tr>
+<td>周日</td>
+<td>第 6 章 复盘 + 第 7 章 验收</td>
+<td>总结、建 Bug 案例库、预习</td>
+</tr>
+</tbody>
+</table>
+<h2 id="04">0.4 整个一周就回答一个问题</h2>
+<blockquote>
+<p><strong>机器狗是怎么知道"我在哪里"的？</strong></p>
+</blockquote>
+<p>答案的骨架（先用大白话说，学完这本书你能说出数学细节）：</p>
+<ol>
+<li>机器狗身上有<strong>激光雷达</strong>（每秒射出几十万个激光点，碰到障碍物弹回来，算出障碍物距离）和 <strong>IMU</strong>（像手机里的陀螺仪+加速度计，感受身体旋转和晃动）。</li>
+<li><strong>激光点</strong>能告诉我们"周围长什么样"（一面墙、一棵树）。</li>
+<li><strong>IMU</strong> 能告诉我们"我刚刚怎么动的"（往左转了多少、往前颠了多少）。</li>
+<li>计算机把它们合起来猜："根据 IMU 我大概在这 → 那激光应该看到这些点 → 咦，实际看到的点有点偏 → 修正一下我的位置"。</li>
+<li><strong>这个过程反复进行 = 一边猜自己在哪、一边把周围的点拼成地图。这就是 SLAM（同步定位与建图）。</strong></li>
+</ol>
+<p><strong>FAST-LIO2 就是干这件事的程序</strong>（"FAST" 快，"LIO" = 激光 + 惯性里程计）。你这一周要学的数学（线性代数）就是第 4 步"怎么修正位置"用的工具，C++ 和 Eigen 是写这个工具的语言。</p>
+<hr />
+<h1 id="1">第 1 章 线性代数（从零开始）</h1>
+<h2 id="10-10">1.0 预备：把初中数学捡回来（10 分钟）</h2>
+<h3 id="101">1.0.1 坐标系：给世界贴门牌号</h3>
+<p>你小时候在方格纸上画过点。<strong>坐标系就是给平面上每个位置起名字的系统</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>    y
+    |
+  3 |      ● (2, 3)      ← 这个点的&quot;门牌号&quot;是 (2, 3)
+    |
+  2 |
+    |
+  1 |
+    |
+    +----+----+----&gt; x
+        1    2    3
+
+三维就是多一个方向：墙上的画是 (x, y)，房间里的东西还要加上&quot;离地面多高&quot;——(x, y, z)。
+</code></pre></div>
+
+<ul>
+<li>读法：<strong>先横着走 x 步，再竖着走 y 步</strong>。坐标 <code>(2, 3)</code> = 向右 2、向上 3。</li>
+<li><strong>激光雷达测到的每个点，就是三维坐标 <code>(x, y, z)</code></strong>：x = 前后，y = 左右，z = 高低。</li>
+</ul>
+<h3 id="102">1.0.2 函数：一台"输入→输出"的机器</h3>
+<p><strong>函数就是一个规则：给它一个数，它算出一个数。</strong> 比如"加 1 函数"：输入 2 → 输出 3；输入 5 → 输出 6。</p>
+<p>写成符号：<code>f(x) = x + 1</code>（读作：f of x 等于 x 加 1）。x 是输入（自变量），f(x) 是输出。</p>
+<p><strong>为什么学函数</strong>：机器狗里全是函数——"输入当前速度，输出 0.1 秒后在哪里"，"输入两个点，输出它们的距离"。看懂函数 = 看懂程序在算什么。</p>
+<h3 id="103-sin-cos">1.0.3 sin 和 cos：直角三角形里的比例</h3>
+<p>画一个直角三角形，其中一个角是 θ：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>        /
+   斜边 /|
+       / |
+      /  | 对边        sin(θ) = 对边 ÷ 斜边
+     /___|
+    邻边                cos(θ) = 邻边 ÷ 斜边
+</code></pre></div>
+
+<ul>
+<li><strong>sin(θ)</strong> = 对边长度 ÷ 斜边长度（念"塞因"）</li>
+<li><strong>cos(θ)</strong> = 邻边长度 ÷ 斜边长度（念"扣塞因"）</li>
+</ul>
+<p>几个必须记住的常用值（θ 用度数）：</p>
+<table>
+<thead>
+<tr>
+<th>θ（度）</th>
+<th>0°</th>
+<th>30°</th>
+<th>45°</th>
+<th>90°</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sin(θ)</td>
+<td>0</td>
+<td>0.5</td>
+<td>0.707</td>
+<td>1</td>
+</tr>
+<tr>
+<td>cos(θ)</td>
+<td>1</td>
+<td>0.866</td>
+<td>0.707</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>为什么学 sin/cos</strong>：旋转就是靠它们算的。一个点绕原点转 θ 度后去哪了？答案里全是 sin 和 cos（见 1.5 节）。机器狗扭头、翻身，数学上都写成 sin/cos。</p>
+<blockquote>
+<p>一句话总结：坐标 = 门牌号；函数 = 输入输出机器；sin/cos = 直角三角形两边的比例。</p>
+</blockquote>
+<h3 id="10">1.0 自测</h3>
+<ol>
+<li>坐标 (3, 4) 什么意思？激光点的 (x,y,z) 各代表什么方向？</li>
+<li>函数 f(x) = x + 2，输入 5 输出几？</li>
+<li>sin(30°) 等于几？它是哪两条边的比？</li>
+</ol>
+<hr />
+<h2 id="11-3b1b-1">1.1 向量：带方向的箭头（相当于 3B1B 第 1 集）</h2>
+<h3 id="111">1.1.1 先打比方</h3>
+<p>你家在"往东走 3 公里、往北走 2 公里"的地方。这个"<strong>往东 3、往北 2</strong>"就是一个<strong>向量</strong>——它不只是个数，还带着<strong>方向和大小</strong>。</p>
+<ul>
+<li><strong>点</strong> <code>(3, 2)</code>：就是那个位置本身（门牌号）。</li>
+<li><strong>向量</strong> <code>(3, 2)</code>：是从原点"出发，往东 3、往北 2"这个<strong>动作</strong>（箭头）。</li>
+</ul>
+<p><strong>区别</strong>：点是位置，向量是"怎么走过去"。但在数学里它俩长得一模一样，都用 <code>(x, y, z)</code> 写。<strong>激光雷达的一个点，我们既把它当"位置"，也把它当"从雷达出发指向障碍物的箭头"</strong>——什么时候当哪个，看语境。</p>
+<h3 id="112">1.1.2 向量的加法：先走一段，再走一段</h3>
+<p>"先往东 3、往北 2，再往东 1、往北 4" = 总共"往东 4、往北 6"。</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>(3, 2) + (1, 4) = (4, 6)
+</code></pre></div>
+
+<p>规则：<strong>对应的分量分别相加</strong>（第一个加第一个，第二个加第二个）。</p>
+<blockquote>
+<p>生活例子：位移就是向量加法。机器狗"先走 1 米再走 2 米"，位移 = 1 + 2 = 3 米（方向相同时）。</p>
+</blockquote>
+<h3 id="113">1.1.3 向量的数乘：把箭头拉长缩短</h3>
+<p>"往东 3、往北 2"走 2 遍 = "往东 6、往北 4"。</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>2 × (3, 2) = (6, 4)        拉长 2 倍，方向不变
+-1 × (3, 2) = (-3, -2)     方向转 180°（往回走）
+0.5 × (3, 2) = (1.5, 1)    缩短一半
+</code></pre></div>
+
+<p>规则：<strong>每个分量都乘以这个数</strong>。</p>
+<h3 id="114">1.1.4 小总结：向量是什么</h3>
+<ul>
+<li><strong>三个视角</strong>：物理（箭头）、计算（一列数字）、几何（箭头在坐标里的样子）。</li>
+<li><strong>两个操作</strong>：加法（首尾相接）、数乘（拉长/缩短/反向）。</li>
+<li>线性代数里 90% 的运算，都是这两个操作的组合。</li>
+</ul>
+<blockquote>
+<p>一句话总结：<strong>向量 = 带方向的箭头 = 一列数字；加法 = 走两步；数乘 = 拉长缩短。</strong></p>
+</blockquote>
+<h3 id="11">1.1 自测</h3>
+<ol>
+<li>用你自己的话解释：点和向量的区别？</li>
+<li>(1, 2) + (3, 4) = ?   3 × (2, -1) = ?</li>
+<li>激光雷达测的一个点，为什么能看成向量？</li>
+</ol>
+<hr />
+<h2 id="12-3b1b-2">1.2 线性组合、张成空间、基：用积木拼出一切（相当于 3B1B 第 2 集）</h2>
+<h3 id="121">1.2.1 先打比方：调颜料</h3>
+<p>调颜料时：红色颜料 + 蓝色颜料 = 紫色。<strong>"红 3 份 + 蓝 2 份"这种配方，数学上叫"红和蓝的线性组合"。</strong></p>
+<p>向量也一样：把两个向量"各自缩放再相加"：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>3 × (1, 0) + 2 × (0, 1) = (3, 0) + (0, 2) = (3, 2)
+</code></pre></div>
+
+<p>(3, 2) 就是向量 (1,0) 和 (0,1) 的一个<strong>线性组合</strong>（配方：3 份第一个 + 2 份第二个）。</p>
+<h3 id="122-span">1.2.2 张成空间（span）：用这些积木能拼出哪些位置？</h3>
+<p><strong>"两个向量张成的空间" = 用这两个向量（任意缩放、任意组合）能到达的所有位置的集合。</strong></p>
+<ul>
+<li>两个方向<strong>不一样</strong>的向量（比如 (1,0) 和 (0,1)）：能拼出<strong>整个平面</strong>上任意位置 → "张成整个平面"。</li>
+<li>两个方向<strong>一样</strong>的向量（比如 (1,1) 和 (2,2)）：只能拼出一条<strong>直线</strong>上的位置。</li>
+<li>三个<strong>不在同一平面</strong>的向量（比如 (1,0,0)、(0,1,0)、(0,0,1)）：能拼出<strong>整个三维空间</strong>。</li>
+</ul>
+<blockquote>
+<p>直觉：积木种类越多、方向越不重复，你能搭出的位置越多。</p>
+</blockquote>
+<h3 id="123-basis">1.2.3 基（basis）：最精炼的积木组</h3>
+<p><strong>基 = 一组"刚好够用、一个不多"的向量</strong>，用它们能拼出空间里的任意位置，而且每个位置的"配方"是唯一的。</p>
+<ul>
+<li>标准基：<code>(1,0,0)</code>、<code>(0,1,0)</code>、<code>(0,0,1)</code>（三维空间的"米尺"）。</li>
+<li>坐标 (3, 2, 1) 的意思 = 配方"3 个 (1,0,0) + 2 个 (0,1,0) + 1 个 (0,0,1)"。</li>
+<li>基不唯一：<code>(1,1)</code> 和 <code>(1,-1)</code> 也能当二维的基，只是坐标值会变。</li>
+</ul>
+<p><strong>判断"是不是基"</strong>：① 能拼出整个空间（张成）；② 彼此方向不重复（线性无关）。</p>
+<h3 id="124">1.2.4 关键洞察：坐标 = 配方</h3>
+<blockquote>
+<p><strong>"这个点的坐标是 (x, y, z)" 的真正意思是："用 x 份第一根积木 + y 份第二根积木 + z 份第三根积木，可以拼到这个点。"</strong></p>
+</blockquote>
+<h3 id="125">1.2.5 和机器狗的关系（重要！）</h3>
+<p>机器狗身上有<strong>好多套坐标系</strong>（你可以理解为好多套"积木/尺子"）：</p>
+<ul>
+<li><strong>雷达坐标系</strong>：以雷达为原点，"往前"是它的 x 轴。</li>
+<li><strong>机体坐标系</strong>：以机器狗身体中心为原点，"狗头方向"是 x 轴。</li>
+<li><strong>世界坐标系</strong>：以出发点为原点，固定不动。</li>
+</ul>
+<p><strong>同一个点（比如墙上的钉子），在不同坐标系里的坐标不同</strong>——因为它分别用不同的尺子量。<strong>坐标系变换 = 换一套尺子量同一个东西。</strong> 这就是后面 1.11 节要讲的"基变换"。</p>
+<blockquote>
+<p>一句话总结：<strong>线性组合 = 调配方；张成 = 能拼出的所有位置；基 = 最精炼的积木组；坐标 = 配方。</strong></p>
+</blockquote>
+<h3 id="12">1.2 自测</h3>
+<ol>
+<li>用 (1,0) 和 (0,1) 怎么拼出 (3, 2)？（写配方）</li>
+<li>(1,1) 和 (2,2) 能张成一个平面吗？为什么？</li>
+<li>什么是"基"？为什么说坐标是配方？</li>
+<li>雷达坐标系和世界坐标系是什么关系？</li>
+</ol>
+<hr />
+<h2 id="13-3b1b-3">1.3 线性变换与矩阵：把整个空间扭一下（相当于 3B1B 第 3 集）</h2>
+<h3 id="131">1.3.1 先打比方：游戏里的变形</h3>
+<p>游戏里把整个画面"压扁"或"拉长"，每个像素都移动了，但<strong>直线还是直线、格子还整齐</strong>——这种"把整个空间规规矩矩地变形"就叫<strong>线性变换</strong>。</p>
+<p>两条规则（数学定义）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>① 变换后，直线还是直线（格子保持平行、间距均匀）
+② 原点（0,0）不动
+</code></pre></div>
+
+<blockquote>
+<p>反例：平移（整个画面往右挪）原点动了，所以<strong>平移不是线性变换</strong>。这就是为什么机器人位姿要写两半：旋转矩阵（线性变换）+ 平移向量（不是）。</p>
+</blockquote>
+<h3 id="132">1.3.2 矩阵 = 变形的"说明书"</h3>
+<p><strong>关键魔法：只要知道两根积木（基向量）被扭到哪里，就能知道所有点的去向。</strong></p>
+<p>因为任意点 = "x 份积木1 + y 份积木2"，变形后 = "x 份变形后的积木1 + y 份变形后的积木2"。</p>
+<p>所以变形的全部信息，就是<strong>两张照片：积木1 去哪了、积木2 去哪了</strong>。把它们并排写在一起：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>变形后积木1 变形后积木2
+    ↓           ↓
+ |  a    b  |
+ |  c    d  |     ← 这就是一个&quot;矩阵&quot;（数字方阵）
+</code></pre></div>
+
+<p><strong>矩阵 = 变形说明书。矩阵的每一列 = 一个基向量被扭到了哪里。</strong></p>
+<h3 id="133">1.3.3 矩阵 × 向量 = 按说明书变形</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>| 2  0 |   | 1 |       | 2 |
+| 0  2 | × | 1 |  =    | 2 |
+</code></pre></div>
+
+<p>读法：基向量 (1,0) 被扭到 (2,0)（向右拉长 2 倍），(0,1) 被扭到 (0,2)（向上拉长 2 倍）。所以点 (1,1) 被扭到 (2,2)。<strong>整个平面被放大了 2 倍。</strong></p>
+<p>计算规则（重要，背下来）：</p>
+<blockquote>
+<p><strong>矩阵 × 向量 = "用向量的分量去组合矩阵的列"</strong></p>
+</blockquote>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>| a  b |   | x |          | x × 第1列 + y × 第2列 |
+| c  d | × | y |    =     |                        |
+</code></pre></div>
+
+<p>例：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>| 0  -1 |   | 1 |     =  1 × | 0 |  +  0 × |-1 |   =  | 0 |
+| 1   0 | × | 0 |         | 1 |       | 0  |        | 1 |
+</code></pre></div>
+
+<p>即 (1,0) → (0,1)：<strong>逆时针转 90°</strong>。所以这个矩阵就是"转 90°"的说明书。</p>
+<h3 id="134">1.3.4 和机器狗的关系</h3>
+<p>机器狗的<strong>位姿（位置+姿态）</strong>就是一个变换：把雷达测到的点，从雷达坐标系"变形"到世界坐标系。</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>p_world = R × p_body + t
+          ─┬──   ──┬──   ─
+      旋转矩阵   点坐标   平移向量
+</code></pre></div>
+
+<ul>
+<li>R（旋转矩阵）：负责"扭头、翻身、点头"对应的变形。</li>
+<li>t（平移向量）：负责"位置在哪"。</li>
+</ul>
+<p><strong>看到矩阵乘法，先想"基向量去哪了"，别想数字。</strong> 这是学线性代数最重要的一步。</p>
+<blockquote>
+<p>一句话总结：<strong>矩阵 = 变形说明书（列 = 基向量去哪了）；矩阵×向量 = 按说明书变形这个向量。</strong></p>
+</blockquote>
+<h3 id="13">1.3 自测</h3>
+<ol>
+<li>线性变换的两条规则？（为什么平移不是线性变换？）</li>
+<li>矩阵的每一列代表什么？</li>
+<li>矩阵 <code>| 0 -1; 1 0 |</code> 对 (1,0) 做了什么？</li>
+<li><code>p_world = R × p_body + t</code> 里 R 和 t 各是什么？</li>
+</ol>
+<hr />
+<h2 id="14-3b1b-4">1.4 矩阵乘法：两次变形合一次（相当于 3B1B 第 4 集）</h2>
+<h3 id="141">1.4.1 先打比方：先穿袜子还是先穿鞋？</h3>
+<p><strong>先穿袜子再穿鞋</strong>（正常）和<strong>先穿鞋再穿袜子</strong>（荒唐）结果完全不同。矩阵乘法也一样——<strong>顺序决定结果</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>A × B ≠ B × A      （一般情况）
+</code></pre></div>
+
+<p>先做 B 的变形，再做 A 的变形 = <code>A × B</code>（读法：<strong>从右往左读</strong>）。</p>
+<h3 id="142">1.4.2 计算规则</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>| a  b |   | e  f |        | ae+bg   af+bh |
+| c  d | × | g  h |   =    | ce+dg   cf+dh |
+</code></pre></div>
+
+<p>规则：结果矩阵的<strong>第 i 行第 j 列 = 左边矩阵第 i 行 × 右边矩阵第 j 列</strong>（对应相乘再相加）。</p>
+<p>例：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>| 1  2 |   | 5  6 |        | 1×5+2×7   1×6+2×8 |     | 19  22 |
+| 3  4 | × | 7  8 |   =    | 3×5+4×7   3×6+4×8 |  =  | 43  50 |
+</code></pre></div>
+
+<h3 id="143">1.4.3 一个有用的性质：结合律</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>(A × B) × C = A × (B × C)
+</code></pre></div>
+
+<p>先打包前两个，还是先打包后两个，结果一样。所以变换链可以随便"合并"：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>p_world = T_wb × (T_bl × p_l) = (T_wb × T_bl) × p_l
+</code></pre></div>
+
+<h3 id="144">1.4.4 和机器狗的关系：坐标变换链</h3>
+<p>机器狗身上的坐标变换是"串糖葫芦"：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>点从雷达系 → 机体系 → 世界系
+      ↓          ↓         ↓
+    p_l     × T_bl     × T_wb
+</code></pre></div>
+
+<p>每一步都是一个矩阵乘法。<strong>外参（extrinsic）就是"雷达和机体之间"的变换 T_bl</strong>。写错顺序或写错一个数字，点云整体错位——这是你以后排查"点云错位"时第一个要怀疑的地方。</p>
+<blockquote>
+<p>一句话总结：<strong>矩阵乘法 = 两次变形合一次；先做右边的再左边的；顺序不能换，但可以任意加括号。</strong></p>
+</blockquote>
+<h3 id="14">1.4 自测</h3>
+<ol>
+<li>计算 <code>| 1 1; 0 1 | × | 1 0; 1 1 |</code> 和反着乘，结果一样吗？</li>
+<li>变换链为什么可以任意加括号？</li>
+<li>机器狗身上雷达→机体→世界，各是什么变换？</li>
+</ol>
+<hr />
+<h2 id="15-3b1b-5">1.5 三维旋转：翻身、点头、扭头（相当于 3B1B 第 5 集）</h2>
+<h3 id="151">1.5.1 先打比方</h3>
+<p>飞机/机器狗的动作有三个名字：</p>
+<ul>
+<li><strong>roll（横滚）</strong>：绕 x 轴转——像<strong>翻身</strong>（左翻右翻）。</li>
+<li><strong>pitch（俯仰）</strong>：绕 y 轴转——像<strong>点头/抬头</strong>。</li>
+<li><strong>yaw（偏航）</strong>：绕 z 轴转——像<strong>扭头</strong>（左右看）。</li>
+</ul>
+<p>机器狗走路时这三样全在动：每走一步身体都会<strong>晃</strong>（roll/pitch 小幅变化）、<strong>上下颠</strong>（高度变化）、<strong>扭</strong>（yaw 转向）。</p>
+<h3 id="152-z">1.5.2 绕 z 轴转 θ 度（扭头的数学）</h3>
+<p>一个点 (x, y) 绕原点逆时针转 θ 度后，新坐标是：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>x&#39; = x·cosθ − y·sinθ
+y&#39; = x·sinθ + y·cosθ
+</code></pre></div>
+
+<p>写成矩阵（就是 1.3 节的"说明书"）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>| x&#39; |     | cosθ  −sinθ |   | x |
+| y&#39; |  =  | sinθ   cosθ | × | y |
+</code></pre></div>
+
+<p>三维绕各轴旋转矩阵（照相机视角，θ 是弧度，180° = π ≈ 3.14159）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>绕 x 轴（翻身 roll）：
+| 1    0      0    |
+| 0  cosθ  −sinθ  |
+| 0  sinθ   cosθ  |
+
+绕 y 轴（点头 pitch）：
+|  cosθ  0  sinθ  |
+|   0    1   0    |
+| −sinθ  0  cosθ  |
+
+绕 z 轴（扭头 yaw）：
+| cosθ  −sinθ  0  |
+| sinθ   cosθ  0  |
+|  0      0    1  |
+</code></pre></div>
+
+<p><strong>不用背，知道结构就行</strong>：对角线上有 cos，角落里有 sin，位置对应对应轴。</p>
+<h3 id="153">1.5.3 旋转矩阵的两个"身份证"</h3>
+<ol>
+<li><strong>转置 = 逆</strong>：<code>Rᵀ = R⁻¹</code>（想转回去？把矩阵转置一下（行和列互换）就行）。</li>
+<li><strong>行列式 = 1</strong>（下一节讲行列式，先记住这个结论）。</li>
+</ol>
+<h3 id="154-2">1.5.4 和机器狗的关系（第 2 周主题的预告）</h3>
+<p><strong>激光点云为什么会被"拧"坏</strong>：激光雷达不是一瞬间扫完整个环境的，一帧点云要扫几十分之一秒。这期间机器狗在<strong>晃</strong>——先采的点是在"没晃"的位姿采的，后采的点是在"晃了"的位姿采的。每个点其实用了<strong>不同的坐标系</strong>，把它们当成同一时刻拼起来，点云就扭曲了（看起来"重影"）。</p>
+<p>补偿这个扭曲 = 把每个点按它自己的采集时刻，用对应的旋转矩阵<strong>转回同一个时刻</strong>。<strong>这就是"点云畸变补偿"，第 2 周学雅可比时你会亲手算。</strong></p>
+<blockquote>
+<p>一句话总结：<strong>roll/pitch/yaw = 翻身/点头/扭头；旋转 = 用 sin/cos 重算每个点的坐标；旋转矩阵转置就是逆。</strong></p>
+</blockquote>
+<h3 id="15">1.5 自测</h3>
+<ol>
+<li>绕 z 轴转 90° 的矩阵是？（提示：sin90°=1, cos90°=0）</li>
+<li>机器狗走路时哪三个角会动？</li>
+<li>"点云畸变"是怎么产生的？（用自己的话说）</li>
+</ol>
+<hr />
+<h2 id="16-3b1b-6">1.6 行列式：变形放大了多少倍（相当于 3B1B 第 6 集）</h2>
+<h3 id="161">1.6.1 先打比方：复印机</h3>
+<p>复印机有"放大 200%"档——面积变成 4 倍（长 2 倍 × 宽 2 倍）。<strong>行列式就是变形的"放大倍数"</strong>：这个变换把一块面积（二维）或体积（三维）放大了多少倍。</p>
+<ul>
+<li><code>行列式 = 2</code>：面积放大 2 倍。</li>
+<li><code>行列式 = 1</code>：面积不变（比如旋转——旋转只是转个方向，大小不变）。</li>
+<li><code>行列式 = 0</code>：<strong>空间被压扁了</strong>（把平面压成一条线、把立方体压成一张纸）——信息丢了！</li>
+<li><code>行列式 &lt; 0</code>：除了放大缩小，还<strong>翻面</strong>了（镜像）。</li>
+</ul>
+<h3 id="162">1.6.2 怎么算</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>2×2：det | a  b | = a×d − b×c
+         | c  d |
+
+例：| 2  0 |     det = 2×2 − 0×0 = 4     （放大 2 倍 → 面积 ×4，对上了）
+    | 0  2 |
+</code></pre></div>
+
+<p>3×3 的更复杂，Eigen 一行代码搞定（第 3 章学），本周知道含义就行。</p>
+<h3 id="163">1.6.3 和机器狗的关系</h3>
+<ol>
+<li><strong>检查旋转矩阵是否合法</strong>：旋转不改变大小，所以 <code>det(R) 必须 = 1</code>。你写的旋转矩阵，行列式不是 1 就是写错了。</li>
+<li><strong>"行列式 = 0" = 定位要崩</strong>：后面讲配准时，如果某个数学量（JᵀJ）的行列式接近 0，说明<strong>观测信息不够，某方向算不出来</strong>。机器狗在<strong>长直走廊</strong>里，沿走廊方向的定位信息就接近这种状态——这就是"定位退化"的数学源头。</li>
+</ol>
+<blockquote>
+<p>一句话总结：<strong>行列式 = 变形的放大倍数；等于 0 = 压扁了 = 信息丢了；旋转的行列式永远是 1。</strong></p>
+</blockquote>
+<h3 id="16">1.6 自测</h3>
+<ol>
+<li>行列式的几何含义？</li>
+<li>为什么旋转矩阵行列式必须是 1？</li>
+<li>"长走廊定位退化"和行列式有什么关系？（大白话）</li>
+</ol>
+<hr />
+<h2 id="17-3b1b-78">1.7 逆矩阵：撤销变形 + 解方程（相当于 3B1B 第 7、8 集）</h2>
+<h3 id="171">1.7.1 先打比方：撤销键</h3>
+<p>Ctrl+Z 是"撤销上一步"。<strong>逆矩阵 = 变形的撤销键</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>A⁻¹ × A = I     （A⁻¹ 读作 &quot;A 逆&quot;）
+</code></pre></div>
+
+<p>I 是<strong>单位矩阵</strong>（对角线全是 1、其他是 0，相当于"什么都没做"的矩阵）。</p>
+<ul>
+<li>先做 A 的变形，再做 A⁻¹ 的变形 = 白干 = 单位矩阵 I。</li>
+<li><strong>转圈：先旋转 θ 度，再旋转 −θ 度，回到原点。</strong></li>
+</ul>
+<h3 id="172">1.7.2 什么时候没有"撤销"？</h3>
+<p>如果 A 把平面<strong>压扁了</strong>（行列式 = 0），被压扁的点<strong>没法还原</strong>（多个点压成同一个点，不知道你原来是哪个）→ <strong>不可逆</strong>。</p>
+<blockquote>
+<p>所以：<strong>行列式 = 0 ⟺ 不可逆 ⟺ 信息丢失</strong>。行列式 ≠ 0 才可逆。</p>
+</blockquote>
+<h3 id="173-ax-b">1.7.3 解方程 Ax = b：找"原样"是什么</h3>
+<p>方程 <code>Ax = b</code> 的意思是：<strong>某个向量 x 被变形 A 处理后，得到了 b。求 x 原来是什么。</strong></p>
+<ul>
+<li>如果 A 可逆（没压扁）：答案唯一，<code>x = A⁻¹ × b</code>。</li>
+<li>如果 A 压扁了（det = 0）：</li>
+<li>b 落在"压扁后的范围"里：<strong>无穷多个答案</strong>（一条线上的点都被压到同一个 b）。</li>
+<li>b 落在范围外：<strong>无解</strong>。</li>
+</ul>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>例：| 2  1 | | x |     | 5 |        x + y ... 一个方程组的矩阵写法
+    | 1 −1 | | y |  =  | 1 |
+
+解出来 x = 2, y = 1。验证：| 2  1 | | 2 |   | 5 |
+                          | 1 −1 | | 1 | = | 1 |  ✓
+</code></pre></div>
+
+<p><strong>验证方法永远是这个：算一下 Ax，看是不是 b。</strong></p>
+<h3 id="174">1.7.4 和机器狗的关系</h3>
+<p>SLAM 里"求解位姿"本质就是解方程。<strong>当环境退化（走廊、大平地）时，方程接近"压扁"状态（det≈0），位姿解就漂移。</strong> 你工作中遇到的"机器狗在长走廊里定位漂移"，数学根子就在这一节。</p>
+<blockquote>
+<p>一句话总结：<strong>逆矩阵 = 撤销变形；行列式是 0 就撤不了（信息丢了）；Ax=b = 问"x 变形后是 b，x 原来是谁"。</strong></p>
+</blockquote>
+<h3 id="17">1.7 自测</h3>
+<ol>
+<li>为什么行列式 = 0 的矩阵没有逆矩阵？（用"压扁"说）</li>
+<li>Ax = b 无解、一解、无数解的几何条件？</li>
+<li>验证 x 是 Ax=b 的解，标准动作是什么？</li>
+</ol>
+<hr />
+<h2 id="18-3b1b-9">1.8 列空间、零空间、秩：信息够不够（相当于 3B1B 第 9 集）</h2>
+<h3 id="181">1.8.1 先打比方：压缩文件</h3>
+<p>把一张照片压成一条线——你失去了"宽度"信息，这条线就是<strong>列空间</strong>（变形后所有可能结果的范围）。被压到"看不见"的那部分信息，是<strong>零空间</strong>。</p>
+<p>正式定义（配合打比方理解）：</p>
+<ul>
+<li><strong>列空间</strong>：A 的所有列能拼出的所有位置 = <strong>变形后所有可能结果的集合</strong>。<code>Ax = b</code> 有解 ⟺ b 在列空间里。</li>
+<li><strong>秩（rank）</strong> = 列空间的"大小"（几维） = 变形后还剩几维。压成线 → 秩 1；完整平面 → 秩 2；压成点 → 秩 0。</li>
+<li><strong>零空间</strong>：被 A 压到原点的所有向量。只有零向量 ⟺ 没压东西 ⟺ 信息无损。</li>
+</ul>
+<p><strong>维度定理</strong>（记住结论即可）：<code>秩 + 零空间维度 = 列数</code>。</p>
+<h3 id="182">1.8.2 和机器狗的关系（本周最重要的连线）</h3>
+<p>配准的最小二乘问题（第 1.14 节 SVD 会用上）解不稳定的根源：</p>
+<ul>
+<li>环境<strong>特征丰富</strong>（有墙、有树、有角）：信息足，秩满，位姿解稳。</li>
+<li>环境<strong>退化</strong>（长走廊、大平地、玻璃墙）：某个方向没有特征，那个方向的"秩缺了一块"（信息不够），位姿就往那个方向漂。</li>
+</ul>
+<blockquote>
+<p>一句话总结：<strong>秩 = 变形后还剩几维；零空间 = 被压没的信息；走廊漂移 = 某个方向的信息秩不够了。</strong></p>
+</blockquote>
+<h3 id="18">1.8 自测</h3>
+<ol>
+<li>什么是列空间？b 在列空间里意味着方程怎样？</li>
+<li>什么是零空间？非零的零空间意味着什么？</li>
+<li>用"信息够不够"解释长走廊定位漂移。</li>
+</ol>
+<hr />
+<h2 id="19-3b1b-11">1.9 点积：影子的长度（相当于 3B1B 第 11 集）</h2>
+<h3 id="191">1.9.1 先打比方</h3>
+<p>太阳在正上方，杆子在地上有<strong>影子</strong>。点积 = 一个向量"投在"另一个向量方向上的<strong>影子长度</strong>（× 另一个向量的长度）。</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>v·w = |v| × |w| × cosθ     （θ 是两个向量的夹角）
+
+例：v = (1,0)，w = (1,1)。夹角 45°，|v|=1, |w|=√2, cos45°≈0.707
+    v·w = 1 × √2 × 0.707 ≈ 1
+</code></pre></div>
+
+<p><strong>坐标计算法</strong>（更常用，对应分量相乘再相加）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>v·w = x₁x₂ + y₁y₂ + z₁z₂
+(1,0)·(1,1) = 1×1 + 0×1 = 1     ✓ 和几何算法一致
+</code></pre></div>
+
+<p>两个关键结论：</p>
+<ul>
+<li><code>v·w = 0</code> ⟺ 两向量<strong>垂直</strong>（影子为 0）。</li>
+<li><code>v·v = |v|²</code>（自己点自己 = 长度平方）。</li>
+</ul>
+<h3 id="192">1.9.2 和机器狗的关系（本周最实用的一条）</h3>
+<p><strong>点到平面的距离</strong>。给一面墙：墙上一点 p₀，墙的法线（垂直于墙面的方向）n。任意一点 p 到墙的距离：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>距离 = | (p − p₀) · n |
+</code></pre></div>
+
+<p><strong>激光配准（ICP/NDT）的核心残差就是它</strong>：每个激光点，找地图里最近的面，算点到面的距离，距离越小 = 位姿越准。FAST-LIO2 迭代更新时，残差计算里全是点积。<strong>看懂这一条，第 7 周配准部分就轻松一半。</strong></p>
+<blockquote>
+<p>一句话总结：<strong>点积 = 一个向量在另一个方向上的影子长度；垂直时点积为 0；点到面的距离就是点积。</strong></p>
+</blockquote>
+<h3 id="19">1.9 自测</h3>
+<ol>
+<li>(1,0)·(0,1) = ? 它俩是什么关系？</li>
+<li>点到平面的距离公式是什么？n 是什么？</li>
+<li>配准（对齐点云）和点到面距离什么关系？</li>
+</ol>
+<hr />
+<h2 id="110-3b1b-12">1.10 叉积：找出"垂直的方向"（相当于 3B1B 第 12 集）</h2>
+<h3 id="1101">1.10.1 先打比方</h3>
+<p>两个向量确定一个平面（比如桌面上两条交叉的线）。<strong>叉积 = 垂直于这个平面的方向</strong>，用右手定则判断朝上还是朝下：右手从第一个向量弯向第二个向量，拇指指的方向就是叉积方向。</p>
+<ul>
+<li><strong>大小</strong>：<code>|v×w| = |v| × |w| × sinθ</code> = 两个向量张成的平行四边形<strong>面积</strong>。</li>
+<li>两个向量平行时，叉积 = 0（面积 0）。</li>
+</ul>
+<p>坐标公式（要会查，不用背）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>v × w = ( v₂w₃ − v₃w₂,   v₃w₁ − v₁w₃,   v₁w₂ − v₂w₁ )
+</code></pre></div>
+
+<h3 id="1102">1.10.2 和机器狗的关系</h3>
+<ol>
+<li><strong>求墙面法向量 n</strong>：墙上两个不共线的向量做叉积，就是垂直于墙的方向——这是配准残差里"面"的来历。</li>
+<li><strong>旋转轴</strong>：两个向量叉积的方向 = 从第一个转到第二个的旋转轴。</li>
+<li><strong>刚体旋转</strong>：<code>v = ω × r</code>——身体上一点的速度 = 角速度 ω 叉乘位置 r。机器狗旋转导致点云畸变，补偿用的就是这个关系。</li>
+</ol>
+<blockquote>
+<p>一句话总结：<strong>叉积 = 垂直于两个向量的新方向；大小 = 平行四边形面积；平行时叉积为 0。</strong></p>
+</blockquote>
+<h3 id="110">1.10 自测</h3>
+<ol>
+<li>怎么用叉积求一面墙的法向量？</li>
+<li>叉积的大小代表什么？</li>
+<li>v = ω × r 在机器狗上表示什么？</li>
+</ol>
+<hr />
+<h2 id="111-3b1b-13">1.11 基变换：换一把尺子（相当于 3B1B 第 13 集）</h2>
+<h3 id="1111">1.11.1 先打比方</h3>
+<p>同一根棍子：用米尺量 = 2 米，用英尺量 ≈ 6.6 英尺。<strong>长度没变，尺子换了，读数变了。</strong></p>
+<p>向量也一样：<strong>同一个点，在不同坐标系（尺子）下坐标不同。</strong> 从一套坐标换成另一套坐标，就是<strong>基变换</strong>。</p>
+<p>数学上：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>v_新坐标 = B⁻¹ × v_旧坐标     （B 的每一列 = 新坐标系基向量在旧坐标系下的坐标）
+v_旧坐标 = B × v_新坐标
+</code></pre></div>
+
+<p>简单理解：<strong>乘以"换尺子矩阵" = 把读数换算成另一把尺子的读数。</strong></p>
+<h3 id="1112">1.11.2 和机器狗的关系（这就是"外参"的全部内容）</h3>
+<p>机器狗有雷达坐标系、机体坐标系、世界坐标系。<strong>每两套坐标之间都有一个"换尺子矩阵"，这就是外参和位姿。</strong></p>
+<ul>
+<li><code>extrinsic_T</code>（平移）= 两个坐标系原点差多远。</li>
+<li><code>extrinsic_R</code>（旋转）= 两个坐标系的轴差多少角度。</li>
+</ul>
+<p>前后两个雷达各有一个外参。<strong>外参写错 → 点云错位</strong>。你排查"点云错位"问题时，第一步就要怀疑外参。</p>
+<blockquote>
+<p>一句话总结：<strong>基变换 = 换把尺子量同一个东西；外参 = 两套坐标之间的换尺子矩阵。</strong></p>
+</blockquote>
+<h3 id="111_1">1.11 自测</h3>
+<ol>
+<li>同一个点，为什么雷达坐标和世界坐标不同？</li>
+<li>extrinsic_T 和 extrinsic_R 各是什么？</li>
+<li>外参写错会导致什么现象？</li>
+</ol>
+<hr />
+<h2 id="112-3b1b-14">1.12 特征值与特征向量：变形中不动的方向（相当于 3B1B 第 14 集）</h2>
+<h3 id="1121">1.12.1 先打比方</h3>
+<p>把一张世界地图横向拉长 2 倍：<strong>正东方向的线只被拉长、方向没变</strong>；斜着的线方向和长度都变了。</p>
+<ul>
+<li><strong>特征向量 = 变形后方向不变的那些方向</strong>（正东那条线）。</li>
+<li><strong>特征值 = 这个方向被拉长了多少倍</strong>（2 倍）。</li>
+</ul>
+<p>数学定义：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>A × v = λ × v
+</code></pre></div>
+
+<p>A 对 v 做变形，结果只是把 v 拉长了 λ 倍（方向没变）。v 是<strong>特征向量</strong>，λ 是<strong>特征值</strong>。</p>
+<p>例：<code>| 2 0; 0 3 |</code> 把平面横向拉 2 倍、纵向拉 3 倍。特征向量 (1,0)（横向）特征值 2；(0,1)（纵向）特征值 3。</p>
+<h3 id="1122">1.12.2 和机器狗的关系</h3>
+<ol>
+<li><strong>误差椭球</strong>：定位的不确定性是个"椭圆"，椭圆的长轴方向 = 特征向量，长轴长度 = 特征值。<strong>特征值最大的方向 = 最没把握的方向。</strong></li>
+<li><strong>退化检测</strong>：某个特征值接近 0 = 那个方向几乎没有信息 = 不能信那个方向的定位。机器狗进走廊时，沿走廊方向的定位不确定性会变大——这是正常现象，程序要能"知道"并降级处理。</li>
+</ol>
+<blockquote>
+<p>一句话总结：<strong>特征向量 = 变形后方向不变的线；特征值 = 那条线被拉长几倍；特征值 ≈ 0 的方向 = 信息缺失的方向。</strong></p>
+</blockquote>
+<h3 id="112_1">1.12 自测</h3>
+<ol>
+<li>用自己的话解释特征向量和特征值？</li>
+<li>误差椭球的长轴方向和特征值什么关系？</li>
+<li>"退化检测"在检查什么？</li>
+</ol>
+<hr />
+<h2 id="113-3b1b-15">1.13 抽象向量空间（了解即可，相当于 3B1B 第 15 集）</h2>
+<p>只要一套东西满足"能加、能缩放"，线性代数的一切工具就能用在它身上。函数、信号、多项式都能当"向量"用。</p>
+<ul>
+<li>例：一段声音信号可以分解成一堆正弦波（傅里叶）——正弦波就是"声音空间的基"。</li>
+<li>本周知道"向量不只是一列数字"就够了，不深究。</li>
+</ul>
+<blockquote>
+<p>一句话总结：<strong>向量 = 任何"能加、能缩放"的东西，不一定是箭头。</strong></p>
+</blockquote>
+<hr />
+<h2 id="114-svd-3b1b-16">1.14 SVD：把任何变形拆成"转—拉—转"（相当于 3B1B 第 16 集）</h2>
+<h3 id="1141">1.14.1 先打比方：任何复杂的变形都能拆成三步</h3>
+<p>不管多复杂的变形（挤压、剪切、倾斜……），都可以看成：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>变形 = 先转一个角度（Vᵀ）→ 再沿坐标轴拉长/缩短（Σ）→ 最后再转一个角度（U）
+</code></pre></div>
+
+<p>数学上写成：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>A = U × Σ × Vᵀ
+</code></pre></div>
+
+<ul>
+<li><strong>U、V</strong>：旋转矩阵（正交矩阵）。</li>
+<li><strong>Σ</strong>：对角矩阵，对角上的数 σ₁ ≥ σ₂ ≥ … ≥ 0 叫<strong>奇异值</strong>（就是"拉长了多少倍"的倍数）。</li>
+</ul>
+<p><strong>关键事实</strong>：</p>
+<ul>
+<li>奇异值有几个非零 = 秩是几（信息剩几维）。</li>
+<li>最小奇异值接近 0 = 某个方向被压扁 = 退化。</li>
+<li><strong>伪逆</strong>：不可逆/非方阵的矩阵也有"几乎逆"：<code>A⁺ = V × Σ⁺ × Uᵀ</code>（Σ⁺ 把非零奇异值取倒数）。用它求<strong>最小二乘解</strong>：找不到精确解时，找"误差最小的解"。</li>
+</ul>
+<h3 id="1142-kabsch">1.14.2 和机器狗的关系（本周最重要的应用：Kabsch 算法）</h3>
+<p><strong>已知两帧点云里的点一一对应（比如都是墙上的同一排钉子），求机器人转了多少、移了多少？</strong></p>
+<p>解法（Kabsch 算法，ICP 配准的核心）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>1. 两帧点都减去各自中心（去掉平移的影响）
+2. 算 H = P&#39; × Q&#39;ᵀ（“两帧有多像”的矩阵）
+3. 对 H 做 SVD：H = U × Σ × Vᵀ
+4. 旋转 = V × Uᵀ，平移 = Q的中心 − R × P的中心
+</code></pre></div>
+
+<p><strong>周六实验你要亲手写这个算法</strong>，要求误差 &lt; 1e-10。它就是你以后工作中"点云配准对齐两帧"的最基本工具。</p>
+<blockquote>
+<p>一句话总结：<strong>SVD = 把任何变形拆成"旋转—拉伸—旋转"；奇异值接近 0 = 退化；Kabsch 用 SVD 从两帧对应点反推出旋转和平移。</strong></p>
+</blockquote>
+<h3 id="114_1">1.14 自测</h3>
+<ol>
+<li>SVD 把矩阵拆成哪三部分？每部分是什么？</li>
+<li>最小奇异值接近 0 说明什么？</li>
+<li>Kabsch 算法的 4 步是什么？</li>
+</ol>
+<hr />
+<h3 id="1_1">第 1 章总自测（全部能答出 = 线性代数过关）</h3>
+<ol>
+<li>向量是什么？加法和数乘怎么算？（1.1）</li>
+<li>什么是基？为什么说坐标是配方？（1.2）</li>
+<li>矩阵 × 向量的几何含义？（1.3）</li>
+<li>矩阵乘法为什么不能交换顺序？（1.4）</li>
+<li>roll/pitch/yaw 是什么？旋转矩阵里为什么有 sin 和 cos？（1.5）</li>
+<li>行列式是什么？det=0 意味着什么？（1.6）</li>
+<li>Ax=b 怎么解？什么时候无解？（1.7）</li>
+<li>秩、零空间是什么？长走廊为什么漂移？（1.8）</li>
+<li>点积 = 什么？点到面的距离怎么写？（1.9）</li>
+<li>叉积是干什么的？（1.10）</li>
+<li>外参矩阵是什么？（1.11）</li>
+<li>特征向量/特征值是什么？退化检测查什么？（1.12）</li>
+<li>SVD 拆成哪三步？Kabsch 怎么求旋转？（1.14）</li>
+</ol>
+<hr />
+<h1 id="2-c">第 2 章 C++（从"能看懂"到"能读代码"）</h1>
+<blockquote>
+<p>你已能看懂简单 C++。这章帮你把 FAST-LIO2 代码里最常见的 C++ 语法全部看懂，不要求你会写——<strong>会读就行</strong>。</p>
+</blockquote>
+<h2 id="20">2.0 预备：程序 = 菜谱</h2>
+<p>程序就是给计算机的<strong>菜谱</strong>：一系列步骤，按顺序执行。C++ 程序的骨架：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;iostream&gt;              // 准备工具：输入输出</span>
+<span style="color: #B00040">int</span><span style="color: #BBB"> </span><span style="color: #00F">main</span>()<span style="color: #BBB"> </span>{<span style="color: #BBB">                     </span><span style="color: #3D7B7B; font-style: italic">// 菜谱从 main() 开始</span>
+<span style="color: #BBB">    </span>std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;你好&quot;</span><span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>std<span style="color: #666">::</span>endl;<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 步骤1：在屏幕上写字</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">return</span><span style="color: #BBB"> </span><span style="color: #666">0</span>;<span style="color: #BBB">                    </span><span style="color: #3D7B7B; font-style: italic">// 步骤2：结束，报告&quot;正常&quot;</span>
+}
+</code></pre></div>
+
+<ul>
+<li>每条语句以 <code>;</code> 结尾（就像句子以句号结尾）。</li>
+<li><code>main</code> 是入口——所有程序都从这里开始。</li>
+<li><code>std::cout &lt;&lt;</code> = "把东西输出到屏幕"；<code>std::endl</code> = 换行。</li>
+<li><code>//</code> 开头的是注释（写给人看的说明，程序会忽略）。</li>
+</ul>
+<h2 id="21-primer-2">2.1 变量：贴了标签的盒子（覆盖 Primer 第 2 章）</h2>
+<p><strong>变量 = 一个存数的盒子，盒子上有名字标签。</strong></p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #B00040">double</span><span style="color: #BBB"> </span>x<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #666">0.0</span>;<span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic">// 一个叫 x 的盒子，里面放 0.0（double = 带小数的数）</span>
+<span style="color: #B00040">int</span><span style="color: #BBB">    </span>n<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #666">3</span>;<span style="color: #BBB">        </span><span style="color: #3D7B7B; font-style: italic">// 一个叫 n 的盒子，放整数 3（int = 整数）</span>
+<span style="color: #B00040">bool</span><span style="color: #BBB">   </span>ok<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #008000">true</span>;<span style="color: #BBB">    </span><span style="color: #3D7B7B; font-style: italic">// true/false = 对/错</span>
+</code></pre></div>
+
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>能存什么</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>int</code></td>
+<td>整数</td>
+<td>点数、循环次数</td>
+</tr>
+<tr>
+<td><code>double</code></td>
+<td>带小数的数</td>
+<td>位置、速度、距离</td>
+</tr>
+<tr>
+<td><code>bool</code></td>
+<td>对/错</td>
+<td>是否初始化</td>
+</tr>
+<tr>
+<td><code>float</code></td>
+<td>带小数的数（精度低）</td>
+<td>点云坐标（省内存）</td>
+</tr>
+<tr>
+<td><code>string</code></td>
+<td>文字</td>
+<td>话题名、文件名</td>
+</tr>
+</tbody>
+</table>
+<p><strong>为什么机器人代码几乎全用 double</strong>：SLAM 里差 0.0000001 就可能让结果跑偏。double 比 float 精确得多。看到 float 要警惕精度损失。</p>
+<p><strong>const 标签</strong>：盒子上贴"只读，不许改"：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">const</span><span style="color: #BBB"> </span><span style="color: #B00040">double</span><span style="color: #BBB"> </span>g<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #666">9.81</span>;<span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic">// 重力加速度，永远不许改</span>
+</code></pre></div>
+
+<p><strong>规则：盒子一定要先放东西再使用</strong>（没放东西的盒子叫"未初始化"，里面是垃圾值）。Eigen 矩阵默认就是"没放东西的盒子"——所以到处要 <code>.setZero()</code>（第 3 章）。</p>
+<p><strong>两个变量可以"共用同一个盒子"</strong>（引用，第 2.5 节讲）。</p>
+<h2 id="22-primer-45">2.2 判断与循环：岔路口和绕圈（覆盖 Primer 第 4、5 章）</h2>
+<p><strong>if = 岔路口</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #B00040">double</span><span style="color: #BBB"> </span>dist<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #666">3.5</span>;
+<span style="color: #008000; font-weight: bold">if</span><span style="color: #BBB"> </span>(dist<span style="color: #BBB"> </span><span style="color: #666">&gt;</span><span style="color: #BBB"> </span><span style="color: #666">2.0</span>)<span style="color: #BBB"> </span>{<span style="color: #BBB">          </span><span style="color: #3D7B7B; font-style: italic">// 如果 dist 大于 2.0</span>
+<span style="color: #BBB">    </span>std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;太远了&quot;</span><span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>std<span style="color: #666">::</span>endl;
+}<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">else</span><span style="color: #BBB"> </span>{<span style="color: #BBB">                   </span><span style="color: #3D7B7B; font-style: italic">// 否则</span>
+<span style="color: #BBB">    </span>std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;可以&quot;</span><span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>std<span style="color: #666">::</span>endl;
+}
+</code></pre></div>
+
+<p><strong>注意</strong>：<code>==</code> 是"等于"，<code>=</code> 是"赋值"。<code>if (x = 1)</code> 是把 1 塞进 x（恒为真，Bug！），<code>if (x == 1)</code> 才是判断。</p>
+<p><strong>for = 绕圈</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">for</span><span style="color: #BBB"> </span>(<span style="color: #B00040">int</span><span style="color: #BBB"> </span>i<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #666">0</span>;<span style="color: #BBB"> </span>i<span style="color: #BBB"> </span><span style="color: #666">&lt;</span><span style="color: #BBB"> </span><span style="color: #666">5</span>;<span style="color: #BBB"> </span><span style="color: #666">++</span>i)<span style="color: #BBB"> </span>{<span style="color: #BBB">     </span><span style="color: #3D7B7B; font-style: italic">// 从 0 数到 4，共 5 次</span>
+<span style="color: #BBB">    </span>std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>i<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>std<span style="color: #666">::</span>endl;
+}
+</code></pre></div>
+
+<p>读法：<strong>初始 i=0 → 检查 i&lt;5 → 干活 → i 加 1 → 再检查…</strong> 直到 i=5 不满足条件停。</p>
+<p><strong>while = 只要条件成立就一直绕</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">while</span><span style="color: #BBB"> </span>(has_data())<span style="color: #BBB"> </span>{<span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic">// 只要有数据就一直处理</span>
+<span style="color: #BBB">    </span>process();
+}
+</code></pre></div>
+
+<p><strong>break / continue</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">for</span><span style="color: #BBB"> </span>(...)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">if</span><span style="color: #BBB"> </span>(太远)<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">continue</span>;<span style="color: #BBB">    </span><span style="color: #3D7B7B; font-style: italic">// 跳过这一圈，进入下一圈</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">if</span><span style="color: #BBB"> </span>(结束)<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">break</span>;<span style="color: #BBB">       </span><span style="color: #3D7B7B; font-style: italic">// 跳出整个循环</span>
+<span style="color: #BBB">    </span>...
+}
+</code></pre></div>
+
+<p><strong>经典读码技巧</strong>：看到 <code>if</code> 问"过滤掉了什么？"看到 <code>for</code> 问"在遍历谁？"——FAST-LIO2 预处理里大量 <code>if</code> 就是在问"这个点要不要"。</p>
+<h2 id="23-vector-primer-3">2.3 vector：会变长的货架（覆盖 Primer 第 3 章）</h2>
+<p><strong>vector = 一排放东西的货架，可以随时往后面加</strong>。点云就是一个 <code>vector</code>，每个格子放一个点。</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;vector&gt;</span>
+std<span style="color: #666">::</span>vector<span style="color: #666">&lt;</span><span style="color: #B00040">double</span><span style="color: #666">&gt;</span><span style="color: #BBB"> </span>v;<span style="color: #BBB">            </span><span style="color: #3D7B7B; font-style: italic">// 一个空的货架</span>
+v.push_back(<span style="color: #666">1.0</span>);<span style="color: #BBB">                 </span><span style="color: #3D7B7B; font-style: italic">// 往末尾放 1.0</span>
+v.push_back(<span style="color: #666">2.5</span>);<span style="color: #BBB">                 </span><span style="color: #3D7B7B; font-style: italic">// 再放 2.5</span>
+v.size();<span style="color: #BBB">                         </span><span style="color: #3D7B7B; font-style: italic">// 现在有几格（2）</span>
+v[<span style="color: #666">0</span>];<span style="color: #BBB">                             </span><span style="color: #3D7B7B; font-style: italic">// 第 0 格的内容（1.0）——注意从 0 开始数！</span>
+v.at(<span style="color: #666">0</span>);<span style="color: #BBB">                          </span><span style="color: #3D7B7B; font-style: italic">// 同上，但越界会报错（开发时好用）</span>
+v.clear();<span style="color: #BBB">                        </span><span style="color: #3D7B7B; font-style: italic">// 清空货架</span>
+</code></pre></div>
+
+<p><strong>坑</strong>：<code>v[99]</code> 越界不会报错（未定义行为），可能程序悄悄错。调试期用 <code>.at()</code>。</p>
+<p><strong>遍历 = 把货架从头到尾看一遍</strong>（两种写法）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic">// 写法1：用下标</span>
+<span style="color: #008000; font-weight: bold">for</span><span style="color: #BBB"> </span>(<span style="color: #B00040">int</span><span style="color: #BBB"> </span>i<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #666">0</span>;<span style="color: #BBB"> </span>i<span style="color: #BBB"> </span><span style="color: #666">&lt;</span><span style="color: #BBB"> </span>v.size();<span style="color: #BBB"> </span><span style="color: #666">++</span>i)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span>std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>v[i]<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>std<span style="color: #666">::</span>endl;
+}
+
+<span style="color: #3D7B7B; font-style: italic">// 写法2：范围 for（更常用）</span>
+<span style="color: #008000; font-weight: bold">for</span><span style="color: #BBB"> </span>(<span style="color: #008000; font-weight: bold">const</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">auto</span><span style="color: #666">&amp;</span><span style="color: #BBB"> </span>x<span style="color: #BBB"> </span><span style="color: #666">:</span><span style="color: #BBB"> </span>v)<span style="color: #BBB"> </span>{<span style="color: #BBB">         </span><span style="color: #3D7B7B; font-style: italic">// 逐个取出，叫 x</span>
+<span style="color: #BBB">    </span>std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>x<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>std<span style="color: #666">::</span>endl;
+}
+</code></pre></div>
+
+<p>读法：<code>for (const auto&amp; x : v)</code> = "对 v 里的每个元素 x（只读、不拷贝）做…"。</p>
+<p><strong>为什么写 <code>const auto&amp;</code></strong>：
+- <code>auto</code> = 让编译器自动猜类型（省得你写长类型名）。
+- <code>&amp;</code> = 引用（借用，不复制）。<strong>不复制 = 快</strong>（点云有几万个点，复制一次很慢）。
+- <code>const</code> = 只读（保证遍历时不乱改）。</p>
+<p>FAST-LIO2 里 <code>for (const auto&amp; p : pc)</code> 出现几十次——看到这个就知道：<strong>在遍历点云，只读每个点</strong>。</p>
+<h2 id="24-primer-6">2.4 函数：给一段步骤起个名字（覆盖 Primer 第 6 章）</h2>
+<p><strong>函数 = 给一段"菜谱步骤"起名字，以后叫名字就能用。</strong></p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic">// 定义：一个叫 distance 的函数，输入两个点，输出距离</span>
+<span style="color: #B00040">double</span><span style="color: #BBB"> </span><span style="color: #00F">distance</span>(<span style="color: #B00040">double</span><span style="color: #BBB"> </span>x1,<span style="color: #BBB"> </span><span style="color: #B00040">double</span><span style="color: #BBB"> </span>y1,<span style="color: #BBB"> </span><span style="color: #B00040">double</span><span style="color: #BBB"> </span>x2,<span style="color: #BBB"> </span><span style="color: #B00040">double</span><span style="color: #BBB"> </span>y2)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span><span style="color: #B00040">double</span><span style="color: #BBB"> </span>dx<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>x2<span style="color: #BBB"> </span><span style="color: #666">-</span><span style="color: #BBB"> </span>x1;
+<span style="color: #BBB">    </span><span style="color: #B00040">double</span><span style="color: #BBB"> </span>dy<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>y2<span style="color: #BBB"> </span><span style="color: #666">-</span><span style="color: #BBB"> </span>y1;
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">return</span><span style="color: #BBB"> </span>sqrt(dx<span style="color: #666">*</span>dx<span style="color: #BBB"> </span><span style="color: #666">+</span><span style="color: #BBB"> </span>dy<span style="color: #666">*</span>dy);<span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic">// return = 把结果交出去</span>
+}
+
+<span style="color: #3D7B7B; font-style: italic">// 使用</span>
+<span style="color: #B00040">double</span><span style="color: #BBB"> </span>d<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>distance(<span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">3</span>,<span style="color: #BBB"> </span><span style="color: #666">4</span>);<span style="color: #BBB">     </span><span style="color: #3D7B7B; font-style: italic">// 调用：输出 5</span>
+</code></pre></div>
+
+<p>结构：<code>返回类型 函数名(参数列表) { 函数体 }</code>。</p>
+<p><strong>参数传递三条规则</strong>（看代码时必须懂）：
+1. 小东西（int、double）：直接传值（复印一份）。
+2. 大东西（点云、矩阵）：用 <code>const 类型&amp;</code> 传——<strong>只借不复印</strong>（快、还保证不改）。
+3. 需要修改外面变量的：用 <code>类型&amp;</code>（借走并允许改）。</p>
+<p><strong>重载 = 同一个名字、不同参数</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #B00040">double</span><span style="color: #BBB"> </span><span style="color: #00F">area</span>(<span style="color: #B00040">double</span><span style="color: #BBB"> </span>r);<span style="color: #BBB">              </span><span style="color: #3D7B7B; font-style: italic">// 算圆面积</span>
+<span style="color: #B00040">double</span><span style="color: #BBB"> </span><span style="color: #00F">area</span>(<span style="color: #B00040">double</span><span style="color: #BBB"> </span>w,<span style="color: #BBB"> </span><span style="color: #B00040">double</span><span style="color: #BBB"> </span>h);<span style="color: #BBB">    </span><span style="color: #3D7B7B; font-style: italic">// 算矩形面积</span>
+<span style="color: #3D7B7B; font-style: italic">// 调用 area(1.0) 选第一个，area(1.0, 2.0) 选第二个</span>
+</code></pre></div>
+
+<h2 id="25-const">2.5 引用与 const：借东西，不复印</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #B00040">double</span><span style="color: #BBB"> </span>v<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #666">1.0</span>;
+<span style="color: #B00040">double</span><span style="color: #666">&amp;</span><span style="color: #BBB"> </span>ref<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>v;<span style="color: #BBB">        </span><span style="color: #3D7B7B; font-style: italic">// ref 是 v 的&quot;另一个名字&quot;——同一个盒子</span>
+ref<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #666">2.0</span>;<span style="color: #BBB">              </span><span style="color: #3D7B7B; font-style: italic">// 改 ref 就是改 v（v 现在也是 2.0）</span>
+</code></pre></div>
+
+<ul>
+<li><strong>引用 <code>&amp;</code></strong>：给同一个盒子起别名。改谁都一样。</li>
+<li><strong>指针 <code>*</code></strong>：盒子的"门牌号"（地址）。<code>double* p = &amp;v;</code> 存 v 的地址；<code>*p</code> 是"走到门牌号那，打开盒子"。</li>
+<li><strong><code>const&amp;</code></strong>：借来看，不许改，也不复制。</li>
+</ul>
+<p><strong>机器狗场景</strong>：点云有几万几十万个点。函数接收点云时如果"复印一份"，每帧都要复制，又慢又占内存。所以一律"借"——<code>const std::vector&lt;PointType&gt;&amp; cloud</code> 的意思：<strong>"借你的点云看看，不复制，也不改"</strong>。</p>
+<h2 id="26-lambda-primer-6-lambda">2.6 lambda：顺手写的小函数（覆盖 Primer 第 6 章 lambda）</h2>
+<p><strong>lambda = 不单独起名字、当场写出来的小函数</strong>。格式：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>[捕获]<span style="border: 1px solid #F00">（</span>参数<span style="border: 1px solid #F00">）</span>{<span style="color: #BBB"> </span>函数体<span style="color: #BBB"> </span>}
+
+<span style="color: #3D7B7B; font-style: italic">// 例：按强度从小到大排序（sort 需要一个&quot;谁小谁在前&quot;的规则）</span>
+std<span style="color: #666">::</span>sort(points.begin(),<span style="color: #BBB"> </span>points.end(),
+<span style="color: #BBB">          </span>[](<span style="color: #008000; font-weight: bold">const</span><span style="color: #BBB"> </span>PointType<span style="color: #666">&amp;</span><span style="color: #BBB"> </span>a,<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">const</span><span style="color: #BBB"> </span>PointType<span style="color: #666">&amp;</span><span style="color: #BBB"> </span>b)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">              </span><span style="color: #008000; font-weight: bold">return</span><span style="color: #BBB"> </span>a.intensity<span style="color: #BBB"> </span><span style="color: #666">&lt;</span><span style="color: #BBB"> </span>b.intensity;
+<span style="color: #BBB">          </span>});
+</code></pre></div>
+
+<ul>
+<li><code>[]</code> 里写"捕获"：lambda 想用外面定义的变量，<code>[=]</code> 按值拷贝，<code>[&amp;]</code> 用引用，<code>[threshold]</code> 只拷贝这一个。</li>
+</ul>
+<p><strong>机器狗场景</strong>：点云要按时间戳排序（去畸变前提）——<code>sort</code> 配 lambda 就是这个用途，你在 preprocess 里会亲眼看到。</p>
+<h3 id="2-c_1">第 2 章总自测（C++）</h3>
+<ol>
+<li>int 和 double 的区别？为什么机器人代码用 double？</li>
+<li><code>if (x = 1)</code> 和 <code>if (x == 1)</code> 哪个是 Bug？</li>
+<li>vector 怎么加元素、怎么遍历？<code>const auto&amp;</code> 是什么意思？</li>
+<li>函数为什么用 <code>const&amp;</code> 传大对象？</li>
+<li>lambda 是干什么的？写一个按 curvature 降序排序的 lambda。</li>
+<li>看到 <code>for (const auto&amp; p : pc)</code> 你应该想到什么？</li>
+</ol>
+<hr />
+<h1 id="3-eigen">第 3 章 Eigen：把数学变成代码</h1>
+<blockquote>
+<p>目标：把第 1 章的数学，用 C++ 写出来。FAST-LIO2 的所有数学都用 Eigen。</p>
+</blockquote>
+<h2 id="31-eigen">3.1 Eigen 是什么</h2>
+<p><strong>Eigen 是一个 C++ 数学库</strong>——别人帮你写好的"向量、矩阵、解方程"工具，你直接调用。它是<strong>纯头文件</strong>库（不用编译、不用链接），在 CMake 里一行配置就能用。</p>
+<h2 id="32-eigen-matrix-class">3.2 创建矩阵和向量（覆盖 Eigen Matrix class）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;Eigen/Dense&gt;</span>
+
+Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #BBB"> </span>A;<span style="color: #BBB">        </span><span style="color: #3D7B7B; font-style: italic">// 3×3 的矩阵（double 类型）</span>
+Eigen<span style="color: #666">::</span>Vector3d<span style="color: #BBB"> </span>v;<span style="color: #BBB">        </span><span style="color: #3D7B7B; font-style: italic">// 3 维向量（3×1 的矩阵）</span>
+
+<span style="color: #3D7B7B; font-style: italic">// 初始化：逗号初始化（一行一行填）</span>
+A<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">2</span>,<span style="color: #BBB"> </span><span style="color: #666">3</span>,
+<span style="color: #BBB">     </span><span style="color: #666">4</span>,<span style="color: #BBB"> </span><span style="color: #666">5</span>,<span style="color: #BBB"> </span><span style="color: #666">6</span>,
+<span style="color: #BBB">     </span><span style="color: #666">7</span>,<span style="color: #BBB"> </span><span style="color: #666">8</span>,<span style="color: #BBB"> </span><span style="color: #666">9</span>;
+
+<span style="color: #3D7B7B; font-style: italic">// 特殊矩阵</span>
+Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #BBB"> </span>Z<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #666">::</span>Zero();<span style="color: #BBB">       </span><span style="color: #3D7B7B; font-style: italic">// 全 0</span>
+Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #BBB"> </span>I<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #666">::</span>Identity();<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 单位矩阵（对角线 1）</span>
+Eigen<span style="color: #666">::</span>Vector3d<span style="color: #BBB"> </span><span style="color: #00F">b</span>(<span style="color: #666">1.0</span>,<span style="color: #BBB"> </span><span style="color: #666">2.0</span>,<span style="color: #BBB"> </span><span style="color: #666">3.0</span>);<span style="color: #BBB">                  </span><span style="color: #3D7B7B; font-style: italic">// 直接给值</span>
+
+<span style="color: #3D7B7B; font-style: italic">// 访问元素（用圆括号！）</span>
+A(<span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">0</span>);<span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic">// 第 0 行第 0 列 = 1</span>
+A(<span style="color: #666">2</span>,<span style="color: #BBB"> </span><span style="color: #666">1</span>);<span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic">// 第 2 行第 1 列 = 8</span>
+</code></pre></div>
+
+<p><strong>⚠️ 最大坑：Eigen 矩阵默认不放东西（垃圾值）！</strong> 要么 <code>&lt;&lt;</code> 填，要么 <code>::Zero()</code>。不初始化就用的程序，结果忽对忽错。</p>
+<h2 id="33">3.3 基本运算</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>Eigen<span style="color: #666">::</span>Vector3d<span style="color: #BBB"> </span>y<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>A<span style="color: #BBB"> </span><span style="color: #666">*</span><span style="color: #BBB"> </span>v;<span style="color: #BBB">            </span><span style="color: #3D7B7B; font-style: italic">// 矩阵 × 向量</span>
+Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #BBB"> </span>P<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>A<span style="color: #BBB"> </span><span style="color: #666">*</span><span style="color: #BBB"> </span>B;<span style="color: #BBB">            </span><span style="color: #3D7B7B; font-style: italic">// 矩阵乘法</span>
+A.transpose();<span style="color: #BBB">                        </span><span style="color: #3D7B7B; font-style: italic">// 转置（行列互换）</span>
+A.determinant();<span style="color: #BBB">                      </span><span style="color: #3D7B7B; font-style: italic">// 行列式</span>
+v.norm();<span style="color: #BBB">                             </span><span style="color: #3D7B7B; font-style: italic">// 向量的长度（模长）</span>
+v.dot(w);<span style="color: #BBB">                             </span><span style="color: #3D7B7B; font-style: italic">// 点积</span>
+v.cross(w);<span style="color: #BBB">                           </span><span style="color: #3D7B7B; font-style: italic">// 叉积</span>
+A.inverse();<span style="color: #BBB">                          </span><span style="color: #3D7B7B; font-style: italic">// 逆矩阵（验证用！）</span>
+</code></pre></div>
+
+<h2 id="34-ax-b">3.4 解方程 Ax = b（唯一正确姿势）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #BBB"> </span>A;
+A<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #666">2</span>,<span style="color: #BBB"> </span><span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">-1</span>,
+<span style="color: #BBB">    </span><span style="color: #666">-3</span>,<span style="color: #BBB"> </span><span style="color: #666">-1</span>,<span style="color: #BBB"> </span><span style="color: #666">2</span>,
+<span style="color: #BBB">    </span><span style="color: #666">-2</span>,<span style="color: #BBB"> </span><span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">2</span>;
+Eigen<span style="color: #666">::</span>Vector3d<span style="color: #BBB"> </span><span style="color: #00F">b</span>(<span style="color: #666">8</span>,<span style="color: #BBB"> </span><span style="color: #666">-11</span>,<span style="color: #BBB"> </span><span style="color: #666">-3</span>);
+
+Eigen<span style="color: #666">::</span>Vector3d<span style="color: #BBB"> </span>x<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>A.colPivHouseholderQr().solve(b);<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 用 QR 分解解方程</span>
+std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>(A<span style="color: #BBB"> </span><span style="color: #666">*</span><span style="color: #BBB"> </span>x<span style="color: #BBB"> </span><span style="color: #666">-</span><span style="color: #BBB"> </span>b).norm()<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>std<span style="color: #666">::</span>endl;<span style="color: #BBB">           </span><span style="color: #3D7B7B; font-style: italic">// 验证：应 ≈ 0</span>
+</code></pre></div>
+
+<p><strong>铁律</strong>：解方程<strong>不要</strong>用 <code>A.inverse()</code>（慢、不稳定）。用 <code>.solve(b)</code>。<code>inverse()</code> 只用于数学验证。</p>
+<h2 id="35-svd">3.5 SVD 和特征值</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic">// SVD：A = U × Σ × Vᵀ</span>
+Eigen<span style="color: #666">::</span>JacobiSVD<span style="color: #666">&lt;</span>Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #666">&gt;</span><span style="color: #BBB"> </span>svd(A,<span style="color: #BBB"> </span>Eigen<span style="color: #666">::</span>ComputeFullU<span style="color: #BBB"> </span><span style="color: #666">|</span><span style="color: #BBB"> </span>Eigen<span style="color: #666">::</span>ComputeFullV);
+svd.singularValues();<span style="color: #BBB">       </span><span style="color: #3D7B7B; font-style: italic">// 奇异值（降序）</span>
+svd.matrixU();<span style="color: #BBB">              </span><span style="color: #3D7B7B; font-style: italic">// U</span>
+svd.matrixV();<span style="color: #BBB">              </span><span style="color: #3D7B7B; font-style: italic">// V</span>
+
+<span style="color: #3D7B7B; font-style: italic">// 特征值（对称矩阵用）</span>
+Eigen<span style="color: #666">::</span>SelfAdjointEigenSolver<span style="color: #666">&lt;</span>Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #666">&gt;</span><span style="color: #BBB"> </span>es(A);
+es.eigenvalues();<span style="color: #BBB">           </span><span style="color: #3D7B7B; font-style: italic">// 特征值</span>
+es.eigenvectors();<span style="color: #BBB">          </span><span style="color: #3D7B7B; font-style: italic">// 特征向量</span>
+</code></pre></div>
+
+<h2 id="36-z-45">3.6 旋转（绕 z 轴转 45°）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;Eigen/Geometry&gt;</span>
+
+Eigen<span style="color: #666">::</span>AngleAxisd<span style="color: #BBB"> </span><span style="color: #00F">rot</span>(<span style="color: #666">45.0</span><span style="color: #BBB"> </span><span style="color: #666">*</span><span style="color: #BBB"> </span><span style="color: #666">3.14159265</span><span style="color: #BBB"> </span><span style="color: #666">/</span><span style="color: #BBB"> </span><span style="color: #666">180.0</span>,<span style="color: #BBB"> </span>Eigen<span style="color: #666">::</span>Vector3d(<span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">1</span>));
+Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #BBB"> </span>R<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>rot.toRotationMatrix();<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 转成 3×3 旋转矩阵</span>
+</code></pre></div>
+
+<h2 id="37">3.7 三个必须背的坑</h2>
+<ol>
+<li><strong>矩阵默认不初始化</strong>——用 <code>&lt;&lt;</code> 或 <code>::Zero()</code>。</li>
+<li><strong><code>auto</code> 陷阱</strong>：<code>auto B = A.transpose();</code> 得到的是"临时表达式"，可能出 bug。要写成 <code>Eigen::Matrix3d B = A.transpose();</code>。</li>
+<li><strong>解方程用 <code>.solve()</code>，不用 <code>.inverse()</code></strong>。</li>
+</ol>
+<h3 id="3-eigen_1">第 3 章自测（Eigen）</h3>
+<ol>
+<li>创建一个 3×3 零矩阵和单位矩阵。</li>
+<li><code>A(i,j)</code> 访问元素，注意什么？（圆括号）</li>
+<li>解 Ax=b 用什么方法？为什么不用 inverse()？</li>
+<li>绕 z 轴转 45° 的矩阵怎么构造？</li>
+<li>三个坑各说一个。</li>
+</ol>
+<hr />
+<h1 id="4-fast-lio2">第 4 章 FAST-LIO2：机器狗的"认路程序"</h1>
+<blockquote>
+<p>建议打开真实仓库 <code>https://github.com/hku-mars/FAST_LIO</code> 对照看。教材已把关键代码翻译成大白话。</p>
+</blockquote>
+<h2 id="41-readme">4.1 它是什么 + 为什么需要它（覆盖 README 任务）</h2>
+<p><strong>FAST-LIO2 = 一个开源程序，实时算出"机器狗现在在哪"，同时把周围拼成 3D 地图。</strong></p>
+<p>它融合两样东西（对应第 0.4 节）：</p>
+<table>
+<thead>
+<tr>
+<th>传感器</th>
+<th>特点</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>激光雷达</td>
+<td>准、但慢（10Hz）</td>
+<td>告诉"周围长什么样"</td>
+</tr>
+<tr>
+<td>IMU</td>
+<td>快（200Hz）、但会漂</td>
+<td>告诉"刚才怎么动的"</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>FAST</strong> = 快（算法高效，低功耗设备也跑得动）。</li>
+<li><strong>LIO</strong> = LiDAR-Inertial Odometry（激光 + 惯性里程计）。</li>
+</ul>
+<p><strong>目录结构（每项干什么，记住这张表）</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>FAST_LIO/
+├── launch/                 # 启动文件：一键启动整个程序 + 参数
+├── config/*.yaml           # 参数文件（雷达型号、外参、噪声…）—— 工作里常改这里
+├── include/
+│   ├── common_lib.h        # ★ 核心数据结构（4.2）
+│   ├── IMU_Processing.hpp  # IMU 处理（第 2 周精读）
+│   ├── preprocess.hpp      # 点云预处理声明（4.3）
+│   └── ikd-Tree/           # 地图存储（第 7 周精读）
+├── src/
+│   ├── LaserMapping.cpp    # ★ 主程序（4.4）
+│   └── preprocess.cpp      # 点云预处理实现（4.3）
+└── README.md               # 项目说明书
+</code></pre></div>
+
+<p><strong>config yaml 里你会看到的东西</strong>（都是你以后要调的）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">common</span>:
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">lidar_type</span>:<span style="color: #BBB"> </span>4<span style="color: #BBB">          </span><span style="color: #3D7B7B; font-style: italic"># 雷达型号编号（4 = MID360）</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">blind</span>:<span style="color: #BBB"> </span>0.2<span style="color: #BBB">             </span><span style="color: #3D7B7B; font-style: italic"># 盲区：雷达周围 0.2 米内的点全丢掉</span>
+<span style="color: #008000; font-weight: bold">mapping</span>:
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">down_sample_size</span>:<span style="color: #BBB"> </span>0.1<span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic"># 地图点稀疏度（体素尺寸）</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">extrinsic_T</span>:<span style="color: #BBB"> </span>[<span style="color: #19177C">0</span>,<span style="color: #BBB"> </span><span style="color: #19177C">0</span>,<span style="color: #BBB"> </span><span style="color: #19177C">0</span>]<span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic"># ★ 外参平移：雷达在机体哪里</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">extrinsic_R</span>:<span style="color: #BBB"> </span>[<span style="color: #19177C">1</span>,<span style="color: #19177C">0</span>,<span style="color: #19177C">0</span>,<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic"># ★ 外参旋转：雷达怎么安在机体上的</span>
+<span style="color: #BBB">                  </span><span style="color: #19177C">0</span>,<span style="color: #19177C">1</span>,<span style="color: #19177C">0</span>,
+<span style="color: #BBB">                  </span><span style="color: #19177C">0</span>,<span style="color: #19177C">0</span>,<span style="color: #19177C">1</span>]
+</code></pre></div>
+
+<h2 id="42-common_libh">4.2 common_lib.h：程序的"户口本"（覆盖通读任务）</h2>
+<p><strong>类型别名</strong>（看到 V3D、M3D 就知道是什么类型）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">using</span><span style="color: #BBB"> </span>V3D<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>Eigen<span style="color: #666">::</span>Matrix<span style="color: #666">&lt;</span><span style="color: #B00040">double</span>,<span style="color: #BBB"> </span><span style="color: #666">3</span>,<span style="color: #BBB"> </span><span style="color: #666">1&gt;</span>;<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 三维向量（double）</span>
+<span style="color: #008000; font-weight: bold">using</span><span style="color: #BBB"> </span>M3D<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>Eigen<span style="color: #666">::</span>Matrix<span style="color: #666">&lt;</span><span style="color: #B00040">double</span>,<span style="color: #BBB"> </span><span style="color: #666">3</span>,<span style="color: #BBB"> </span><span style="color: #666">3&gt;</span>;<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 3×3 矩阵</span>
+<span style="color: #008000; font-weight: bold">using</span><span style="color: #BBB"> </span>V12D<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>Eigen<span style="color: #666">::</span>Matrix<span style="color: #666">&lt;</span><span style="color: #B00040">double</span>,<span style="color: #BBB"> </span><span style="color: #666">12</span>,<span style="color: #BBB"> </span><span style="color: #666">1&gt;</span>;<span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">// 12 维向量</span>
+</code></pre></div>
+
+<p><strong>点结构</strong>（点云里一个点的长相）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">struct</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">PointXYZINormal</span><span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span>PCL_ADD_POINT4D;<span style="color: #BBB">        </span><span style="color: #3D7B7B; font-style: italic">// x, y, z 三个坐标（外加一个没用的填充）</span>
+<span style="color: #BBB">    </span><span style="color: #B00040">float</span><span style="color: #BBB"> </span>intensity;<span style="color: #BBB">        </span><span style="color: #3D7B7B; font-style: italic">// 反射强度（激光打在不同材质上强度不同）</span>
+<span style="color: #BBB">    </span><span style="color: #B00040">int</span><span style="color: #BBB">   </span>normal[<span style="color: #666">4</span>];<span style="color: #BBB">        </span><span style="color: #3D7B7B; font-style: italic">// 法向量（墙面朝哪，配准用）</span>
+<span style="color: #BBB">    </span><span style="color: #B00040">float</span><span style="color: #BBB"> </span>curvature;<span style="color: #BBB">        </span><span style="color: #3D7B7B; font-style: italic">// 曲率（表面弯曲程度）</span>
+};
+</code></pre></div>
+
+<p><strong>状态结构</strong>（系统"猜"的对象——它包含机器狗的状态）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">struct</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">States</span><span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span>Eigen<span style="color: #666">::</span>Matrix<span style="color: #666">&lt;</span><span style="color: #B00040">double</span>,<span style="color: #BBB"> </span><span style="color: #666">12</span>,<span style="color: #BBB"> </span><span style="color: #666">1&gt;</span><span style="color: #BBB"> </span>rot;<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 姿态（朝向），12 维存储</span>
+<span style="color: #BBB">    </span>Eigen<span style="color: #666">::</span>Matrix<span style="color: #666">&lt;</span><span style="color: #B00040">double</span>,<span style="color: #BBB"> </span><span style="color: #666">3</span>,<span style="color: #BBB"> </span><span style="color: #666">1&gt;</span><span style="color: #BBB">  </span>pos;<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 位置（世界坐标）</span>
+<span style="color: #BBB">    </span>Eigen<span style="color: #666">::</span>Matrix<span style="color: #666">&lt;</span><span style="color: #B00040">double</span>,<span style="color: #BBB"> </span><span style="color: #666">3</span>,<span style="color: #BBB"> </span><span style="color: #666">1&gt;</span><span style="color: #BBB">  </span>vel;<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 速度</span>
+<span style="color: #BBB">    </span>Eigen<span style="color: #666">::</span>Matrix<span style="color: #666">&lt;</span><span style="color: #B00040">double</span>,<span style="color: #BBB"> </span><span style="color: #666">3</span>,<span style="color: #BBB"> </span><span style="color: #666">1&gt;</span><span style="color: #BBB">  </span>b_gyr;<span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">// 陀螺仪零偏（IMU 的系统误差）</span>
+<span style="color: #BBB">    </span>Eigen<span style="color: #666">::</span>Matrix<span style="color: #666">&lt;</span><span style="color: #B00040">double</span>,<span style="color: #BBB"> </span><span style="color: #666">3</span>,<span style="color: #BBB"> </span><span style="color: #666">1&gt;</span><span style="color: #BBB">  </span>b_acc;<span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">// 加速度计零偏</span>
+};
+</code></pre></div>
+
+<p><strong>rot 为什么是 12 维不是 9 维</strong>：旋转矩阵 3×3 = 9 个数，但这 9 个数互相有约束（不能随便填）。FAST-LIO2 用 12 维的"宽松"存法方便数学计算，具体细节第 6 周学。<strong>本周只需知道：状态 = 姿态 + 位置 + 速度 + 两个零偏。</strong></p>
+<p><strong>读法</strong>：第一遍扫结构名；第二遍细读上面三个结构；不认识的名字抄下来问 AI。</p>
+<h2 id="43-preprocess">4.3 点云预处理：挑点（覆盖 preprocess 任务）</h2>
+<p><strong>职责</strong>：把雷达原始点云变成"干净、按时间排好"的点云。<strong>它不改点的坐标，只做筛选和整理。</strong></p>
+<p>流程（大白话版）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>原始点云（一帧帧到来，每帧只有几十个点）
+   │
+   ▼
+① 按雷达型号分流（不同雷达处理方式不同）
+   │
+   ▼
+② 攒点：把一小段时间的点攒成一&quot;帧&quot;（Livox 每秒 20 万个点，攒 0.1 秒）
+   │
+   ▼
+③ 按时间戳排序（谁先谁后排好——去畸变的前提）
+   │
+   ▼
+④ 逐点筛选：
+   距离太近（盲区）→ 丢        距离太远 → 丢      强度异常 → 丢
+   │
+   ▼
+⑤ 输出干净点云 + 每个点的时间
+</code></pre></div>
+
+<p>代码里你会看到的样子（现在能读懂了）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic">// 攒点够了才处理</span>
+<span style="color: #008000; font-weight: bold">if</span><span style="color: #BBB"> </span>(lidar_buffer.size()<span style="color: #BBB"> </span><span style="color: #666">&lt;</span><span style="color: #BBB"> </span>某阈值)<span style="color: #BBB"> </span>{<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">return</span>;<span style="color: #BBB"> </span>}
+
+<span style="color: #3D7B7B; font-style: italic">// 按时间戳排序（lambda！第 2.6 节学的）</span>
+std<span style="color: #666">::</span>sort(lidar_buffer.begin(),<span style="color: #BBB"> </span>lidar_buffer.end(),
+<span style="color: #BBB">          </span>[](<span style="color: #008000; font-weight: bold">const</span><span style="color: #BBB"> </span>PointType<span style="color: #666">&amp;</span><span style="color: #BBB"> </span>a,<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">const</span><span style="color: #BBB"> </span>PointType<span style="color: #666">&amp;</span><span style="color: #BBB"> </span>b)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">              </span><span style="color: #008000; font-weight: bold">return</span><span style="color: #BBB"> </span>a.timestamp<span style="color: #BBB"> </span><span style="color: #666">&lt;</span><span style="color: #BBB"> </span>b.timestamp;
+<span style="color: #BBB">          </span>});
+
+<span style="color: #3D7B7B; font-style: italic">// 逐点筛选（if = 问&quot;这个点要不要&quot;）</span>
+<span style="color: #008000; font-weight: bold">for</span><span style="color: #BBB"> </span>(<span style="color: #B00040">int</span><span style="color: #BBB"> </span>i<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #666">0</span>;<span style="color: #BBB"> </span>i<span style="color: #BBB"> </span><span style="color: #666">&lt;</span><span style="color: #BBB"> </span>(<span style="color: #B00040">int</span>)lidar_buffer.size();<span style="color: #BBB"> </span>i<span style="color: #666">++</span>)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span>PointType<span style="color: #666">&amp;</span><span style="color: #BBB"> </span>p<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>lidar_buffer[i];
+<span style="color: #BBB">    </span><span style="color: #B00040">double</span><span style="color: #BBB"> </span>dist<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>sqrt(p.x<span style="color: #666">*</span>p.x<span style="color: #BBB"> </span><span style="color: #666">+</span><span style="color: #BBB"> </span>p.y<span style="color: #666">*</span>p.y<span style="color: #BBB"> </span><span style="color: #666">+</span><span style="color: #BBB"> </span>p.z<span style="color: #666">*</span>p.z);
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">if</span><span style="color: #BBB"> </span>(dist<span style="color: #BBB"> </span><span style="color: #666">&lt;</span><span style="color: #BBB"> </span>blind)<span style="color: #BBB"> </span>{<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">continue</span>;<span style="color: #BBB"> </span>}<span style="color: #BBB">    </span><span style="color: #3D7B7B; font-style: italic">// 太近，丢</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">if</span><span style="color: #BBB"> </span>(dist<span style="color: #BBB"> </span><span style="color: #666">&gt;</span><span style="color: #BBB"> </span>max_range)<span style="color: #BBB"> </span>{<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">continue</span>;<span style="color: #BBB"> </span>}<span style="color: #3D7B7B; font-style: italic">// 太远，丢</span>
+<span style="color: #BBB">    </span>...
+}
+</code></pre></div>
+
+<blockquote>
+<p>一句话：<strong>预处理 = 挑点：把杂点丢掉、把顺序排好。</strong></p>
+</blockquote>
+<h2 id="44-lasermappingcpp">4.4 LaserMapping.cpp：整个程序的心脏（覆盖主循环任务）</h2>
+<p><strong>main 函数</strong>（程序启动时做的事）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #B00040">int</span><span style="color: #BBB"> </span><span style="color: #00F">main</span>(<span style="color: #B00040">int</span><span style="color: #BBB"> </span>argc,<span style="color: #BBB"> </span><span style="color: #B00040">char</span><span style="color: #666">**</span><span style="color: #BBB"> </span>argv)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span>readParameters(...);<span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic">// ① 读参数文件（yaml）</span>
+<span style="color: #BBB">    </span><span style="color: #3D7B7B; font-style: italic">// ② 初始化地图（ikd-Tree：存地图点的大仓库）</span>
+<span style="color: #BBB">    </span><span style="color: #3D7B7B; font-style: italic">// ③ 初始化状态估计器（ESKF：负责&quot;猜位置&quot;）</span>
+<span style="color: #BBB">    </span><span style="color: #3D7B7B; font-style: italic">// ④ 订阅两个话题：点云、IMU（传感器数据来了会叫醒回调函数）</span>
+<span style="color: #BBB">    </span>ros<span style="color: #666">::</span>spin();<span style="color: #BBB">              </span><span style="color: #3D7B7B; font-style: italic">// ⑤ 挂起等待，数据到了就干活</span>
+}
+</code></pre></div>
+
+<p><strong>主回调（收到一帧点云时执行）——本周核心交付物，5 步</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>收到点云
+   │
+   ▼
+① IMU 状态传播（预测）
+   用最近的 IMU 数据算：&quot;根据刚才的晃动，现在我大概在哪&quot;
+   —— 会越漂越不准，所以下一步要修正
+   │
+   ▼
+② 点云预处理
+   4.3 节：挑点、排序、带时间戳
+   │
+   ▼
+③ 配准 + 状态更新（iEKF 迭代更新）★ 数学核心
+   每个激光点找地图里的最近面 → 算点到面的距离（点积！第 1.9 节）
+   → 距离不为 0 说明我猜的位置不对 → 算出修正量 → 修正位姿
+   → 反复迭代几次直到对不上为止
+   │
+   ▼
+④ 更新地图
+   把新点塞进地图仓库（ikd-Tree），删掉太旧太远的
+   │
+   ▼
+⑤ 发布结果
+   发布位姿、配准后的点云、地图 → 下游的导航程序（第 5 周学）使用
+</code></pre></div>
+
+<p><strong>IMU 回调</strong>：IMU 数据（角速度 + 加速度 + 时间戳）来了就存进队列，供第①步用。<strong>IMU 快（200Hz）、激光慢（10Hz），两次激光之间靠 IMU 撑着。</strong></p>
+<h2 id="45">4.5 完整数据流总图（本周核心交付物）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>   IMU（200Hz：角速度+加速度）           激光点云（10Hz：x,y,z,强度,时间）
+            │                                    │
+            ▼                                    ▼
+   ┌─────────────────┐  预测    ┌───────────────────────────┐
+   │ 攒 IMU 数据     │────────→│ ① IMU 状态传播（大概在哪）  │
+   └─────────────────┘          └────────────┬──────────────┘
+                                             ▼
+                            ┌──────────────────────────────┐
+                            │ ② 点云预处理（挑点/排序）      │
+                            │ ③ iEKF 更新（配准）：          │
+                            │    点到面距离 = 点积           │
+                            │    求修正量 = 解方程/SVD       │
+                            └──────┬───────────────┬───────┘
+                                   ▼               ▼
+                          ┌────────────────┐  ┌──────────────────┐
+                          │ ④ 地图仓库     │  │ ⑤ 发布           │
+                          │ ikd-Tree 增删  │  │ 位姿 / 点云 / 地图 │
+                          └────────────────┘  └──────────────────┘
+</code></pre></div>
+
+<p><strong>线性代数在哪里（至少标 3 处）</strong>：
+1. ① IMU 预测：旋转矩阵 × 向量（矩阵乘法）。
+2. ③ 配准残差：点到面距离 = 点积。
+3. ③ 求修正量：解方程/最小二乘（1.7、1.14 节）。</p>
+<h3 id="4-fast-lio2_1">第 4 章自测（FAST-LIO2）</h3>
+<ol>
+<li>FAST-LIO2 是干什么的？LIO 是什么意思？</li>
+<li>为什么需要 IMU 和激光两样东西？</li>
+<li>States 里存了什么？（4 个量）</li>
+<li>预处理做哪几件事？</li>
+<li>主回调 5 步是什么？哪步最核心？</li>
+<li>数据流图里至少 3 处线性代数在哪？</li>
+</ol>
+<hr />
+<h1 id="5-45h">第 5 章 周六实验手册（4~5h）</h1>
+<blockquote>
+<p>全程 git 提交：每完成一步提交一次。<strong>做不出来没关系，卡住就问 AI。</strong></p>
+</blockquote>
+<h2 id="51-40">5.1 搭建工程（40 分钟）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>mkdir<span style="color: #BBB"> </span>eigen_practice<span style="color: #BBB"> </span><span style="color: #666">&amp;&amp;</span><span style="color: #BBB"> </span><span style="color: #008000">cd</span><span style="color: #BBB"> </span>eigen_practice
+git<span style="color: #BBB"> </span>init
+mkdir<span style="color: #BBB"> </span>src<span style="color: #BBB"> </span>build
+</code></pre></div>
+
+<p><strong>CMakeLists.txt</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000">cmake_minimum_required</span>(<span style="color: #BA2121">VERSION</span><span style="color: #BBB"> </span><span style="color: #BA2121">3.16</span>)
+<span style="color: #008000">project</span>(<span style="color: #BA2121">eigen_practice</span>)
+
+<span style="color: #008000">set</span>(<span style="color: #BA2121">CMAKE_CXX_STANDARD</span><span style="color: #BBB"> </span><span style="color: #BA2121">17</span>)
+<span style="color: #008000">set</span>(<span style="color: #BA2121">CMAKE_CXX_STANDARD_REQUIRED</span><span style="color: #BBB"> </span><span style="color: #BA2121">ON</span>)
+
+<span style="color: #008000">find_package</span>(<span style="color: #BA2121">Eigen3</span><span style="color: #BBB"> </span><span style="color: #BA2121">REQUIRED</span>)
+
+<span style="color: #008000">add_executable</span>(<span style="color: #BA2121">matrix_demo</span><span style="color: #BBB"> </span><span style="color: #BA2121">src/matrix_demo.cpp</span>)
+<span style="color: #008000">target_link_libraries</span>(<span style="color: #BA2121">matrix_demo</span><span style="color: #BBB"> </span><span style="color: #BA2121">Eigen3::Eigen</span>)
+</code></pre></div>
+
+<p><strong>src/matrix_demo.cpp</strong>（测试 Eigen 能不能用）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;Eigen/Dense&gt;</span>
+<span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;iostream&gt;</span>
+
+<span style="color: #B00040">int</span><span style="color: #BBB"> </span><span style="color: #00F">main</span>()<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span>Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #BBB"> </span>A;
+<span style="color: #BBB">    </span>A<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">2</span>,<span style="color: #BBB"> </span><span style="color: #666">3</span>,
+<span style="color: #BBB">         </span><span style="color: #666">4</span>,<span style="color: #BBB"> </span><span style="color: #666">5</span>,<span style="color: #BBB"> </span><span style="color: #666">6</span>,
+<span style="color: #BBB">         </span><span style="color: #666">7</span>,<span style="color: #BBB"> </span><span style="color: #666">8</span>,<span style="color: #BBB"> </span><span style="color: #666">10</span>;<span style="color: #BBB">                          </span><span style="color: #3D7B7B; font-style: italic">// 填一个 3×3 矩阵</span>
+<span style="color: #BBB">    </span>std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;A =</span><span style="color: #AA5D1F; font-weight: bold">\n</span><span style="color: #BA2121">&quot;</span><span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>A<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;</span><span style="color: #AA5D1F; font-weight: bold">\n</span><span style="color: #BA2121">&quot;</span>;<span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic">// 打印</span>
+<span style="color: #BBB">    </span>std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;行列式 = &quot;</span><span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>A.determinant()<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;</span><span style="color: #AA5D1F; font-weight: bold">\n</span><span style="color: #BA2121">&quot;</span>;
+<span style="color: #BBB">    </span>Eigen<span style="color: #666">::</span>Vector3d<span style="color: #BBB"> </span>b(<span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">2</span>,<span style="color: #BBB"> </span><span style="color: #666">3</span>);
+<span style="color: #BBB">    </span>Eigen<span style="color: #666">::</span>Vector3d<span style="color: #BBB"> </span>x<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>A.colPivHouseholderQr().solve(b);<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 解 Ax=b</span>
+<span style="color: #BBB">    </span>std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;解 x = &quot;</span><span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>x.transpose()<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;</span><span style="color: #AA5D1F; font-weight: bold">\n</span><span style="color: #BA2121">&quot;</span>;
+<span style="color: #BBB">    </span>std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;验证 Ax-b = &quot;</span><span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>(A<span style="color: #BBB"> </span><span style="color: #666">*</span><span style="color: #BBB"> </span>x<span style="color: #BBB"> </span><span style="color: #666">-</span><span style="color: #BBB"> </span>b).norm()<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;</span><span style="color: #AA5D1F; font-weight: bold">\n</span><span style="color: #BA2121">&quot;</span>;<span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic">// 应 ≈ 0</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">return</span><span style="color: #BBB"> </span><span style="color: #666">0</span>;
+}
+</code></pre></div>
+
+<p>编译运行：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>cmake<span style="color: #BBB"> </span>-S<span style="color: #BBB"> </span>.<span style="color: #BBB"> </span>-B<span style="color: #BBB"> </span>build
+cmake<span style="color: #BBB"> </span>--build<span style="color: #BBB"> </span>build
+./build/matrix_demo
+</code></pre></div>
+
+<p>✅ 通过标准：<code>Ax-b</code> 的结果 &lt; 1e-12。<strong>提交 git。</strong></p>
+<h2 id="52-130">5.2 任务 1：矩阵乘法验证（30 分钟）</h2>
+<ul>
+<li>构造两个 3×3 矩阵 A、B，算 <code>A*B</code> 和 <code>B*A</code>，<strong>确认不一样</strong>。</li>
+<li>用第 1.4 节的计算规则手算一个元素，和代码输出核对。</li>
+</ul>
+<h2 id="53-2-axb40">5.3 任务 2：解方程 Ax=b（40 分钟）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #BBB"> </span>A;
+A<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB">  </span><span style="color: #666">2</span>,<span style="color: #BBB">  </span><span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">-1</span>,
+<span style="color: #BBB">     </span><span style="color: #666">-3</span>,<span style="color: #BBB"> </span><span style="color: #666">-1</span>,<span style="color: #BBB">  </span><span style="color: #666">2</span>,
+<span style="color: #BBB">     </span><span style="color: #666">-2</span>,<span style="color: #BBB">  </span><span style="color: #666">1</span>,<span style="color: #BBB">  </span><span style="color: #666">2</span>;
+Eigen<span style="color: #666">::</span>Vector3d<span style="color: #BBB"> </span><span style="color: #00F">b</span>(<span style="color: #666">8</span>,<span style="color: #BBB"> </span><span style="color: #666">-11</span>,<span style="color: #BBB"> </span><span style="color: #666">-3</span>);
+
+Eigen<span style="color: #666">::</span>Vector3d<span style="color: #BBB"> </span>x_lu<span style="color: #BBB">  </span><span style="color: #666">=</span><span style="color: #BBB"> </span>A.partialPivLu().solve(b);
+Eigen<span style="color: #666">::</span>Vector3d<span style="color: #BBB"> </span>x_qr<span style="color: #BBB">  </span><span style="color: #666">=</span><span style="color: #BBB"> </span>A.colPivHouseholderQr().solve(b);
+Eigen<span style="color: #666">::</span>Vector3d<span style="color: #BBB"> </span>x_svd<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>A.jacobiSvd(Eigen<span style="color: #666">::</span>ComputeThinU<span style="color: #BBB"> </span><span style="color: #666">|</span><span style="color: #BBB"> </span>Eigen<span style="color: #666">::</span>ComputeThinV).solve(b);
+
+std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>(x_lu<span style="color: #BBB"> </span><span style="color: #666">-</span><span style="color: #BBB"> </span>x_qr).norm()<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;</span><span style="color: #AA5D1F; font-weight: bold">\n</span><span style="color: #BA2121">&quot;</span>;<span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic">// 三种方法应一致（≈0）</span>
+std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>(A<span style="color: #BBB"> </span><span style="color: #666">*</span><span style="color: #BBB"> </span>x_lu<span style="color: #BBB"> </span><span style="color: #666">-</span><span style="color: #BBB"> </span>b).norm()<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;</span><span style="color: #AA5D1F; font-weight: bold">\n</span><span style="color: #BA2121">&quot;</span>;<span style="color: #BBB">     </span><span style="color: #3D7B7B; font-style: italic">// 验证解（≈0）</span>
+</code></pre></div>
+
+<ul>
+<li><strong>先手算</strong>（消元法，初中知识），答案 x = (3, 1, -1)，再和代码对比。</li>
+<li>思考：为什么解方程不用 inverse()？</li>
+</ul>
+<h2 id="54-3svd-svd-kabsch50">5.4 任务 3：SVD 验证 + 用 SVD 反推旋转（Kabsch）（50 分钟）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic">// Step A：SVD 验证（奇异值应为 2, 1, 0）</span>
+Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #BBB"> </span>M;
+M<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">0</span>,
+<span style="color: #BBB">     </span><span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">2</span>,<span style="color: #BBB"> </span><span style="color: #666">0</span>,
+<span style="color: #BBB">     </span><span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">0</span>;
+Eigen<span style="color: #666">::</span>JacobiSVD<span style="color: #666">&lt;</span>Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #666">&gt;</span><span style="color: #BBB"> </span>svd(M,<span style="color: #BBB"> </span>Eigen<span style="color: #666">::</span>ComputeFullU<span style="color: #BBB"> </span><span style="color: #666">|</span><span style="color: #BBB"> </span>Eigen<span style="color: #666">::</span>ComputeFullV);
+std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;奇异值: &quot;</span><span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>svd.singularValues().transpose()<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;</span><span style="color: #AA5D1F; font-weight: bold">\n</span><span style="color: #BA2121">&quot;</span>;
+
+<span style="color: #3D7B7B; font-style: italic">// Step B：Kabsch——给两组对应点，求旋转</span>
+Eigen<span style="color: #666">::</span>Matrix3Xd<span style="color: #BBB"> </span><span style="color: #00F">P</span>(<span style="color: #666">3</span>,<span style="color: #BBB"> </span><span style="color: #666">5</span>);
+P<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">2</span>,<span style="color: #BBB"> </span><span style="color: #666">3</span>,<span style="color: #BBB"> </span><span style="color: #666">4</span>,<span style="color: #BBB"> </span><span style="color: #666">5</span>,
+<span style="color: #BBB">     </span><span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">0</span>,
+<span style="color: #BBB">     </span><span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">2</span>;
+
+Eigen<span style="color: #666">::</span>AngleAxisd<span style="color: #BBB"> </span><span style="color: #00F">angle</span>(<span style="color: #666">0.3</span>,<span style="color: #BBB"> </span>Eigen<span style="color: #666">::</span>Vector3d(<span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">1</span>));<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 真实旋转：绕 z 转 0.3 弧度</span>
+Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #BBB"> </span>R_true<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>angle.toRotationMatrix();
+Eigen<span style="color: #666">::</span>Matrix3Xd<span style="color: #BBB"> </span>Q<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>R_true<span style="color: #BBB"> </span><span style="color: #666">*</span><span style="color: #BBB"> </span>P;<span style="color: #BBB">                          </span><span style="color: #3D7B7B; font-style: italic">// Q = 旋转后的点</span>
+
+<span style="color: #3D7B7B; font-style: italic">// 现在只知道 P 和 Q，假装不知道旋转，把它算出来：</span>
+Eigen<span style="color: #666">::</span>Vector3d<span style="color: #BBB"> </span>p_mean<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>P.rowwise().mean();<span style="color: #BBB">              </span><span style="color: #3D7B7B; font-style: italic">// 1. 去中心</span>
+Eigen<span style="color: #666">::</span>Vector3d<span style="color: #BBB"> </span>q_mean<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>Q.rowwise().mean();
+Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #BBB"> </span>H<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>(P.colwise()<span style="color: #BBB"> </span><span style="color: #666">-</span><span style="color: #BBB"> </span>p_mean)<span style="color: #BBB"> </span><span style="color: #666">*</span><span style="color: #BBB"> </span>(Q.colwise()<span style="color: #BBB"> </span><span style="color: #666">-</span><span style="color: #BBB"> </span>q_mean).transpose();
+Eigen<span style="color: #666">::</span>JacobiSVD<span style="color: #666">&lt;</span>Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #666">&gt;</span><span style="color: #BBB"> </span>svd2(H,<span style="color: #BBB"> </span>Eigen<span style="color: #666">::</span>ComputeFullU<span style="color: #BBB"> </span><span style="color: #666">|</span><span style="color: #BBB"> </span>Eigen<span style="color: #666">::</span>ComputeFullV);
+Eigen<span style="color: #666">::</span>Matrix3d<span style="color: #BBB"> </span>R_est<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>svd2.matrixV()<span style="color: #BBB"> </span><span style="color: #666">*</span><span style="color: #BBB"> </span>svd2.matrixU().transpose();<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// R = V×Uᵀ</span>
+
+std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;误差 = &quot;</span><span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>(R_est<span style="color: #BBB"> </span><span style="color: #666">-</span><span style="color: #BBB"> </span>R_true).norm()<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;</span><span style="color: #AA5D1F; font-weight: bold">\n</span><span style="color: #BA2121">&quot;</span>;<span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic">// 应 &lt; 1e-10</span>
+</code></pre></div>
+
+<p>✅ 通过标准：误差 &lt; 1e-10。<strong>给每行写中文注释，讲给 AI 听。提交 git。</strong></p>
+<p>（这一步就是 ICP 配准的核心思想——你以后工作中"对齐两帧点云"就是干这个。）</p>
+<h2 id="55-4ai-40">5.5 任务 4：AI 生成代码 + 你逐行审查（40 分钟）</h2>
+<ol>
+<li>让 AI 生成："用 Eigen 对一组带噪声的 2D 点做直线拟合 y = kx + b"。</li>
+<li>你<strong>逐行加中文注释</strong>，并向 AI 复述每行在干嘛（让 AI 挑错）。</li>
+<li>验证：造一组已知斜率的点，拟合误差 &lt; 1e-6。</li>
+<li><strong>提交 git。</strong></li>
+</ol>
+<h2 id="56-5-fast-lio2-60">5.6 任务 5：画 FAST-LIO2 数据流图（60 分钟，核心交付物）</h2>
+<ol>
+<li>按 4.5 节的图，自己画一遍（draw.io / 白板手绘拍照）。</li>
+<li>每框标输入/输出/关键函数名（回翻 4.2–4.4）。</li>
+<li>箭头标注至少 3 处线性代数。</li>
+<li>存进仓库。<strong>提交 git。</strong></li>
+</ol>
+<h2 id="57">5.7 周六检查清单</h2>
+<ul>
+<li>[ ] matrix_demo 跑通，Ax-b ≈ 0</li>
+<li>[ ] 手算 Ax=b 与代码一致</li>
+<li>[ ] 奇异值 2,1,0；Kabsch 误差 &lt; 1e-10</li>
+<li>[ ] AI 代码逐行注释 + 验证</li>
+<li>[ ] 数据流图完成</li>
+<li>[ ] 全程 git 提交 ≥ 5 次</li>
+</ul>
+<hr />
+<h1 id="6-12h">第 6 章 周日复盘（1~2h）</h1>
+<h2 id="61">6.1 整理本周笔记（一页）</h2>
+<ol>
+<li>第 1 章的 13 个概念，每个写一句大白话（回看"一句话总结"）。</li>
+<li>每个概念对应机器狗哪个环节。</li>
+<li>源码收获：目录表、common_lib 结构、预处理流程、主循环流程。</li>
+<li>遗留问题清单（至少 1 个），下周解决。</li>
+</ol>
+<h2 id="62-bug">6.2 建立 Bug 案例库</h2>
+<p>建 <code>bug_cases/</code> 目录，按模板建第一个文件：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #000080; font-weight: bold"># Bug 案例 1：&lt;一句话标题&gt;</span>
+
+<span style="color: #008000; font-weight: bold">-</span><span style="color: #BBB"> </span>日期：
+<span style="color: #008000; font-weight: bold">-</span><span style="color: #BBB"> </span>模块（定位/建图/规划/控制/ROS2）：
+<span style="color: #008000; font-weight: bold">-</span><span style="color: #BBB"> </span>现象：
+<span style="color: #008000; font-weight: bold">-</span><span style="color: #BBB"> </span>复现步骤：
+<span style="color: #008000; font-weight: bold">-</span><span style="color: #BBB"> </span>根因：
+<span style="color: #008000; font-weight: bold">-</span><span style="color: #BBB"> </span>修复方案：
+<span style="color: #008000; font-weight: bold">-</span><span style="color: #BBB"> </span>验证方式：
+<span style="color: #008000; font-weight: bold">-</span><span style="color: #BBB"> </span>可复用经验：
+</code></pre></div>
+
+<p>本周没有真 Bug 就只建模板，下周用"点云重影"填第一例。</p>
+<h2 id="63-15">6.3 下周预习（15 分钟）</h2>
+<ul>
+<li>第 2 周主题：微积分/雅可比（求"变化的速度"）+ 四足运动学 + costmap。</li>
+<li>思考题：<strong>机身一颠簸，激光点云为什么会扭曲？</strong>（提示：一帧点云不是同一时刻采的，机身位姿在变 → 每个点用的坐标系不同 → 数学上要描述"位姿随时间怎么变"——答案是用导数/雅可比。）</li>
+</ul>
+<h2 id="64">6.4 周日自测（整周回顾）</h2>
+<ol>
+<li>不看任何资料画出主回调 5 步。</li>
+<li>矩阵乘法、点积、SVD 各在 FAST-LIO2 哪里出现？</li>
+<li>长走廊为什么定位漂移？（大白话）</li>
+<li>外参写错会怎样？排查时先怀疑什么？</li>
+<li>你的 eigen_practice 有几次提交？每个都讲得清吗？</li>
+</ol>
+<hr />
+<h1 id="7">第 7 章 第一周验收清单</h1>
+<ul>
+<li>[ ] 第 1 章 13 个概念都能用自己的话讲（不是背公式）</li>
+<li>[ ] 第 2 章 C++：vector、for、if、函数、lambda 都能看懂</li>
+<li>[ ] 第 3 章 Eigen：会建矩阵、解方程、SVD、构造旋转</li>
+<li>[ ] 第 4 章：能讲清目录、数据结构、预处理、主循环</li>
+<li>[ ] eigen_practice 跑通 5 个任务</li>
+<li>[ ] 数据流图完成</li>
+<li>[ ] 一页费曼笔记《线性代数帮 SLAM 解决什么问题》完成</li>
+<li>[ ] Bug 案例库模板建立</li>
+<li>[ ] 每日自测正确率 ≥ 60%</li>
+</ul>
+<p><strong>未达标怎么办</strong>：先砍了解级内容（1.13 抽象空间），源码阅读和周六实验不可砍。卡住的概念先抄下来再复述，卡超 2 天让 AI 换个比喻再讲。</p>
+<hr />
+<h1 id="_1">附录：术语表（随时回来查）</h1>
+<table>
+<thead>
+<tr>
+<th>术语</th>
+<th>大白话解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>向量</td>
+<td>带方向的箭头 / 一列数字，如 (x,y,z)</td>
+</tr>
+<tr>
+<td>坐标系</td>
+<td>给空间每个位置起名字的尺子（雷达系/机体系/世界系）</td>
+</tr>
+<tr>
+<td>基</td>
+<td>最精炼的一组积木，能拼出所有位置</td>
+</tr>
+<tr>
+<td>坐标</td>
+<td>配方：几份积木拼到这个位置</td>
+</tr>
+<tr>
+<td>线性组合</td>
+<td>向量各自缩放后相加</td>
+</tr>
+<tr>
+<td>张成空间</td>
+<td>这些向量能拼出的所有位置</td>
+</tr>
+<tr>
+<td>线性变换</td>
+<td>把整个空间规规矩矩地变形（直线保持直线、原点不动）</td>
+</tr>
+<tr>
+<td>矩阵</td>
+<td>变形的说明书（每列 = 一个基向量去哪了）</td>
+</tr>
+<tr>
+<td>旋转矩阵</td>
+<td>表示"转了个角度"的变形说明书</td>
+</tr>
+<tr>
+<td>行列式</td>
+<td>变形放大（面积/体积）的倍数；=0 表示压扁了</td>
+</tr>
+<tr>
+<td>逆矩阵</td>
+<td>变形的撤销键；= 反着变回去</td>
+</tr>
+<tr>
+<td>单位矩阵 I</td>
+<td>"什么都没做"的矩阵（对角线 1）</td>
+</tr>
+<tr>
+<td>秩</td>
+<td>变形后还剩几维（信息剩多少）</td>
+</tr>
+<tr>
+<td>零空间</td>
+<td>被压到原点的向量（被弄丢的信息）</td>
+</tr>
+<tr>
+<td>点积</td>
+<td>一个向量在另一个方向上的影子长度</td>
+</tr>
+<tr>
+<td>叉积</td>
+<td>垂直于两个向量的新方向（大小 = 面积）</td>
+</tr>
+<tr>
+<td>基变换</td>
+<td>换一把尺子量同一个东西</td>
+</tr>
+<tr>
+<td>特征向量/值</td>
+<td>变形后方向不变的线 / 被拉长几倍</td>
+</tr>
+<tr>
+<td>SVD</td>
+<td>把任何变形拆成"旋转—拉伸—旋转"</td>
+</tr>
+<tr>
+<td>奇异值</td>
+<td>SVD 里的拉伸倍数</td>
+</tr>
+<tr>
+<td>伪逆/最小二乘</td>
+<td>找不到精确解时，找误差最小的解</td>
+</tr>
+<tr>
+<td>外参</td>
+<td>两套坐标系之间的换尺子矩阵（平移+旋转）</td>
+</tr>
+<tr>
+<td>SLAM</td>
+<td>同时定位（我在哪）+ 建图（周围长啥样）</td>
+</tr>
+<tr>
+<td>点云</td>
+<td>一堆激光点（x,y,z + 强度）</td>
+</tr>
+<tr>
+<td>IMU</td>
+<td>惯性测量单元：感受旋转和加速度的小传感器</td>
+</tr>
+<tr>
+<td>畸变</td>
+<td>点云因为机身晃动而扭曲（重影）</td>
+</tr>
+<tr>
+<td>配准</td>
+<td>把两帧点云对齐（找最佳旋转和平移）</td>
+</tr>
+<tr>
+<td>残差</td>
+<td>对齐后剩下的误差（点到面的距离）</td>
+</tr>
+<tr>
+<td>退化</td>
+<td>环境特征太少，某些方向定位算不准</td>
+</tr>
+<tr>
+<td>ikd-Tree</td>
+<td>存地图点、能快速找最近点的数据结构</td>
+</tr>
+<tr>
+<td>iEKF</td>
+<td>迭代扩展卡尔曼滤波：FAST-LIO2 的"猜位置"算法</td>
+</tr>
+<tr>
+<td>ROS</td>
+<td>机器人操作系统：程序之间传数据的通信框架</td>
+</tr>
+<tr>
+<td>话题</td>
+<td>ROS 里数据的"广播频道"（如 /livox/lidar）</td>
+</tr>
+<tr>
+<td>回调</td>
+<td>数据到达时被自动叫醒执行的函数</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>教材说明：本教材自包含、零基础友好。外部资源（3B1B 视频、《C++ Primer》、Eigen 文档、FAST-LIO2 源码）只在想加深时使用。源码讲解基于 FAST-LIO2 主线版本，具体字段/行号以你 clone 的版本为准。每天学习结束后按清单文末"每日学习检测协议"让 AI 追问验证。</em></p>
+<footer>
+<p>四足机器狗导航算法 · 三个月学习计划 · 第 1 周教材</p>
+<p>每天学习结束后，按清单文末「每日学习检测协议」让 AI 追问验证</p>
+</footer>
+</div>
+<script>
+(function(){{
+  var toc = document.getElementById('toc-placeholder');
+  var heads = document.querySelectorAll('h2');
+  var list = document.createElement('ul');
+  heads.forEach(function(h){{
+    var id = h.id || ('h-' + h.textContent.replace(/[^\w\u4e00-\u9fa5]/g, '-').slice(0, 30));
+    h.id = id;
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    list.appendChild(li);
+  }});
+  toc.appendChild(list);
+}})();
+</script>
+</body>
+</html>

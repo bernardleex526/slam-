@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>第六周学习教材：EKF 与四足里程计特性</title>
+<style>
+:root {{
+  --bg: #f7f5f0;
+  --card: #ffffff;
+  --ink: #1f2430;
+  --muted: #6b7280;
+  --accent: #b45309;
+  --accent-soft: #fef3c7;
+  --line: #e5e0d6;
+  --code-bg: #f4f1ea;
+  --table-head: #f0ece2;
+  --link: #92400e;
+}}
+* {{ box-sizing: border-box; }}
+html {{ -webkit-text-size-adjust: 100%; }}
+body {{
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-size: 16px;
+  line-height: 1.85;
+  word-break: break-word;
+}}
+.wrap {{ max-width: 46rem; margin: 0 auto; padding: 1.2rem 1.1rem 4rem; }}
+header.hero {{
+  background: linear-gradient(135deg, #7c2d12 0%, #b45309 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 1.6rem 1.4rem;
+  margin-bottom: 1.4rem;
+  box-shadow: 0 4px 14px rgba(124, 45, 18, .25);
+}}
+header.hero h1 {{ margin: 0 0 .4rem; font-size: 1.4rem; line-height: 1.4; }}
+header.hero p {{ margin: .2rem 0; font-size: .9rem; opacity: .92; }}
+.nav {{
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  margin-bottom: 1.4rem;
+}}
+.nav a {{
+  display: inline-block; padding: .3rem .7rem; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line);
+  color: var(--link); text-decoration: none; font-size: .82rem;
+}}
+.nav a.on {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
+.toc {{
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 1rem 1.2rem; margin-bottom: 1.6rem; font-size: .92rem;
+}}
+.toc summary {{ cursor: pointer; font-weight: 600; color: var(--accent); }}
+.toc a {{ color: var(--link); text-decoration: none; }}
+.toc a:hover {{ text-decoration: underline; }}
+h1 {{ font-size: 1.5rem; margin: 2.2rem 0 .8rem; padding-bottom: .4rem; border-bottom: 2px solid var(--accent); }}
+h2 {{ font-size: 1.22rem; margin: 1.8rem 0 .6rem; color: #7c2d12; }}
+h3 {{ font-size: 1.05rem; margin: 1.4rem 0 .5rem; }}
+h4 {{ font-size: .98rem; margin: 1.1rem 0 .4rem; color: #444; }}
+p {{ margin: .55rem 0; }}
+ul, ol {{ padding-left: 1.5rem; margin: .5rem 0; }}
+li {{ margin: .28rem 0; }}
+strong {{ color: #7c2d12; }}
+code {{
+  background: var(--code-bg); border-radius: 4px; padding: .12em .35em;
+  font-family: "SF Mono", Consolas, "Courier New", monospace; font-size: .88em; color: #8b4513;
+}}
+pre {{
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px;
+  padding: .9rem 1rem; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  font-size: .84rem; line-height: 1.6;
+}}
+pre code {{ background: none; padding: 0; color: inherit; }}
+blockquote {{
+  margin: .8rem 0; padding: .6rem 1rem; background: var(--accent-soft);
+  border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0;
+}}
+blockquote p {{ margin: .3rem 0; }}
+table {{
+  width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .9rem;
+  display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+}}
+th, td {{ border: 1px solid var(--line); padding: .45rem .6rem; text-align: left; vertical-align: top; }}
+th {{ background: var(--table-head); font-weight: 600; white-space: nowrap; }}
+hr {{ border: none; border-top: 1px solid var(--line); margin: 2rem 0; }}
+input[type="checkbox"] {{ transform: scale(1.2); margin-right: .4em; }}
+footer {{
+  margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: .82rem; text-align: center;
+}}
+</style>
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f8f8f8; }
+.codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+.codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #E40000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #008400 } /* Generic.Inserted */
+.codehilite .go { color: #717171 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #687822 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #800 } /* Name.Constant */
+.codehilite .nd { color: #A2F } /* Name.Decorator */
+.codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #00F } /* Name.Function */
+.codehilite .nl { color: #767600 } /* Name.Label */
+.codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #00F } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<h1>第六周学习教材：EKF 与四足里程计特性</h1>
+<p>四足机器狗导航算法工程师 · 三个月学习计划</p>
+<p>零基础自包含版 · 手机阅读 · 单文件离线可用</p>
+</header>
+<nav class="nav">
+<a class="" href="第一周学习教材.html">W1</a>
+<a class="" href="第二周学习教材.html">W2</a>
+<a class="" href="第三周学习教材.html">W3</a>
+<a class="" href="第四周学习教材.html">W4</a>
+<a class="" href="第五周学习教材.html">W5</a>
+<a class="on" href="第六周学习教材.html">W6</a>
+<a class="" href="第七周学习教材.html">W7</a>
+<a class="" href="第八周学习教材.html">W8</a>
+<a class="" href="第九周学习教材.html">W9</a>
+<a class="" href="第十周学习教材.html">W10</a>
+<a class="" href="第十一周学习教材.html">W11</a>
+<a class="" href="第十二周学习教材.html">W12</a>
+</nav>
+<details class="toc" open>
+<summary>📑 目录（点击收起）</summary>
+<div id="toc-placeholder"></div>
+</details>
+<h1 id="ekf">第六周学习教材：EKF 与四足里程计特性（零基础版）</h1>
+<blockquote>
+<p>定位：四足机器狗（云深处）导航算法工程师
+周期：第 6 周（共 12 周）· 工作日 1.5~2h + 周六 4~5h 实验 + 周日 1~2h 复盘
+本周目标：<strong>理解滤波定位原理；能分析四足里程计漂移来源。</strong>
+本周交付：EKF 融合实验报告 + 漂移来源清单 + Bug 案例 #5</p>
+</blockquote>
+<hr />
+<h1 id="0">第 0 章 开课前必读</h1>
+<h2 id="01">0.1 本周学什么（一句话）</h2>
+<p>第 3 周你学了"一维 Kalman"。本周把它升级成"<strong>EKF</strong>"（多变量、非线性版本）——<strong>FAST-LIO2 的 ESKF 就是它的亲兄弟</strong>。同时深挖四足狗的特点：<strong>它的里程计为什么比轮式车容易漂？</strong></p>
+<h2 id="02">0.2 学习进度表</h2>
+<table>
+<thead>
+<tr>
+<th>天</th>
+<th>读什么</th>
+<th>学完能干什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>周一</td>
+<td>1.0 + 2.0</td>
+<td>懂贝叶斯滤波框架；配 robot_localization 入门</td>
+</tr>
+<tr>
+<td>周二</td>
+<td>1.1</td>
+<td>手推 EKF 预测/更新（一页纸）</td>
+</tr>
+<tr>
+<td>周三</td>
+<td>1.2 + 2.1</td>
+<td>懂四足里程计特性；PlotJuggler 画轨迹找漂移</td>
+</tr>
+<tr>
+<td>周四</td>
+<td>1.3 + 2.2</td>
+<td>了解 UKF/误差状态；懂李群李代数入门</td>
+</tr>
+<tr>
+<td>周五</td>
+<td>1.4 + 2.3</td>
+<td>懂 IMU 标定/Allan 方差；写漂移来源清单</td>
+</tr>
+<tr>
+<td>周六</td>
+<td>第 3 章 实验</td>
+<td>bag 跑 robot_localization + 参数实验</td>
+</tr>
+<tr>
+<td>周日</td>
+<td>第 4 章 复盘 + 第 5 章 验收</td>
+<td>Bug 案例 #5、下周预习</td>
+</tr>
+</tbody>
+</table>
+<h2 id="03">0.3 本周主线问题</h2>
+<blockquote>
+<p><strong>为什么四足狗走着走着就"偏"了？</strong> —— 三个元凶：腿打滑（里程计说走了其实没走）、机身浮动（IMU 混入晃动）、航向漂移（转弯累计误差）。本周把每个都搞懂，并学会用 EKF 融合多传感器减轻它。</p>
+</blockquote>
+<hr />
+<h1 id="1-ekf-kalman">第 1 章 EKF：多变量、非线性的 Kalman</h1>
+<h2 id="10-kalman-ekf-2">1.0 从 Kalman 到 EKF（覆盖《概率机器人》第 2 章思路）</h2>
+<h3 id="101-kalman-3">1.0.1 回顾一维 Kalman（第 3 周）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>预测：x&#39; = x + v·Δt          （用模型往前推）
+更新：x ← x + K·(z − x&#39;)      （用测量修正，K = 信测量程度）
+</code></pre></div>
+
+<h3 id="102">1.0.2 两个问题</h3>
+<ol>
+<li><strong>多变量</strong>：状态是"位置 3 个 + 姿态 3 个 + 速度 3 个 + 零偏 6 个"，不是一个数 → 所有量都变成<strong>向量</strong>，方差变成<strong>协方差矩阵</strong>（第 3 周学过）。</li>
+<li><strong>非线性</strong>：运动模型和测量模型大多不是直线关系（旋转是 sin/cos！）→ 直接套 Kalman 公式失效。</li>
+</ol>
+<h3 id="103-ekf">1.0.3 EKF 的答案（一句话）</h3>
+<p><strong>EKF = 在每个当前状态处，把非线性函数"拉直"（用雅可比线性化，第 2 周学的），然后套 Kalman 公式。</strong></p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>f(x) ≈ f(x₀) + J·(x − x₀)      ← 一阶泰勒展开（第 4 周也用过）
+</code></pre></div>
+
+<p><strong>代价</strong>：线性化有误差 → EKF 在"非线性强"的地方会不准 → 这就是为什么 FAST-LIO2 用<strong>迭代</strong>（iEKF，反复线性化）。</p>
+<h3 id="104">1.0.4 和机器狗的关系</h3>
+<ul>
+<li>机器狗状态：位置、姿态（四元数/旋转矩阵）、速度、IMU 零偏。</li>
+<li>传感器：里程计（测位移）、IMU（测角速度+加速度）、激光定位（测绝对位置）。</li>
+<li><strong>EKF 把多个传感器的信息按"各自有多准"融合成一个最优估计</strong> —— 这就是 <code>robot_localization</code> 包干的事（本周实验用）。</li>
+</ul>
+<blockquote>
+<p>一句话总结：<strong>EKF = 多变量 + 非线性的 Kalman：用雅可比把非线性拉直，再套 Kalman 公式。</strong></p>
+</blockquote>
+<h3 id="10">1.0 自测</h3>
+<ol>
+<li>EKF 和 Kalman 的两个区别？</li>
+<li>线性化用什么工具？（雅可比）</li>
+<li>为什么说"迭代 EKF 更准"？</li>
+</ol>
+<hr />
+<h2 id="11-ekf">1.1 手推 EKF 预测/更新（本周核心，写满一页纸）</h2>
+<h3 id="111">1.1.1 记号</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>状态向量：x（如 15 维：位置 3 + 姿态 3 + 速度 3 + 零偏 6）
+协方差矩阵：P（不确定度）
+运动模型：x&#39; = f(x) + 噪声       （非线性，用雅可比 F 线性化）
+测量模型：z = h(x) + 噪声        （非线性，用雅可比 H 线性化）
+过程噪声 Q、测量噪声 R（第 3 周学过）
+</code></pre></div>
+
+<h3 id="112-predict">1.1.2 预测步（Predict）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>① x̂⁻ = f(x̂)                    （用模型往前推状态）
+② P⁻ = F·P·Fᵀ + Q              （不确定性变大：F = 运动模型雅可比，Q = 过程噪声）
+</code></pre></div>
+
+<p><strong>对照一维版</strong>：x' = x + vΔt（变成了 f），P' = P + Q（变成了 FPFᵀ + Q——矩阵版"不确定变大"）。</p>
+<h3 id="113-update">1.1.3 更新步（Update）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>① 残差（新息）：y = z − h(x̂⁻)          （测量 − 预测的测量）
+② 创新协方差：S = H·P⁻·Hᵀ + R
+③ 卡尔曼增益：K = P⁻·Hᵀ·S⁻¹           （矩阵版 K）
+④ 修正状态：x̂ = x̂⁻ + K·y
+⑤ 修正协方差：P = (I − K·H)·P⁻
+</code></pre></div>
+
+<p><strong>对照一维版</strong>：K = P/(P+R) → 变成了矩阵式；x̂ = x̂⁻ + K·y 完全一样；P 缩小 → P 也缩小。</p>
+<h3 id="114">1.1.4 手推任务（周五前完成）</h3>
+<p>写满一页纸，三栏：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>| 一维 Kalman（第 3 周） | EKF 矩阵版 | 一句话解释 |
+| K = P/(P+R)            | K = P⁻Hᵀ(HP⁻Hᵀ+R)⁻¹ | 信测量的程度 |
+| x&#39; = x + vΔt           | x̂⁻ = f(x̂)          | 模型预测 |
+| ...                    | ...                 | ... |
+</code></pre></div>
+
+<p><strong>写完全部对照，你就真的懂了 EKF。</strong></p>
+<blockquote>
+<p>一句话总结：<strong>EKF = 把一维 Kalman 的每个公式换成矩阵版，并在预测/测量处用雅可比线性化。</strong></p>
+</blockquote>
+<h3 id="11">1.1 自测</h3>
+<ol>
+<li>预测步的两个公式？（x̂⁻、P⁻）</li>
+<li>更新步的五个公式？（y、S、K、x̂、P）</li>
+<li>K 在矩阵版里还是"信测量程度"吗？为什么？</li>
+</ol>
+<hr />
+<h2 id="12">1.2 四足里程计特性（覆盖资料任务，周三）</h2>
+<h3 id="121">1.2.1 里程计是什么</h3>
+<p><strong>里程计 = "我走了多远"的估计</strong>。轮式车：轮子转了几圈 × 轮周长 = 位移（比较准）。四足狗：<strong>没有轮子</strong>，靠的是"腿的关节角度 + 机身 IMU"反推身体移动 = <strong>腿部里程计</strong>。</p>
+<h3 id="122-5">1.2.2 四足里程计漂移的 5+ 个来源（本周核心清单，逐条理解）</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>来源</th>
+<th>大白话</th>
+<th>影响</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>打滑</strong></td>
+<td>脚和地面打滑，腿动了但身体没动那么多</td>
+<td>里程计说走了 2m，实际 1.8m</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>机身浮动</strong></td>
+<td>走路时身体上下颠、左右晃（浮动基座）</td>
+<td>里程计混入"晃动"当"前进"</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>航向漂移</strong></td>
+<td>转弯时角度的微小误差不断累积</td>
+<td>走直线变成走弧线</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>支撑相/摆动相</strong></td>
+<td>脚抬起来时关节角度在变但没位移</td>
+<td>需要区分"哪只脚在着地"</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>地面材质</strong></td>
+<td>草地/沙地 vs 水泥地，打滑程度不同</td>
+<td>同样的腿运动，位移不同</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>坡度</strong></td>
+<td>上坡/下坡，水平位移 ≠ 腿轨迹</td>
+<td>垂直方向误差影响水平</td>
+</tr>
+</tbody>
+</table>
+<h3 id="123">1.2.3 观测任务（周三）</h3>
+<p>看真机（或仿真）走路视频/数据，记录：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>观察记录表（2026-xx-xx）
+- 直走时：机身 pitch 变化范围？高度变化？
+- 转弯时：横滚（roll）有没有晃？
+- 数据验证：odom 的 z 轴高度是不是一直在跳？
+→ 结论：浮动基座是主要漂移源还是次要？
+</code></pre></div>
+
+<p><strong>这就是"把观察变成数据"的训练——你以后分析漂移问题都要这么干。</strong></p>
+<blockquote>
+<p>一句话总结：<strong>四足里程计漂移主要来自：打滑、机身浮动、航向漂移、支撑相判断、地面材质、坡度。知道"哪在漂"才能知道"怎么修"。</strong></p>
+</blockquote>
+<h3 id="12_1">1.2 自测</h3>
+<ol>
+<li>四足里程计和轮式里程计的本质区别？</li>
+<li>说出 4 个漂移来源，各一句话。</li>
+<li>"航向漂移"为什么是累积的？</li>
+</ol>
+<hr />
+<h2 id="13-ukf">1.3 UKF、误差状态滤波、李群李代数（了解层，周四）</h2>
+<h3 id="131-ukf-kalman">1.3.1 UKF：不用线性化的 Kalman</h3>
+<p>UKF 不把非线性函数拉直，而是<strong>采样一堆点</strong>（sigma 点），把这些点过一遍非线性函数，再统计出新分布。<strong>对强非线性更准，但计算量大。</strong> 了解即可。</p>
+<h3 id="132-eskffast-lio2">1.3.2 误差状态滤波（ESKF）：FAST-LIO2 的家族</h3>
+<p><strong>思想</strong>：把状态拆成"名义状态 + 误差状态"：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>真实状态 ≈ 名义状态（大数，用 IMU 积分）⊕ 误差状态（小数，用滤波估计）
+</code></pre></div>
+
+<p><strong>为什么</strong>：旋转在高斯假设下"不能直接加"（转 30° + 转 30° ≠ 转 60°？是，但协方差传播很麻烦）。误差状态是<strong>微小量</strong>，微小旋转可以当向量直接加——<strong>数学就简单了，精度还高</strong>。FAST-LIO2 的 ESKF 就是这个套路。</p>
+<h3 id="133-slam-4">1.3.3 李群李代数：旋转的"正确数学"（《视觉SLAM十四讲》第 4 章）</h3>
+<p><strong>为什么旋转不能当普通向量</strong>：</p>
+<ul>
+<li>旋转矩阵乘积（组合旋转）不是"加法"；旋转矩阵对时间的导数公式复杂。</li>
+<li><strong>李群 SO(3)</strong> = 所有旋转矩阵的集合；<strong>李代数 so(3)</strong> = 旋转矩阵"附近"的微小旋转（3 维向量）。</li>
+<li><strong>指数映射 exp：so(3) → SO(3)</strong>：微小旋转 → 旋转矩阵（"微小量累加"的正确方式）。</li>
+<li><strong>对数映射 log：SO(3) → so(3)</strong>：旋转矩阵 → 微小旋转。</li>
+</ul>
+<p><strong>一句话</strong>：<strong>"旋转"有自己的加减法规则——用李代数做微分/扰动，用指数映射回到旋转矩阵。</strong> FAST-LIO2 在流形上迭代更新 = 每次修正都用 so(3) 算、再 exp 回 SO(3)。</p>
+<p><strong>本周要求</strong>：能说出"为什么不能直接加旋转矩阵"和"exp/log 是干嘛的"即可，公式不要求手推。</p>
+<blockquote>
+<p>一句话总结：<strong>ESKF = 估计微小误差状态；李代数 = 旋转的"微分空间"，exp/log 在微小旋转和旋转矩阵之间来回。</strong></p>
+</blockquote>
+<h3 id="13">1.3 自测</h3>
+<ol>
+<li>UKF 和 EKF 的思路区别？</li>
+<li>ESKF 估计的是"名义状态"还是"误差状态"？为什么这样设计？</li>
+<li>exp/log 映射在旋转里是干嘛的？</li>
+</ol>
+<hr />
+<h2 id="14-imu-allan">1.4 IMU 标定与 Allan 方差（覆盖资料任务，周五）</h2>
+<h3 id="141-imu">1.4.1 IMU 的噪声模型</h3>
+<p>IMU 输出有两个系统误差要估计：</p>
+<table>
+<thead>
+<tr>
+<th>误差</th>
+<th>含义</th>
+<th>表现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>零偏（bias）</strong></td>
+<td>静止时也不归零的偏移</td>
+<td>静止时角速度显示 0.01 rad/s</td>
+</tr>
+<tr>
+<td><strong>噪声（噪声密度）</strong></td>
+<td>随机抖动</td>
+<td>读数来回跳</td>
+</tr>
+</tbody>
+</table>
+<p>还有<strong>比例因子、安装误差</strong>（出厂标定处理）。<strong>零偏会随温度/时间缓慢变化</strong>——所以 SLAM 把它放进状态里持续估计（你见过 <code>b_gyr</code>、<code>b_acc</code>！）。</p>
+<h3 id="142-allan">1.4.2 Allan 方差：看噪声"长相"的工具</h3>
+<p><strong>Allan 方差</strong> = 把 IMU 静止数据切成长短不同的段，看"平均后还抖多少"：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>切得越长 → 抖动怎么变？
+- 随机噪声：变短（平均掉了）
+- 零偏游走：变长（零偏在漂）
+- 曲线折点：区分噪声类型
+</code></pre></div>
+
+<p><strong>产出</strong>：角度随机游走、零偏不稳定性等参数 → 填进滤波器的 Q/R。</p>
+<h3 id="143">1.4.3 为什么要知道这些</h3>
+<ul>
+<li>滤波器 Q、R 设多大，取决于 IMU 噪声水平。</li>
+<li>看到"定位漂移"先怀疑：IMU 零偏没估好？（对比静止时 odom 姿态是不是在飘）</li>
+</ul>
+<blockquote>
+<p>一句话总结：<strong>IMU 误差 = 零偏（慢慢漂）+ 随机噪声；Allan 方差用来测它们；零偏要放进滤波器状态里实时估计。</strong></p>
+</blockquote>
+<h3 id="14">1.4 自测</h3>
+<ol>
+<li>零偏和随机噪声的区别？</li>
+<li>Allan 方差是干什么的？</li>
+<li>b_gyr、b_acc 为什么是 FAST-LIO2 的状态量？</li>
+</ol>
+<hr />
+<h1 id="2">第 2 章 实操部分</h1>
+<h2 id="20-robot_localization">2.0 robot_localization 入门（周一）</h2>
+<p><strong>robot_localization</strong> = 开源多传感器融合包（EKF/UKF 两种）。用它的步骤：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic"># ekf.yaml（最小配置）</span>
+<span style="color: #008000; font-weight: bold">ekf_filter_node</span>:
+<span style="color: #BBB">  </span><span style="color: #008000; font-weight: bold">ros__parameters</span>:
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">frequency</span>:<span style="color: #BBB"> </span>30.0<span style="color: #BBB">                 </span><span style="color: #3D7B7B; font-style: italic"># 滤波频率</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">odom0</span>:<span style="color: #BBB"> </span>/odom_raw<span style="color: #BBB">                </span><span style="color: #3D7B7B; font-style: italic"># 输入 1：里程计</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">odom0_config</span>:<span style="color: #BBB"> </span>[<span style="color: #19177C">true</span>,<span style="color: #BBB"> </span><span style="color: #19177C">true</span>,<span style="color: #BBB"> </span><span style="color: #19177C">false</span>,<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic"># x, y, z（不使能 z）</span>
+<span style="color: #BBB">                   </span><span style="color: #19177C">false</span>,<span style="color: #BBB"> </span><span style="color: #19177C">false</span>,<span style="color: #BBB"> </span><span style="color: #19177C">false</span>,<span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic"># roll, pitch, yaw</span>
+<span style="color: #BBB">                   </span><span style="color: #19177C">true</span>,<span style="color: #BBB"> </span><span style="color: #19177C">true</span>,<span style="color: #BBB"> </span><span style="color: #19177C">false</span>,<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic"># vx, vy, vz</span>
+<span style="color: #BBB">                   </span><span style="color: #19177C">false</span>,<span style="color: #BBB"> </span><span style="color: #19177C">false</span>,<span style="color: #BBB"> </span><span style="color: #19177C">false</span>,
+<span style="color: #BBB">                   </span><span style="color: #19177C">false</span>,<span style="color: #BBB"> </span><span style="color: #19177C">false</span>,<span style="color: #BBB"> </span><span style="color: #19177C">false</span>]
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">imu0</span>:<span style="color: #BBB"> </span>/imu/data<span style="color: #BBB">                 </span><span style="color: #3D7B7B; font-style: italic"># 输入 2：IMU</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">imu0_config</span>:<span style="color: #BBB"> </span>[<span style="color: #19177C">false</span>,<span style="color: #BBB"> </span><span style="color: #19177C">false</span>,<span style="color: #BBB"> </span><span style="color: #19177C">false</span>,
+<span style="color: #BBB">                  </span><span style="color: #19177C">true</span>,<span style="color: #BBB"> </span><span style="color: #19177C">true</span>,<span style="color: #BBB"> </span><span style="color: #19177C">true</span>,<span style="color: #BBB">     </span><span style="color: #3D7B7B; font-style: italic"># 使能 roll pitch yaw（姿态）</span>
+<span style="color: #BBB">                  </span><span style="color: #19177C">...</span>]
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">odom0_differential</span>:<span style="color: #BBB"> </span>false
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">two_d_mode</span>:<span style="color: #BBB"> </span>true<span style="color: #BBB">                </span><span style="color: #3D7B7B; font-style: italic"># 平面运动模式（多数导航用）</span>
+</code></pre></div>
+
+<p><strong>配置的本质</strong>：告诉滤波器"每个传感器提供哪些维度的信息"（true = 用这个维度）。</p>
+<h2 id="21-plotjuggler">2.1 PlotJuggler 找漂移（周三）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>ros2<span style="color: #BBB"> </span>bag<span style="color: #BBB"> </span>play<span style="color: #BBB"> </span>你的四足bag<span style="color: #BBB"> </span>--loop
+ros2<span style="color: #BBB"> </span>run<span style="color: #BBB"> </span>plotjuggler<span style="color: #BBB"> </span>plotjuggler
+</code></pre></div>
+
+<ol>
+<li>画 odom 的 x、y → <strong>轨迹图</strong>（用 x-y 画布）。</li>
+<li>有真值（ground truth）的话叠加对比。</li>
+<li>肉眼找漂移：直线走弯了？轨迹发散？</li>
+<li>记录"哪个方向漂得最明显"。</li>
+</ol>
+<h2 id="22-ekf-20">2.2 读 ekf 节点入口（周一 20 分钟）</h2>
+<p>文件：<code>robot_localization/src/ekf.cpp</code></p>
+<p><strong>读法</strong>：找 main 和类构造 → 找处理函数（<code>process()</code> 或回调）→ 画流程：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>IMU/odom 消息到达
+ → 转换到公共坐标系
+ → 预测步（F 雅可比 + 积分）
+ → 更新步（K 计算 + 状态修正）
+ → 发布融合结果（/odometry/filtered）
+</code></pre></div>
+
+<h2 id="23-fast-lio2-ekf-iekf-20">2.3 读 FAST-LIO2 状态传播段，对比 EKF 与 iEKF（周四 20 分钟）</h2>
+<p>看 <code>IMU_Processing.hpp</code> 的 predict 和 update，对照本教材 1.1 节，写 3 句对比：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>- 相同：都是&quot;预测 + 更新&quot;两步循环
+- 差异 1：iEKF 更新时反复迭代线性化（EKF 只线性化一次）
+- 差异 2：FAST-LIO2 在流形上更新旋转（用李代数 exp），EKF 直接加
+</code></pre></div>
+
+<hr />
+<h1 id="3-45h">第 3 章 周六实验手册（4~5h）</h1>
+<h2 id="31-1-bag-robot_localization90">3.1 任务 1：用 bag 跑 robot_localization（90 分钟，核心）</h2>
+<ol>
+<li>准备数据：真机或仿真四足 bag（含 <code>/odom_raw</code> 或 <code>/odom</code> + <code>/imu/data</code>，有真值更佳）。</li>
+<li>配好 ekf.yaml（2.0 节模板）。</li>
+<li>启动：
+   <code>bash
+   ros2 launch robot_localization ekf.launch.py</code></li>
+<li>回放 bag：<code>ros2 bag play 四足bag</code>。</li>
+<li><strong>输出对比图</strong>：原始 odom 轨迹 vs EKF 融合轨迹（PlotJuggler 或 Python）。</li>
+</ol>
+<p><strong>量化误差</strong>（有真值时）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic"># 用 Python 加载两条轨迹（先 ros2 bag convert 或导出 csv）</span>
+<span style="color: #3D7B7B; font-style: italic"># 计算：每个时刻 融合轨迹−真值 的距离，平均误差/最大误差</span>
+<span style="color: #3D7B7B; font-style: italic"># 同样算原始 odom，对比改善了多少</span>
+</code></pre></div>
+
+<p><strong>报告模板</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>EKF 融合实验报告（2026-xx-xx）
+- 数据：xxx bag（时长、传感器）
+- 配置：odom0_config / imu0_config
+- 结果：
+  | 指标 | 原始 odom | EKF 融合 | 改善 |
+  | 平均误差 | | | |
+  | 最大误差 | | | |
+- 结论：EKF 把平均误差从 X 降到 Y（改善 Z%）
+</code></pre></div>
+
+<h2 id="32-260">3.2 任务 2：参数敏感性实验（60 分钟）</h2>
+<p><strong>每次只改一个参数，记录"参数 → 精度"关系</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>实验</th>
+<th>观察</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>imu0 的角速度噪声（加大 10 倍）</td>
+<td>融合结果</td>
+<td>更信 odom → 漂移加重？</td>
+</tr>
+<tr>
+<td>odom0 的位置噪声（加大 10 倍）</td>
+<td>融合结果</td>
+<td>更信 IMU → 快速抖动加重？</td>
+</tr>
+<tr>
+<td>不使能 imu 的 roll/pitch</td>
+<td>融合结果</td>
+<td>姿态漂移？</td>
+</tr>
+</tbody>
+</table>
+<p><strong>输出</strong>：参数→精度关系表 + 一句话结论（"哪个参数最敏感"）。</p>
+<h2 id="33-3-60">3.3 任务 3：漂移来源清单 + 真机验证（60 分钟）</h2>
+<ol>
+<li>用 1.2.2 的 6 条清单为底稿。</li>
+<li>对着你的 bag 数据逐条验证（哪些能在数据里看到）：</li>
+<li>打滑：odom 速度 vs 实际轨迹的偏差。</li>
+<li>机身浮动：odom 的 z 轴高度曲线。</li>
+<li>航向漂移：直线行走时 yaw 是不是慢慢偏。</li>
+<li>输出最终版"四足定位漂移来源清单"（≥5 条，每条附数据证据）。</li>
+</ol>
+<h2 id="34-440">3.4 任务 4：可视化轨迹（40 分钟）</h2>
+<p>用 Python 把轨迹画成图（x-y 平面）并叠加：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">matplotlib.pyplot</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">as</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">plt</span>
+<span style="color: #008000; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">numpy</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">as</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">np</span>
+<span style="color: #3D7B7B; font-style: italic"># 数据：从 bag 导出（或用 ros2 bag 转 csv / Python rosbags 库）</span>
+raw <span style="color: #666">=</span> np<span style="color: #666">.</span>loadtxt(<span style="color: #BA2121">&#39;odom_raw.csv&#39;</span>, delimiter<span style="color: #666">=</span><span style="color: #BA2121">&#39;,&#39;</span>)    <span style="color: #3D7B7B; font-style: italic"># [t, x, y]</span>
+filt <span style="color: #666">=</span> np<span style="color: #666">.</span>loadtxt(<span style="color: #BA2121">&#39;odom_fused.csv&#39;</span>, delimiter<span style="color: #666">=</span><span style="color: #BA2121">&#39;,&#39;</span>)
+plt<span style="color: #666">.</span>plot(raw[:, <span style="color: #666">1</span>], raw[:, <span style="color: #666">2</span>], <span style="color: #BA2121">&#39;r-&#39;</span>, label<span style="color: #666">=</span><span style="color: #BA2121">&#39;原始 odom&#39;</span>)
+plt<span style="color: #666">.</span>plot(filt[:, <span style="color: #666">1</span>], filt[:, <span style="color: #666">2</span>], <span style="color: #BA2121">&#39;b-&#39;</span>, label<span style="color: #666">=</span><span style="color: #BA2121">&#39;EKF 融合&#39;</span>)
+plt<span style="color: #666">.</span>axis(<span style="color: #BA2121">&#39;equal&#39;</span>); plt<span style="color: #666">.</span>legend(); plt<span style="color: #666">.</span>grid()
+plt<span style="color: #666">.</span>savefig(<span style="color: #BA2121">&#39;traj_compare.png&#39;</span>, dpi<span style="color: #666">=150</span>)
+</code></pre></div>
+
+<h2 id="35">3.5 周六检查清单</h2>
+<ul>
+<li>[ ] EKF 融合跑通 + 误差对比表（平均/最大误差）</li>
+<li>[ ] 参数敏感性实验完成（≥3 组）</li>
+<li>[ ] 漂移来源清单（≥5 条 + 数据证据）</li>
+<li>[ ] 轨迹对比图</li>
+<li>[ ] git 提交 ≥ 4 次</li>
+</ul>
+<hr />
+<h1 id="4-12h">第 4 章 周日复盘（1~2h）</h1>
+<h2 id="41">4.1 本周总结（一页）</h2>
+<ol>
+<li>EKF = 多变量 + 非线性 Kalman（雅可比线性化）。</li>
+<li>预测/更新矩阵公式与一维版对照。</li>
+<li>ESKF/李群李代数 = 旋转的正确数学（FAST-LIO2 用它）。</li>
+<li>四足漂移 6 源 + 你的数据验证结果。</li>
+<li>IMU 零偏要实时估计。</li>
+</ol>
+<h2 id="42-bug-5">4.2 Bug 案例 #5（必须完成）</h2>
+<p><strong>定位漂移类问题</strong>：用本周实验或工作现场（复现 → 根因 → 修复思路），填 <code>bug_cases/bug_005.md</code>。建议场景：EKF 融合后某方向仍在漂 → 检查哪个传感器贡献了错误信息。</p>
+<h2 id="43-15">4.3 下周预习（15 分钟）</h2>
+<p>第 7 周：点云配准 + LIO 前端。先想：<strong>"两帧点云，怎么对齐？"</strong> —— 找对应点 → 算旋转平移 → 迭代。让 AI 讲讲 ICP 或看 PCL 官方 ICP 教程预热。</p>
+<h2 id="44">4.4 周日自测</h2>
+<ol>
+<li>EKF 预测/更新的矩阵公式各是什么？</li>
+<li>四足漂移来源（说 5 个）。</li>
+<li>ESKF 和 EKF 的区别？</li>
+<li>IMU 零偏为什么要实时估计？</li>
+<li>你实验中哪个参数最敏感？</li>
+</ol>
+<hr />
+<h1 id="5">第 5 章 第六周验收清单</h1>
+<ul>
+<li>[ ] EKF 概念 + 手推一页纸对照</li>
+<li>[ ] robot_localization 配置 + 实验报告</li>
+<li>[ ] 四足漂移来源清单（≥5 条 + 数据证据）</li>
+<li>[ ] UKF/ESKF/李群概念能讲</li>
+<li>[ ] IMU 噪声模型 + Allan 方差概念</li>
+<li>[ ] 参数敏感性实验记录</li>
+<li>[ ] Bug 案例 #5</li>
+<li>[ ] 每日自测 ≥ 60%</li>
+</ul>
+<p><strong>未达标</strong>：砍 1.3.3 李代数公式细节（保概念）。<strong>EKF 实验和漂移清单不可砍。</strong></p>
+<hr />
+<h1 id="6">附录：术语表（第 6 周新增）</h1>
+<table>
+<thead>
+<tr>
+<th>术语</th>
+<th>大白话解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EKF</td>
+<td>扩展卡尔曼滤波：多变量+非线性版 Kalman</td>
+</tr>
+<tr>
+<td>线性化</td>
+<td>用雅可比把弯曲的函数拉直</td>
+</tr>
+<tr>
+<td>预测步</td>
+<td>用模型往前推（不确定变大）</td>
+</tr>
+<tr>
+<td>更新步</td>
+<td>用测量修正（不确定变小）</td>
+</tr>
+<tr>
+<td>创新/新息</td>
+<td>测量 − 预测的测量</td>
+</tr>
+<tr>
+<td>腿部里程计</td>
+<td>用腿关节角度反推身体位移</td>
+</tr>
+<tr>
+<td>打滑</td>
+<td>脚动身没动（或没动那么多）</td>
+</tr>
+<tr>
+<td>浮动基座</td>
+<td>身体不贴地、会晃</td>
+</tr>
+<tr>
+<td>航向漂移</td>
+<td>转角误差累积导致方向慢慢偏</td>
+</tr>
+<tr>
+<td>UKF</td>
+<td>无迹卡尔曼：采样点过非线性函数，不线性化</td>
+</tr>
+<tr>
+<td>ESKF</td>
+<td>误差状态卡尔曼：估计微小误差状态</td>
+</tr>
+<tr>
+<td>李群 SO(3)</td>
+<td>所有旋转矩阵的集合</td>
+</tr>
+<tr>
+<td>李代数 so(3)</td>
+<td>微小旋转（3 维向量）</td>
+</tr>
+<tr>
+<td>指数/对数映射</td>
+<td>exp/log：微小旋转 ↔ 旋转矩阵</td>
+</tr>
+<tr>
+<td>流形</td>
+<td>"旋转"所在的高维曲面空间</td>
+</tr>
+<tr>
+<td>零偏</td>
+<td>IMU 静止时也不归零的偏移</td>
+</tr>
+<tr>
+<td>Allan 方差</td>
+<td>分析 IMU 噪声类型的工具</td>
+</tr>
+<tr>
+<td>robot_localization</td>
+<td>开源多传感器融合包（EKF/UKF）</td>
+</tr>
+<tr>
+<td>二自由度模式</td>
+<td>只估计平面运动（x,y,yaw）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>教材说明：本教材自包含、零基础友好。外部资料（《概率机器人》、Barfoot《状态估计》、《视觉SLAM十四讲》第 4 章）仅作加深。每天学习结束后按"每日学习检测协议"让 AI 追问验证。</em></p>
+<footer>
+<p>四足机器狗导航算法 · 三个月学习计划 · 第 6 周教材</p>
+<p>每天学习结束后，按清单文末「每日学习检测协议」让 AI 追问验证</p>
+</footer>
+</div>
+<script>
+(function(){{
+  var toc = document.getElementById('toc-placeholder');
+  var heads = document.querySelectorAll('h2');
+  var list = document.createElement('ul');
+  heads.forEach(function(h){{
+    var id = h.id || ('h-' + h.textContent.replace(/[^\w\u4e00-\u9fa5]/g, '-').slice(0, 30));
+    h.id = id;
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    list.appendChild(li);
+  }});
+  toc.appendChild(list);
+}})();
+</script>
+</body>
+</html>

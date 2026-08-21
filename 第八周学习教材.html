@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>第八周学习教材：外参标定 + 双雷达融合 + FAST-LIO2 全模块</title>
+<style>
+:root {{
+  --bg: #f7f5f0;
+  --card: #ffffff;
+  --ink: #1f2430;
+  --muted: #6b7280;
+  --accent: #b45309;
+  --accent-soft: #fef3c7;
+  --line: #e5e0d6;
+  --code-bg: #f4f1ea;
+  --table-head: #f0ece2;
+  --link: #92400e;
+}}
+* {{ box-sizing: border-box; }}
+html {{ -webkit-text-size-adjust: 100%; }}
+body {{
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-size: 16px;
+  line-height: 1.85;
+  word-break: break-word;
+}}
+.wrap {{ max-width: 46rem; margin: 0 auto; padding: 1.2rem 1.1rem 4rem; }}
+header.hero {{
+  background: linear-gradient(135deg, #7c2d12 0%, #b45309 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 1.6rem 1.4rem;
+  margin-bottom: 1.4rem;
+  box-shadow: 0 4px 14px rgba(124, 45, 18, .25);
+}}
+header.hero h1 {{ margin: 0 0 .4rem; font-size: 1.4rem; line-height: 1.4; }}
+header.hero p {{ margin: .2rem 0; font-size: .9rem; opacity: .92; }}
+.nav {{
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  margin-bottom: 1.4rem;
+}}
+.nav a {{
+  display: inline-block; padding: .3rem .7rem; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line);
+  color: var(--link); text-decoration: none; font-size: .82rem;
+}}
+.nav a.on {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
+.toc {{
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 1rem 1.2rem; margin-bottom: 1.6rem; font-size: .92rem;
+}}
+.toc summary {{ cursor: pointer; font-weight: 600; color: var(--accent); }}
+.toc a {{ color: var(--link); text-decoration: none; }}
+.toc a:hover {{ text-decoration: underline; }}
+h1 {{ font-size: 1.5rem; margin: 2.2rem 0 .8rem; padding-bottom: .4rem; border-bottom: 2px solid var(--accent); }}
+h2 {{ font-size: 1.22rem; margin: 1.8rem 0 .6rem; color: #7c2d12; }}
+h3 {{ font-size: 1.05rem; margin: 1.4rem 0 .5rem; }}
+h4 {{ font-size: .98rem; margin: 1.1rem 0 .4rem; color: #444; }}
+p {{ margin: .55rem 0; }}
+ul, ol {{ padding-left: 1.5rem; margin: .5rem 0; }}
+li {{ margin: .28rem 0; }}
+strong {{ color: #7c2d12; }}
+code {{
+  background: var(--code-bg); border-radius: 4px; padding: .12em .35em;
+  font-family: "SF Mono", Consolas, "Courier New", monospace; font-size: .88em; color: #8b4513;
+}}
+pre {{
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px;
+  padding: .9rem 1rem; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  font-size: .84rem; line-height: 1.6;
+}}
+pre code {{ background: none; padding: 0; color: inherit; }}
+blockquote {{
+  margin: .8rem 0; padding: .6rem 1rem; background: var(--accent-soft);
+  border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0;
+}}
+blockquote p {{ margin: .3rem 0; }}
+table {{
+  width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .9rem;
+  display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+}}
+th, td {{ border: 1px solid var(--line); padding: .45rem .6rem; text-align: left; vertical-align: top; }}
+th {{ background: var(--table-head); font-weight: 600; white-space: nowrap; }}
+hr {{ border: none; border-top: 1px solid var(--line); margin: 2rem 0; }}
+input[type="checkbox"] {{ transform: scale(1.2); margin-right: .4em; }}
+footer {{
+  margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: .82rem; text-align: center;
+}}
+</style>
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f8f8f8; }
+.codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+.codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #E40000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #008400 } /* Generic.Inserted */
+.codehilite .go { color: #717171 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #687822 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #800 } /* Name.Constant */
+.codehilite .nd { color: #A2F } /* Name.Decorator */
+.codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #00F } /* Name.Function */
+.codehilite .nl { color: #767600 } /* Name.Label */
+.codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #00F } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<h1>第八周学习教材：外参标定 + 双雷达融合 + FAST-LIO2 全模块</h1>
+<p>四足机器狗导航算法工程师 · 三个月学习计划</p>
+<p>零基础自包含版 · 手机阅读 · 单文件离线可用</p>
+</header>
+<nav class="nav">
+<a class="" href="第一周学习教材.html">W1</a>
+<a class="" href="第二周学习教材.html">W2</a>
+<a class="" href="第三周学习教材.html">W3</a>
+<a class="" href="第四周学习教材.html">W4</a>
+<a class="" href="第五周学习教材.html">W5</a>
+<a class="" href="第六周学习教材.html">W6</a>
+<a class="" href="第七周学习教材.html">W7</a>
+<a class="on" href="第八周学习教材.html">W8</a>
+<a class="" href="第九周学习教材.html">W9</a>
+<a class="" href="第十周学习教材.html">W10</a>
+<a class="" href="第十一周学习教材.html">W11</a>
+<a class="" href="第十二周学习教材.html">W12</a>
+</nav>
+<details class="toc" open>
+<summary>📑 目录（点击收起）</summary>
+<div id="toc-placeholder"></div>
+</details>
+<h1 id="fast-lio2">第八周学习教材：外参标定 + 双雷达融合 + FAST-LIO2 全模块（零基础版）</h1>
+<blockquote>
+<p>定位：四足机器狗（云深处）导航算法工程师
+周期：第 8 周（共 12 周）· 工作日 1.5~2h + 周六 4~5h 实验 + 周日 1~2h 复盘
+本周目标：<strong>掌握外参标定与时间同步；把 FAST-LIO2 变成"可讲解的代码"。</strong>
+本周交付：标定与融合实验报告 + FAST-LIO2 全模块图 + Bug 案例 #7</p>
+</blockquote>
+<hr />
+<h1 id="0">第 0 章 开课前必读</h1>
+<h2 id="01">0.1 本周学什么（一句话）</h2>
+<p>机器狗前后装了两个雷达（视野互补：前面看远处、后面防追尾）。<strong>两个雷达的数据要拼成一个点云</strong>——前提是精确知道"两个雷达之间差多少"（外参）和"两个雷达数据时间对不对得上"（时间同步）。本周学标定 + 融合 + 把 FAST-LIO2 全部模块串讲一遍。</p>
+<h2 id="02">0.2 学习进度表</h2>
+<table>
+<thead>
+<tr>
+<th>天</th>
+<th>读什么</th>
+<th>学完能干什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>周一</td>
+<td>1.0–1.1 + 2.0</td>
+<td>懂手眼标定 AX=XB；调研在线标定；记录平台外参</td>
+</tr>
+<tr>
+<td>周二</td>
+<td>1.2 + 2.1</td>
+<td>懂时间同步；检查 bag 时间戳对齐</td>
+</tr>
+<tr>
+<td>周三</td>
+<td>1.3 + 2.2</td>
+<td>懂融合策略；写双雷达融合方案一页</td>
+</tr>
+<tr>
+<td>周四</td>
+<td>1.4 + 2.3</td>
+<td>FAST-LIO2 全模块精读 + AI 辅助注释</td>
+</tr>
+<tr>
+<td>周五</td>
+<td>1.5 + 2.4</td>
+<td>懂地图质量评估；写检查清单</td>
+</tr>
+<tr>
+<td>周六</td>
+<td>第 3 章 实验</td>
+<td>外参标定 + 融合对比 + 调参实验</td>
+</tr>
+<tr>
+<td>周日</td>
+<td>第 4 章 复盘 + 第 5 章 验收</td>
+<td>Bug 案例 #7、阶段二总结</td>
+</tr>
+</tbody>
+</table>
+<h2 id="03">0.3 本周主线问题</h2>
+<blockquote>
+<p><strong>两个雷达的数据怎么"合体"？</strong> —— ① 外参：知道坐标系差多少（标定）；② 时间同步：保证用的数据是同一时刻；③ 融合策略：坐标变换 + 降采样 + 处理重合区。三步缺一不可。</p>
+</blockquote>
+<hr />
+<h1 id="1">第 1 章 外参标定</h1>
+<h2 id="10">1.0 外参是什么（复习 + 深化）</h2>
+<p><strong>外参 = 两个传感器坐标系之间的变换</strong>（第 1、2 周学过）：<code>p_B = R_AB · p_A + t_AB</code>，把 A 系的点变到 B 系。</p>
+<p>机器狗身上要标定的外参：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>前雷达 ↔ 机体（laser_front ↔ base_link）
+后雷达 ↔ 机体（laser_back ↔ base_link）
+雷达 ↔ IMU（laser ↔ imu）      ← FAST-LIO2 用的
+</code></pre></div>
+
+<p><strong>为什么必须标</strong>：出厂值/目测值不准。<strong>外参错 1 厘米、1 度 → 融合点云错位 → 建图重影 → 导航撞墙。</strong> 这是"小误差大后果"的典型。</p>
+<h2 id="11-ax-xb">1.1 手眼标定：AX = XB（覆盖资料任务）</h2>
+<h3 id="111">1.1.1 名字来源</h3>
+<p>机器臂抓相机拍照的场景：手（机器人末端）动 X，眼（相机）相对固定物动 → <strong>手和眼之间的固定变换 X 满足 AX = XB</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>A = 手的两次相对运动（本体坐标系）
+B = 眼的两次相对运动（通过观测算出来）
+X = 手眼之间的固定外参（要求的！）
+</code></pre></div>
+
+<h3 id="112-tsai-lenz">1.1.2 思路（Tsai-Lenz 方法）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>1. 移动两次（或多次），记录：
+   - 手的位置变化 A（机器人告诉你）
+   - 眼观测到的变化 B（标定板/特征点算出）
+2. 解 AX = XB → 先解旋转（用四元数/李代数），再解平移
+3. 多组数据最小二乘求最优 X
+</code></pre></div>
+
+<p><strong>映射到雷达</strong>：把"雷达"当"眼"，把"机体/IMU"当"手"——机器狗动一动，雷达观测的固定场景变化 = B，机体自身运动 = A，解出 X = 雷达外参。</p>
+<h3 id="113">1.1.3 为什么"动一动就能标"</h3>
+<p>因为<strong>固定物体在两个坐标系里的一致性约束</strong>，运动样本越多，X 解越准。<strong>标定的本质 = 采集足够多的运动 + 解最小二乘（第 4 周学的）。</strong></p>
+<blockquote>
+<p>一句话总结：<strong>手眼标定 = 解 AX=XB：手动的变化 × 固定外参 = 外参 × 眼观测的变化；用多组运动数据最小二乘求外参。</strong></p>
+</blockquote>
+<h3 id="11">1.1 自测</h3>
+<ol>
+<li>AX = XB 里 A、B、X 各是什么？</li>
+<li>为什么"动一动"能标出外参？</li>
+<li>雷达外参标定对应"手"和"眼"分别是谁？</li>
+</ol>
+<hr />
+<h2 id="12">1.2 时间同步（覆盖资料任务，周二）</h2>
+<h3 id="121">1.2.1 问题</h3>
+<p>两个雷达数据到达时<strong>时间可能不对齐</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>前雷达：帧时刻 t=10.000s
+后雷达：帧时刻 t=10.013s    ← 差 13ms
+IMU：   t=10.002s ...
+</code></pre></div>
+
+<p><strong>如果忽略时间差</strong>：用 10.013s 的后雷达数据配 10.000s 的前雷达 → 机器狗在 13ms 内动了几厘米 → 点云错位。<strong>运动越快，时间差越致命。</strong></p>
+<h3 id="122">1.2.2 三种同步方案（从硬到软）</h3>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>原理</th>
+<th>精度</th>
+<th>成本</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>硬件时间戳</strong></td>
+<td>传感器自带精确时钟（GPS 授时/PTP）</td>
+<td>微秒级</td>
+<td>高</td>
+</tr>
+<tr>
+<td><strong>PPS 同步</strong></td>
+<td>秒脉冲对齐各传感器时钟</td>
+<td>微秒~毫秒级</td>
+<td>中</td>
+</tr>
+<tr>
+<td><strong>软件近似同步</strong></td>
+<td>用各自时间戳，插值/对齐到统一时间轴</td>
+<td>毫秒级</td>
+<td>低</td>
+</tr>
+</tbody>
+</table>
+<p><strong>工业实践</strong>：传感器给时间戳（软件层保证时钟一致）→ 融合算法按时间戳<strong>插值</strong>（把数据"算"到同一时刻）。</p>
+<h3 id="123">1.2.3 检查方法（周二实验任务）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic"># 看 bag 里各传感器时间戳</span>
+ros2<span style="color: #BBB"> </span>bag<span style="color: #BBB"> </span>info<span style="color: #BBB"> </span>你的bag
+<span style="color: #3D7B7B; font-style: italic"># 或 Python：读两个话题的 header.stamp，画时间差直方图</span>
+</code></pre></div>
+
+<p><strong>目标</strong>：前后雷达时间戳差分布：均值？最大偏差？是否超过"运动中 1 个点的误差"。</p>
+<blockquote>
+<p>一句话总结：<strong>时间同步 = 让所有传感器用同一个时间轴；运动越快、同步误差影响越大；检查方法 = 对比各话题时间戳分布。</strong></p>
+</blockquote>
+<h3 id="12_1">1.2 自测</h3>
+<ol>
+<li>时间不同步会导致什么现象？</li>
+<li>三种同步方案各自精度？</li>
+<li>怎么检查 bag 里时间对齐情况？</li>
+</ol>
+<hr />
+<h2 id="13">1.3 点云融合策略（覆盖资料任务，周三）</h2>
+<h3 id="131">1.3.1 融合四件事（本周核心清单）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>① 坐标变换：后雷达点 → 用外参 → 变到前雷达系（或共同参考系）
+② 降采样：两个雷达重合区点数翻倍 → 体素滤波统一密度
+③ 重合区处理：同一物体被两个雷达看到 → 只保留一边（或按置信度）
+④ 动态物体剔除：重合区里&quot;一个雷达看到、另一个没看到&quot; = 可疑动态目标
+</code></pre></div>
+
+<h3 id="132">1.3.2 融合方案设计（周三输出，一页纸）</h3>
+<p>按这个模板写你自己的方案：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>双雷达融合方案（2026-xx-xx）
+- 输入：/front_lidar 点云、/back_lidar 点云、外参 T_front_back
+- 处理流程：时间对齐 → 坐标变换 → 体素降采样 → 重合区策略
+- 重合区策略：以主雷达为准 / 平均 / 动态剔除（我选：...，理由：...）
+- 输出：融合点云 /fused_cloud
+- 关键参数：体素尺寸、时间窗、重合区判断阈值
+</code></pre></div>
+
+<h3 id="133">1.3.3 常见的坑</h3>
+<ul>
+<li><strong>重合区点云"发毛"</strong>：两雷达精度不同，同一面墙两个厚度 → 降采样后还是双层 → 需要"按距离/入射角加权"。</li>
+<li><strong>外参错 = 融合即错</strong>：先标定，再融合，别反过来。</li>
+<li><strong>时间没对齐 = 动态物重影</strong>。</li>
+</ul>
+<blockquote>
+<p>一句话总结：<strong>融合四件事 = 变换 + 降采样 + 重合区 + 动态剔除；外参和时间是地基，地基错全错。</strong></p>
+</blockquote>
+<h3 id="13_1">1.3 自测</h3>
+<ol>
+<li>融合四件事是什么？</li>
+<li>重合区出现"双层墙"说明什么？</li>
+<li>为什么先标定再融合？</li>
+</ol>
+<hr />
+<h2 id="14-fast-lio2">1.4 FAST-LIO2 全模块精读（周四，本周重头戏）</h2>
+<h3 id="141-1">1.4.1 全模块图（对照第 1 周数据流图，现在补全）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>┌──────────────────────────────────────────────────────────┐
+│ FAST-LIO2 全模块                                          │
+│                                                          │
+│ ① IMU 处理（IMU_Processing.hpp）                          │
+│    predict()：积分状态、零偏传播                            │
+│    update_iterated_dyn_share_modified()：iEKF 迭代更新     │
+│                                                          │
+│ ② 点云预处理（preprocess.cpp）                             │
+│    攒帧 / 时间戳排序 / 滤波（盲区、距离）                   │
+│                                                          │
+│ ③ 地图管理（ikd-Tree）                                    │
+│    Build / Insert / Delete / Nearest_Search               │
+│    （增量增删 + 再平衡）                                   │
+│                                                          │
+│ ④ 主循环（LaserMapping.cpp）                              │
+│    参数加载 → 初始化 → 订阅 → 回调调度 → 发布              │
+│                                                          │
+│ ⑤ 回环接口（部分版本/后续工作）                             │
+│    外接 ScanContext 等（第 12 周）                         │
+└──────────────────────────────────────────────────────────┘
+</code></pre></div>
+
+<h3 id="142-2">1.4.2 精读顺序（周四 2 小时）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>1. 主循环：LaserMapping.cpp 全部（60 分钟）
+   - 每个函数问：输入？输出？被谁调用？
+2. IMU 处理：predict + update 的骨架（40 分钟）
+   - 对照第 6 周 ESKF 概念
+3. ikd-Tree：四个接口签名 + 数据结构（20 分钟）
+   - 不抠内部细节（第 7 周已了解）
+</code></pre></div>
+
+<h3 id="143-ai">1.4.3 AI 辅助注释法（周四任务）</h3>
+<ol>
+<li>让 AI 给 <code>LaserMapping.cpp</code> 的每个函数生成一行注释。</li>
+<li><strong>你逐条对照源码核对</strong>：函数名、参数、调用关系对得上吗？</li>
+<li>修正后输出"模块注释版"，提交 git。</li>
+<li><strong>考核标准</strong>：不看代码能讲出 5 个模块各干什么、彼此怎么衔接。</li>
+</ol>
+<blockquote>
+<p>一句话总结：<strong>FAST-LIO2 五模块 = IMU 处理 + 预处理 + 地图管理 + 主循环 + 回环接口；能讲清每模块的输入输出 = 这周过关。</strong></p>
+</blockquote>
+<h3 id="14">1.4 自测</h3>
+<ol>
+<li>五模块各是什么？</li>
+<li>predict 和 update 各干什么？</li>
+<li>主循环里"订阅—回调—发布"的完整链路？</li>
+</ol>
+<hr />
+<h2 id="15">1.5 地图质量评估（覆盖资料任务，周五）</h2>
+<h3 id="151-vs">1.5.1 好地图 vs 坏地图</h3>
+<table>
+<thead>
+<tr>
+<th>质量指标</th>
+<th>好</th>
+<th>坏</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>点云厚度</td>
+<td>墙面薄（几厘米）</td>
+<td>厚/双层（重影）</td>
+</tr>
+<tr>
+<td>重影</td>
+<td>无</td>
+<td>物体多轮廓</td>
+</tr>
+<tr>
+<td>回环一致性</td>
+<td>走一圈回来，起点对得上</td>
+<td>起点错位（累积漂移）</td>
+</tr>
+<tr>
+<td>动态物体</td>
+<td>被剔除</td>
+<td>车/人留下的残影</td>
+</tr>
+</tbody>
+</table>
+<h3 id="152-6">1.5.2 融合质量检查清单（周五输出，≥6 项）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>融合质量检查清单（2026-xx-xx）
+□ 1. 前后雷达重合区：墙面厚度是否 ≤ 2×点云噪声？
+□ 2. 时间同步：两雷达时间戳差分布（均值/最大）是否在阈值内？
+□ 3. 外参自洽：单雷达建图 vs 双雷达建图，特征点位置差？
+□ 4. 动态剔除：移动物体是否消失/残影？
+□ 5. 重影检查：静态场景绕行一圈，回环闭合误差？
+□ 6. 点密度：融合后各区域密度均匀吗？
+□ 7. 退化场景：长走廊/玻璃墙段，地图质量是否劣化？
+</code></pre></div>
+
+<blockquote>
+<p>一句话总结：<strong>地图质量看厚度、重影、回环一致性、动态残留；融合质量用 6+ 项清单逐条过。</strong></p>
+</blockquote>
+<h3 id="15_1">1.5 自测</h3>
+<ol>
+<li>四个质量指标各是什么？</li>
+<li>"回环一致性"怎么检查？</li>
+<li>你清单里最实用的 3 条？</li>
+</ol>
+<hr />
+<h1 id="2">第 2 章 实操部分</h1>
+<h2 id="20">2.0 记录平台外参来源（周一）</h2>
+<p>查你们平台：前后雷达安装位置、现有外参从哪来（出厂？手测？标定？）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>平台外参记录（2026-xx-xx）
+- 前雷达：位置（x,y,z），朝向，外参来源（...）
+- 后雷达：位置（x,y,z），朝向，外参来源（...）
+- 雷达-IMU 外参：来源（...）
+- 现状问题：精度存疑？还是已知准确？
+</code></pre></div>
+
+<h2 id="21-bag-20">2.1 检查 bag 时间戳对齐（周二 20 分钟）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic"># 读 bag 两个雷达话题的时间戳，画差分布</span>
+<span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">rosbags.highlevel</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> AnyReader
+<span style="color: #008000; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">numpy</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">as</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">np</span><span style="color: #666">,</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">matplotlib.pyplot</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">as</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">plt</span>
+
+<span style="color: #008000; font-weight: bold">with</span> AnyReader([<span style="color: #BA2121">r&quot;你的bag&quot;</span>]) <span style="color: #008000; font-weight: bold">as</span> r:
+    ts_front, ts_back <span style="color: #666">=</span> [], []
+    <span style="color: #008000; font-weight: bold">for</span> c, t, raw <span style="color: #A2F; font-weight: bold">in</span> r<span style="color: #666">.</span>messages():
+        <span style="color: #008000; font-weight: bold">if</span> c<span style="color: #666">.</span>topic <span style="color: #666">==</span> <span style="color: #BA2121">&#39;/front/lidar&#39;</span>: ts_front<span style="color: #666">.</span>append(t)
+        <span style="color: #008000; font-weight: bold">if</span> c<span style="color: #666">.</span>topic <span style="color: #666">==</span> <span style="color: #BA2121">&#39;/back/lidar&#39;</span>:  ts_back<span style="color: #666">.</span>append(t)
+
+<span style="color: #3D7B7B; font-style: italic"># 时间戳单位是纳秒</span>
+ts_front <span style="color: #666">=</span> np<span style="color: #666">.</span>array(ts_front) <span style="color: #666">/</span> <span style="color: #666">1e9</span>
+ts_back <span style="color: #666">=</span> np<span style="color: #666">.</span>array(ts_back) <span style="color: #666">/</span> <span style="color: #666">1e9</span>
+
+<span style="color: #3D7B7B; font-style: italic"># 对每个前雷达帧，找最近的后雷达帧，算差</span>
+diffs <span style="color: #666">=</span> []
+<span style="color: #008000; font-weight: bold">for</span> tf <span style="color: #A2F; font-weight: bold">in</span> ts_front:
+    dt <span style="color: #666">=</span> np<span style="color: #666">.</span>abs(ts_back <span style="color: #666">-</span> tf)<span style="color: #666">.</span>min()
+    diffs<span style="color: #666">.</span>append(dt)
+plt<span style="color: #666">.</span>hist(diffs, bins<span style="color: #666">=50</span>)
+plt<span style="color: #666">.</span>xlabel(<span style="color: #BA2121">&#39;最近后雷达帧时间差 (s)&#39;</span>)
+plt<span style="color: #666">.</span>title(<span style="color: #BA2121">&#39;前后雷达时间戳对齐情况&#39;</span>)
+plt<span style="color: #666">.</span>savefig(<span style="color: #BA2121">&#39;time_sync_check.png&#39;</span>, dpi<span style="color: #666">=150</span>)
+<span style="color: #008000">print</span>(<span style="color: #BA2121">f&quot;平均差: </span><span style="color: #A45A77; font-weight: bold">{</span>np<span style="color: #666">.</span>mean(diffs)<span style="color: #666">*1000</span><span style="color: #A45A77; font-weight: bold">:</span><span style="color: #BA2121">.1f</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BA2121"> ms, 最大差: </span><span style="color: #A45A77; font-weight: bold">{</span>np<span style="color: #666">.</span>max(diffs)<span style="color: #666">*1000</span><span style="color: #A45A77; font-weight: bold">:</span><span style="color: #BA2121">.1f</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BA2121"> ms&quot;</span>)
+</code></pre></div>
+
+<p><strong>结论判断</strong>：平均差 &lt; 一个雷达帧周期的一半（如 10Hz → &lt;50ms）算可接受。</p>
+<h2 id="22-132">2.2 写双雷达融合方案（周三，见 1.3.2 模板）</h2>
+<h2 id="23-14">2.3 全模块精读（周四，见 1.4）</h2>
+<h2 id="24-152">2.4 融合质量检查（周五，见 1.5.2）</h2>
+<hr />
+<h1 id="3-45h">第 3 章 周六实验手册（4~5h）</h1>
+<h2 id="31-190">3.1 任务 1：双雷达外参标定（90 分钟，核心交付）</h2>
+<p><strong>方案 A（推荐，有真机 bag）</strong>：用公开的雷达-IMU 标定工具（如 <code>livox_calibration</code> 或云深处工具）跑一遍，输出外参 + 误差。</p>
+<p><strong>方案 B（没有工具时）</strong>：用手眼标定思路自己写最小二乘标定（用 Open3D/PCL 或让 AI 搭）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic"># 思路（方案 B 最小版）：</span>
+<span style="color: #3D7B7B; font-style: italic"># 1. 两雷达同时观测同一静态场景 N 次（不同位姿）</span>
+<span style="color: #3D7B7B; font-style: italic"># 2. 每次用 ICP 算两帧之间的相对运动</span>
+<span style="color: #3D7B7B; font-style: italic">#    - 前雷达：B_i（帧间变换）</span>
+<span style="color: #3D7B7B; font-style: italic">#    - 后雷达：A_i（帧间变换）</span>
+<span style="color: #3D7B7B; font-style: italic"># 3. 解 AX = XB（旋转用四元数最小二乘，平移类似）</span>
+<span style="color: #3D7B7B; font-style: italic">#    或直接用非线性优化：min Σ ‖B_i·X − X·A_i‖²（Ceres！第 4 周学的）</span>
+</code></pre></div>
+
+<p><strong>输出</strong>：外参结果（R、t）+ 误差（重投影残差均值）。</p>
+<p><strong>记录</strong>：数据量多少组 → 误差多少 → 增加数据量误差怎么变。</p>
+<h2 id="32-260">3.2 任务 2：融合实验（60 分钟）</h2>
+<ol>
+<li>用标定好的外参，把后雷达点云变换到前雷达系。</li>
+<li>体素降采样后输出融合点云。</li>
+<li>对比三张图：前雷达单独 / 后雷达单独 / 融合。</li>
+<li><strong>视野</strong>：融合后覆盖范围是否变大？</li>
+<li><strong>质量</strong>：重合区墙面厚度是否增加？</li>
+<li>输出对比图 + 3 条结论。</li>
+</ol>
+<h2 id="33-3fast-lio2-60">3.3 任务 3：FAST-LIO2 调参实验（60 分钟）</h2>
+<p><strong>用你的四足 bag 跑 FAST-LIO2（或仿真），每次只改一个参数，对比建图质量</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>试验值</th>
+<th>观察</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>地图下采样尺寸 down_sample_size</td>
+<td>0.05 / 0.1 / 0.2</td>
+<td>地图厚度/密度</td>
+</tr>
+<tr>
+<td>配准最大迭代 max_iteration</td>
+<td>1 / 3 / 5</td>
+<td>轨迹精度/耗时</td>
+</tr>
+<tr>
+<td>盲区 blind</td>
+<td>0.2 / 0.5</td>
+<td>近处重影</td>
+</tr>
+<tr>
+<td>IMU 噪声参数</td>
+<td>默认 / ×10</td>
+<td>轨迹抖动</td>
+</tr>
+</tbody>
+</table>
+<p><strong>输出</strong>：参数→建图质量对比图 + 每条一句话结论。</p>
+<h2 id="34-4-fast-lio2-60">3.4 任务 4：画 FAST-LIO2 全模块图（60 分钟）</h2>
+<p>按 1.4.1 画一份完整版（每模块标：输入、输出、关键函数、对应代码文件）。<strong>这是阶段二总结的一部分。</strong></p>
+<h2 id="35">3.5 周六检查清单</h2>
+<ul>
+<li>[ ] 外参标定完成 + 误差报告</li>
+<li>[ ] 融合对比图（视野/质量）</li>
+<li>[ ] 调参实验（≥3 组参数）</li>
+<li>[ ] 全模块图</li>
+<li>[ ] git 提交 ≥ 4 次</li>
+</ul>
+<hr />
+<h1 id="4-12h">第 4 章 周日复盘（1~2h）</h1>
+<h2 id="41">4.1 阶段二总结（本周核心交付）</h2>
+<p>写《我现在能讲清 FAST-LIO2 的哪条链路》：</p>
+<ol>
+<li>完整数据流（第 1 周图 + 现在能讲每步的数学和代码）。</li>
+<li>iEKF 更新链路：残差 → 雅可比 → 增量 → 流形更新。</li>
+<li>ikd-Tree：动态地图的增删查。</li>
+<li>外参/时间同步/融合 = 多传感器的"合体"前提。</li>
+<li>还差什么：回环（第 12 周）、退化检测细节。</li>
+</ol>
+<h2 id="42-bug-7">4.2 Bug 案例 #7（必须完成）</h2>
+<p><strong>前后雷达外参错位/点云错位问题</strong>：走五步法，填 <code>bug_cases/bug_007.md</code>。</p>
+<h2 id="43-15">4.3 下周预习（15 分钟）</h2>
+<p>第 9 周：图搜索（A<em>）+ costmap + Nav2 调参。先想：</em><em>"地图上一格一格，怎么找到最短路径？"</em><em> —— 让 AI 讲讲 A</em> 或看 Dijkstra 可视化。</p>
+<h2 id="44">4.4 周日自测</h2>
+<ol>
+<li>AX = XB 的标定思路？</li>
+<li>时间同步三种方案？</li>
+<li>融合四件事？</li>
+<li>FAST-LIO2 五模块？</li>
+<li>地图质量四个指标？</li>
+</ol>
+<hr />
+<h1 id="5">第 5 章 第八周验收清单</h1>
+<ul>
+<li>[ ] 手眼标定 AX=XB 概念</li>
+<li>[ ] 平台外参来源记录</li>
+<li>[ ] 时间同步方案 + bag 检查结果</li>
+<li>[ ] 融合方案一页（含重合区策略）</li>
+<li>[ ] FAST-LIO2 五模块精读 + AI 注释核对</li>
+<li>[ ] 地图质量检查清单（≥6 项）</li>
+<li>[ ] 外参标定实验 + 误差</li>
+<li>[ ] 融合对比实验</li>
+<li>[ ] 调参实验记录</li>
+<li>[ ] Bug 案例 #7 + 阶段二总结</li>
+<li>[ ] 每日自测 ≥ 60%</li>
+</ul>
+<p><strong>未达标</strong>：砍 2.1 时间戳 Python 细节（保留结论）。<strong>标定实验和融合实验不可砍。</strong></p>
+<hr />
+<h1 id="8">附录：术语表（第 8 周新增）</h1>
+<table>
+<thead>
+<tr>
+<th>术语</th>
+<th>大白话解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>外参</td>
+<td>两个传感器坐标系之间的变换</td>
+</tr>
+<tr>
+<td>手眼标定</td>
+<td>解 AX=XB 求固定外参</td>
+</tr>
+<tr>
+<td>时间同步</td>
+<td>让所有传感器用同一时间轴</td>
+</tr>
+<tr>
+<td>硬件时间戳</td>
+<td>传感器自带精确时钟</td>
+</tr>
+<tr>
+<td>PPS</td>
+<td>秒脉冲时钟同步</td>
+</tr>
+<tr>
+<td>软件同步</td>
+<td>按时间戳插值对齐</td>
+</tr>
+<tr>
+<td>坐标变换</td>
+<td>把点从一个坐标系换到另一个</td>
+</tr>
+<tr>
+<td>重合区</td>
+<td>两个雷达都看到的区域</td>
+</tr>
+<tr>
+<td>动态物体剔除</td>
+<td>去掉移动物体的点</td>
+</tr>
+<tr>
+<td>回环一致性</td>
+<td>走一圈回来起点是否对得上</td>
+</tr>
+<tr>
+<td>点云厚度</td>
+<td>墙面的"胖瘦"（重影 = 厚）</td>
+</tr>
+<tr>
+<td>残影</td>
+<td>动态物体留在图里的影子</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>教材说明：本教材自包含、零基础友好。外部资料（livox_calibration、FAST-LIO2 源码、云深处文档）仅作加深。每天学习结束后按"每日学习检测协议"让 AI 追问验证。</em></p>
+<footer>
+<p>四足机器狗导航算法 · 三个月学习计划 · 第 8 周教材</p>
+<p>每天学习结束后，按清单文末「每日学习检测协议」让 AI 追问验证</p>
+</footer>
+</div>
+<script>
+(function(){{
+  var toc = document.getElementById('toc-placeholder');
+  var heads = document.querySelectorAll('h2');
+  var list = document.createElement('ul');
+  heads.forEach(function(h){{
+    var id = h.id || ('h-' + h.textContent.replace(/[^\w\u4e00-\u9fa5]/g, '-').slice(0, 30));
+    h.id = id;
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    list.appendChild(li);
+  }});
+  toc.appendChild(list);
+}})();
+</script>
+</body>
+</html>

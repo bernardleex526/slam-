@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>第十二周学习教材：回环检测 + 综合项目 + 三个月复盘</title>
+<style>
+:root {{
+  --bg: #f7f5f0;
+  --card: #ffffff;
+  --ink: #1f2430;
+  --muted: #6b7280;
+  --accent: #b45309;
+  --accent-soft: #fef3c7;
+  --line: #e5e0d6;
+  --code-bg: #f4f1ea;
+  --table-head: #f0ece2;
+  --link: #92400e;
+}}
+* {{ box-sizing: border-box; }}
+html {{ -webkit-text-size-adjust: 100%; }}
+body {{
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-size: 16px;
+  line-height: 1.85;
+  word-break: break-word;
+}}
+.wrap {{ max-width: 46rem; margin: 0 auto; padding: 1.2rem 1.1rem 4rem; }}
+header.hero {{
+  background: linear-gradient(135deg, #7c2d12 0%, #b45309 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 1.6rem 1.4rem;
+  margin-bottom: 1.4rem;
+  box-shadow: 0 4px 14px rgba(124, 45, 18, .25);
+}}
+header.hero h1 {{ margin: 0 0 .4rem; font-size: 1.4rem; line-height: 1.4; }}
+header.hero p {{ margin: .2rem 0; font-size: .9rem; opacity: .92; }}
+.nav {{
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  margin-bottom: 1.4rem;
+}}
+.nav a {{
+  display: inline-block; padding: .3rem .7rem; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line);
+  color: var(--link); text-decoration: none; font-size: .82rem;
+}}
+.nav a.on {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
+.toc {{
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 1rem 1.2rem; margin-bottom: 1.6rem; font-size: .92rem;
+}}
+.toc summary {{ cursor: pointer; font-weight: 600; color: var(--accent); }}
+.toc a {{ color: var(--link); text-decoration: none; }}
+.toc a:hover {{ text-decoration: underline; }}
+h1 {{ font-size: 1.5rem; margin: 2.2rem 0 .8rem; padding-bottom: .4rem; border-bottom: 2px solid var(--accent); }}
+h2 {{ font-size: 1.22rem; margin: 1.8rem 0 .6rem; color: #7c2d12; }}
+h3 {{ font-size: 1.05rem; margin: 1.4rem 0 .5rem; }}
+h4 {{ font-size: .98rem; margin: 1.1rem 0 .4rem; color: #444; }}
+p {{ margin: .55rem 0; }}
+ul, ol {{ padding-left: 1.5rem; margin: .5rem 0; }}
+li {{ margin: .28rem 0; }}
+strong {{ color: #7c2d12; }}
+code {{
+  background: var(--code-bg); border-radius: 4px; padding: .12em .35em;
+  font-family: "SF Mono", Consolas, "Courier New", monospace; font-size: .88em; color: #8b4513;
+}}
+pre {{
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px;
+  padding: .9rem 1rem; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  font-size: .84rem; line-height: 1.6;
+}}
+pre code {{ background: none; padding: 0; color: inherit; }}
+blockquote {{
+  margin: .8rem 0; padding: .6rem 1rem; background: var(--accent-soft);
+  border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0;
+}}
+blockquote p {{ margin: .3rem 0; }}
+table {{
+  width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .9rem;
+  display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+}}
+th, td {{ border: 1px solid var(--line); padding: .45rem .6rem; text-align: left; vertical-align: top; }}
+th {{ background: var(--table-head); font-weight: 600; white-space: nowrap; }}
+hr {{ border: none; border-top: 1px solid var(--line); margin: 2rem 0; }}
+input[type="checkbox"] {{ transform: scale(1.2); margin-right: .4em; }}
+footer {{
+  margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: .82rem; text-align: center;
+}}
+</style>
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f8f8f8; }
+.codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+.codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #E40000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #008400 } /* Generic.Inserted */
+.codehilite .go { color: #717171 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #687822 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #800 } /* Name.Constant */
+.codehilite .nd { color: #A2F } /* Name.Decorator */
+.codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #00F } /* Name.Function */
+.codehilite .nl { color: #767600 } /* Name.Label */
+.codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #00F } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<h1>第十二周学习教材：回环检测 + 综合项目 + 三个月复盘</h1>
+<p>四足机器狗导航算法工程师 · 三个月学习计划</p>
+<p>零基础自包含版 · 手机阅读 · 单文件离线可用</p>
+</header>
+<nav class="nav">
+<a class="" href="第一周学习教材.html">W1</a>
+<a class="" href="第二周学习教材.html">W2</a>
+<a class="" href="第三周学习教材.html">W3</a>
+<a class="" href="第四周学习教材.html">W4</a>
+<a class="" href="第五周学习教材.html">W5</a>
+<a class="" href="第六周学习教材.html">W6</a>
+<a class="" href="第七周学习教材.html">W7</a>
+<a class="" href="第八周学习教材.html">W8</a>
+<a class="" href="第九周学习教材.html">W9</a>
+<a class="" href="第十周学习教材.html">W10</a>
+<a class="" href="第十一周学习教材.html">W11</a>
+<a class="on" href="第十二周学习教材.html">W12</a>
+</nav>
+<details class="toc" open>
+<summary>📑 目录（点击收起）</summary>
+<div id="toc-placeholder"></div>
+</details>
+<h1 id="_1">第十二周学习教材：回环检测 + 综合项目 + 三个月复盘（零基础版）</h1>
+<blockquote>
+<p>定位：四足机器狗（云深处）导航算法工程师
+周期：第 12 周（共 12 周）· 工作日 1.5~2h + 周六 4~5h 实验 + 周日 1~2h 复盘
+本周目标：<strong>理解 ScanContext 与位姿图优化；完成一个与工作直接相关的综合项目。</strong>
+本周交付：最终项目 + 三个月复盘报告 + 下一阶段计划</p>
+</blockquote>
+<hr />
+<h1 id="0">第 0 章 开课前必读</h1>
+<h2 id="01">0.1 本周学什么（一句话）</h2>
+<p><strong>最后的拼图</strong>：机器狗走一大圈回来，发现"起点和终点对不上"（累积漂移）——<strong>回环检测</strong>能认出"我又回到了这里"，然后<strong>整体修正</strong>，让地图首尾闭合。同时，本周你要完成<strong>三个月学习的毕业项目</strong>（二选一），并做三个月复盘。</p>
+<h2 id="02">0.2 学习进度表</h2>
+<table>
+<thead>
+<tr>
+<th>天</th>
+<th>读什么</th>
+<th>学完能干什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>周一</td>
+<td>1.0–1.1 + 2.0</td>
+<td>懂 ScanContext 思想；读 scancontext 源码核心函数</td>
+</tr>
+<tr>
+<td>周二</td>
+<td>1.2 + 2.1</td>
+<td>懂回环完整流程；画"回环→位姿图→优化"流程图</td>
+</tr>
+<tr>
+<td>周三</td>
+<td>1.3 + 2.2</td>
+<td>懂因子图与 GTSAM；跑通最小示例</td>
+</tr>
+<tr>
+<td>周四</td>
+<td>1.4 + 2.3</td>
+<td>最终项目集中开发（方案 A/B）</td>
+</tr>
+<tr>
+<td>周五</td>
+<td>1.4 + 2.4</td>
+<td>项目收尾（README/参数/演示）</td>
+</tr>
+<tr>
+<td>周六</td>
+<td>第 3 章 实验</td>
+<td>项目验收 + 对照表复盘 + Bug 案例整理</td>
+</tr>
+<tr>
+<td>周日</td>
+<td>第 4 章 复盘 + 第 5 章 验收</td>
+<td>三个月验收清单 + 下一阶段计划</td>
+</tr>
+</tbody>
+</table>
+<h2 id="03">0.3 本周主线问题</h2>
+<blockquote>
+<p><strong>走一大圈，怎么让地图"首尾接上"？</strong> —— ① 认出"这地方我见过"（回环检测，ScanContext）；② 把它当约束加进全局优化（位姿图/GTSAM）；③ 整体调整所有位姿，误差均匀摊开，地图闭合。</p>
+</blockquote>
+<hr />
+<h1 id="1">第 1 章 回环检测与位姿图优化</h1>
+<h2 id="10">1.0 问题：累积漂移</h2>
+<h3 id="101">1.0.1 为什么需要回环</h3>
+<p>机器狗建图走一大圈（比如 100 米）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>理想：回到起点时，起点重合。
+现实（无回环）：回到起点时，起点偏了 1 米！  ← 累积漂移（每步错一点点，攒起来）
+</code></pre></div>
+
+<p><strong>FAST-LIO2 本身没有回环</strong>（第 7 周学过：滤波式不保留历史帧）——它靠局部配准一路推，走远了必漂。<strong>回环检测 = 认出"我回到了熟悉的地方"→ 用这个信息把地图整体拉闭合。</strong></p>
+<h3 id="102">1.0.2 完整流程（先看全景，周二画图）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>① 回环检测：当前点云 vs 历史点云 → &quot;这地方我来过&quot;（相似度分数）
+② 几何验证：ICP 精配准当前帧与候选帧 → 得到回环约束（相对位姿）
+③ 拒绝误检：验证失败的（几何对不上）→ 丢掉
+④ 位姿图优化：把&quot;回环约束&quot;加进图里，整体优化所有位姿
+⑤ 地图更新：优化后的位姿重新投影点云 → 地图闭合
+</code></pre></div>
+
+<blockquote>
+<p>一句话总结：<strong>回环 = 认出旧地 → ICP 验证 → 加入优化 → 整体修正。没有它，地图走远了必漂。</strong></p>
+</blockquote>
+<h3 id="10_1">1.0 自测</h3>
+<ol>
+<li>累积漂移怎么产生的？</li>
+<li>回环完整 5 步流程？</li>
+<li>为什么"几何验证"能拒绝误检？</li>
+</ol>
+<hr />
+<h2 id="11-scancontext">1.1 ScanContext：给"一帧点云"造指纹（周一）</h2>
+<h3 id="111">1.1.1 问题</h3>
+<p>回环检测的难点：<strong>从几十万个点里，快速判断"这帧我见过吗"</strong>。逐点比较太慢（几十万×几十万）。ScanContext 的思路：<strong>把一帧点云压缩成一个"指纹"（描述子），比指纹就快了。</strong></p>
+<h3 id="112">1.1.2 怎么造指纹（三步）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>① 极坐标网格化：以雷达为圆心，把 360° 分成一圈圈扇区
+   （半径分成 20 圈 × 角度分成 60 扇区 = 1200 个格子）
+② 每个格子填&quot;该区域最高点的高度&quot;（一个数）
+   → 得到一个 20×60 的矩阵 = 这帧点云的&quot;指纹&quot;
+③ 为什么这个指纹好用：
+   - 只看高度 → 对旋转鲁棒（转 90° = 指纹列循环移位）
+   - 压缩了几十万点 → 一个 1200 数的矩阵（快！）
+</code></pre></div>
+
+<p><strong>指纹长这样（示意）</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>    扇区 0   扇区 1   ...   扇区 59
+环0  [3.2]  [3.1]  ...  [3.0]     ← 最内圈（离雷达近）
+环1  [2.5]  [2.6]  ...  [2.4]
+...
+环19 [0.3]  [0.2]  ...  [0.1]     ← 最外圈
+</code></pre></div>
+
+<h3 id="113">1.1.3 怎么比指纹</h3>
+<ul>
+<li><strong>Ring Key（一圈的压缩指纹）</strong>：每圈算一个哈希值（如最高点所在列）→ 先比 ring key 快速筛出候选（不用全比）。</li>
+<li><strong>相似度</strong>：两个指纹矩阵逐格比对（考虑列循环移位，即任意朝向），分数高 = 像。</li>
+</ul>
+<h3 id="114">1.1.4 读官方源码（周一任务）</h3>
+<p><code>github.com/SignalImageCV/scancontext</code>，核心函数：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>makeScancontext(...)      # 造指纹（找极坐标网格化 + 高度填充）
+makeRingkeyFromScancontext(...)  # 造圈指纹（快速筛选）
+distanceBtnScanContext(...)      # 比两个指纹的相似度
+</code></pre></div>
+
+<p><strong>记录</strong>：每个函数输入输出 + 一句"它干什么"。</p>
+<blockquote>
+<p>一句话总结：<strong>ScanContext = 把点云压成"极坐标高度指纹"；先比 ring key 快筛，再比相似度确认；转一圈指纹只是列移位，天然抗旋转。</strong></p>
+</blockquote>
+<h3 id="11">1.1 自测</h3>
+<ol>
+<li>为什么不能逐点比？（速度）</li>
+<li>指纹是怎么造的？（三步）</li>
+<li>为什么指纹抗旋转？</li>
+</ol>
+<hr />
+<h2 id="12">1.2 回环完整流程（周二）</h2>
+<h3 id="121">1.2.1 候选检索</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>每来一帧（或隔一段）：
+1. 造指纹
+2. 比 ring key：和历史所有帧的 ring key 比（哈希表，O(1) 级）
+3. 得到 top-k 候选（最像的几帧）
+4. 检查：候选帧与当前帧时间相隔够远吗？（太近 = 不是回环，是连续帧）
+5. 相似度 &gt; 阈值 → 候选通过
+</code></pre></div>
+
+<h3 id="122">1.2.2 几何验证（拒绝误检）</h3>
+<p><strong>为什么必须验证</strong>：指纹相似 ≠ 真回环（相似环境到处都是，如长的走廊）。用 <strong>ICP</strong>（第 7 周）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>用候选帧位姿做初值，ICP 配准当前帧与候选帧
+- 收敛且误差小（分数高）→ 真回环 → 约束 = ICP 求出的相对位姿
+- 不收敛/误差大 → 假回环 → 丢弃
+</code></pre></div>
+
+<h3 id="123-13">1.2.3 位姿图优化（第 1.3 节细讲）</h3>
+<p>把回环约束加进图 → 优化 → 地图闭合。</p>
+<h3 id="124">1.2.4 周二输出：流程图</h3>
+<p>画"回环检测 → 位姿图 → 优化"完整流程图（每框标输入输出）。</p>
+<blockquote>
+<p>一句话总结：<strong>回环流程 = ring key 快筛 → 相似度确认 → 时间检查 → ICP 几何验证 → 加入位姿图优化。每一步都在拒绝假回环。</strong></p>
+</blockquote>
+<h3 id="12_1">1.2 自测</h3>
+<ol>
+<li>ring key 为什么能快筛？</li>
+<li>为什么"时间相隔太近"的候选要排除？</li>
+<li>ICP 验证怎么拒绝误检？</li>
+</ol>
+<hr />
+<h2 id="13-gtsam">1.3 因子图与 GTSAM（周三）</h2>
+<h3 id="131-pose-graph">1.3.1 位姿图（Pose Graph）：把轨迹画成"珠子项链"</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>每个位姿 = 一颗珠子（节点）
+相邻位姿的相对变换 = 珠子间的线（边/约束）
+回环 = 一颗&quot;远端珠子&quot;和当前珠子之间突然加了一根线（回环约束）
+
+优化前：项链两端对不上（漂移）
+优化后：整体调整珠子位置，让所有&quot;线&quot;都尽量吻合 → 两端闭合
+</code></pre></div>
+
+<h3 id="132-factor-graph">1.3.2 因子图（Factor Graph）</h3>
+<p><strong>因子图 = 位姿图 + 观测约束</strong>（比位姿图更一般）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>变量节点：要估计的量（位姿）
+因子节点：约束/观测（相邻约束、回环约束、里程计、GPS...）
+</code></pre></div>
+
+<p><strong>读法</strong>：变量画圆、因子画方块、因子连接它涉及的变量。<strong>优化 = 调整变量，让所有因子描述的约束都尽量满足 = 最小二乘（第 4 周！）。</strong></p>
+<h3 id="133-gtsam">1.3.3 GTSAM（因子图库）</h3>
+<p><strong>GTSAM = 佐治亚理工的开源因子图库</strong>（SLAM 标配）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;gtsam/geometry/Pose2.h&gt;</span>
+<span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;gtsam/nonlinear/NonlinearFactorGraph.h&gt;</span>
+<span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;gtsam/nonlinear/LevenbergMarquardtOptimizer.h&gt;</span>
+<span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;gtsam/slam/BetweenFactor.h&gt;</span>
+
+<span style="color: #3D7B7B; font-style: italic">// 1. 建图</span>
+gtsam<span style="color: #666">::</span>NonlinearFactorGraph<span style="color: #BBB"> </span>graph;
+
+<span style="color: #3D7B7B; font-style: italic">// 2. 加约束：位姿0 到 位姿1 的相对变换（如向右 1m）</span>
+gtsam<span style="color: #666">::</span>Pose2<span style="color: #BBB"> </span><span style="color: #00F">pose01</span>(<span style="color: #666">1.0</span>,<span style="color: #BBB"> </span><span style="color: #666">0.0</span>,<span style="color: #BBB"> </span><span style="color: #666">0.0</span>);
+graph.add(gtsam<span style="color: #666">::</span>BetweenFactor<span style="color: #666">&lt;</span>gtsam<span style="color: #666">::</span>Pose2<span style="color: #666">&gt;</span>(<span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">1</span>,<span style="color: #BBB"> </span>pose01));
+
+<span style="color: #3D7B7B; font-style: italic">// 3. 初始猜测</span>
+gtsam<span style="color: #666">::</span>Values<span style="color: #BBB"> </span>initials;
+initials.insert(<span style="color: #666">0</span>,<span style="color: #BBB"> </span>gtsam<span style="color: #666">::</span>Pose2(<span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">0</span>,<span style="color: #BBB"> </span><span style="color: #666">0</span>));
+initials.insert(<span style="color: #666">1</span>,<span style="color: #BBB"> </span>gtsam<span style="color: #666">::</span>Pose2(<span style="color: #666">0.8</span>,<span style="color: #BBB"> </span><span style="color: #666">0.2</span>,<span style="color: #BBB"> </span><span style="color: #666">0.1</span>));<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 粗略猜</span>
+
+<span style="color: #3D7B7B; font-style: italic">// 4. 优化（LM，第 4 周学的！）</span>
+gtsam<span style="color: #666">::</span>LevenbergMarquardtOptimizer<span style="color: #BBB"> </span><span style="color: #00F">optimizer</span>(graph,<span style="color: #BBB"> </span>initials);
+gtsam<span style="color: #666">::</span>Values<span style="color: #BBB"> </span>result<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>optimizer.optimize();
+
+<span style="color: #3D7B7B; font-style: italic">// 5. 看结果</span>
+std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;位姿1优化后: &quot;</span><span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>result.at<span style="color: #666">&lt;</span>gtsam<span style="color: #666">::</span>Pose2<span style="color: #666">&gt;</span>(<span style="color: #666">1</span>)<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>std<span style="color: #666">::</span>endl;
+</code></pre></div>
+
+<p><strong>和你的知识连接</strong>：<code>BetweenFactor</code> = 约束；LM 优化 = 第 4 周；<code>Pose2(x, y, theta)</code> = 位置 + 朝向（平面）。<strong>你三个月学的所有东西在这里汇合了。</strong></p>
+<h3 id="134">1.3.4 跑通最小示例（周三任务）</h3>
+<p>官方最小示例（位姿图 2D）：让 AI 生成一个"3 个节点 + 1 个回环"的最小例子：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>节点 0 → 节点 1 → 节点 2（回到 0 附近）
+约束：相邻变换 + 回环约束（0↔2）
+初始猜测有误差 → 优化后回环闭合
+打印：优化前后误差对比
+</code></pre></div>
+
+<blockquote>
+<p>一句话总结：<strong>位姿图 = 珠子项链（位姿+约束）；因子图 = 位姿图+观测；GTSAM = 因子图优化库，加约束 → 优化 → 闭合。</strong></p>
+</blockquote>
+<h3 id="13">1.3 自测</h3>
+<ol>
+<li>位姿图的节点和边是什么？</li>
+<li>回环约束加进图后，优化怎么让它闭合？</li>
+<li>GTSAM 四步？（建图→加约束→初值→优化）</li>
+</ol>
+<hr />
+<h2 id="14">1.4 最终项目（周四~周六，本周重头戏）</h2>
+<h3 id="141">1.4.1 项目二选一</h3>
+<p><strong>方案 A：自定义 Nav2 controller 插件</strong></p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>目标：写一个最简单的局部控制器插件（比如&quot;沿路径直线跟随&quot;）
+内容：
+1. 继承 nav2_core::Controller 基类（第 4 周插件三步）
+2. 实现核心方法：
+   - configure()：读参数
+   - setPlan()：接收全局路径
+   - computeVelocityCommands()：★ 输出 cmd_vel（核心逻辑）
+     （最简单的实现：看路径前方点的方向 → 算转向角速度）
+3. 注册插件（宏 + XML）
+4. 配置：params yaml 里换用你的插件
+5. 单测：在仿真里让机器狗沿你的插件走一段直线/弧线
+</code></pre></div>
+
+<p><strong>方案 B：在 FAST-LIO2 fork 中实现/复现 ScanContext + PGO 回环</strong></p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>目标：给 FAST-LIO2 加回环
+内容：
+1. fork FAST-LIO2
+2. 实现 ScanContext 指纹生成 + 检索（参考官方代码，接入主循环）
+3. 实现回环约束 + GTSAM 位姿图优化（后端）
+4. 实验：绕圈 bag → 建图前后对比（回环闭合了吗？）
+</code></pre></div>
+
+<p><strong>选哪个</strong>：方案 A 更贴近你的日常工作（导航调参）；方案 B 更偏算法（建图）。<strong>工作需求优先选 A</strong>。</p>
+<h3 id="142-git">1.4.2 每天结束 git 提交一次（铁律）</h3>
+<p>周四~周六：<strong>每次工作结束必须提交</strong>，commit message 写"今天完成了什么/卡在哪"。</p>
+<h3 id="143-readme">1.4.3 项目模板（README 要求）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>项目名：
+- 简介：做什么、解决什么问题
+- 环境：系统/ROS2/依赖版本
+- 运行方法：编译、启动、实验步骤
+- 结果：演示截图/数据/指标
+- 参数说明：改了哪些参数、含义
+- 已知限制：还没解决什么
+- 后续计划
+</code></pre></div>
+
+<hr />
+<h1 id="2">第 2 章 实操部分</h1>
+<h2 id="20-scancontext-114">2.0 读 scancontext 源码（周一，见 1.1.4）</h2>
+<h2 id="21-124">2.1 画回环流程（周二，见 1.2.4）</h2>
+<h2 id="22-gtsam-134">2.2 GTSAM 最小示例（周三，见 1.3.4）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic"># 安装 GTSAM</span>
+sudo<span style="color: #BBB"> </span>apt<span style="color: #BBB"> </span>install<span style="color: #BBB"> </span>ros-jazzy-gtsam<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic"># 或源码编译</span>
+</code></pre></div>
+
+<h2 id="23-3">2.3 项目集中开发（周四，3 小时）</h2>
+<p><strong>周四固定节奏</strong>：
+- 前 30 分钟：整理方案（你要做什么、接口是什么）
+- 中间 2 小时：写核心代码（方案 A：computeVelocityCommands；方案 B：指纹+检索）
+- 最后 30 分钟：git 提交 + 记录"卡点"</p>
+<p><strong>卡住了怎么办</strong>：五步法（第 4 周）→ 拆最小问题 → 问 AI（让 AI 解释它给的代码，不要直接抄）→ 复现验证。</p>
+<h2 id="24">2.4 项目收尾（周五）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>1. 写 README（模板见 1.4.3）
+2. 录演示视频（5 分钟讲解稿：我做了什么→怎么做的→结果→局限）
+3. 最后的 git 提交（tag 一下：v1.0）
+</code></pre></div>
+
+<hr />
+<h1 id="3-45h">第 3 章 周六实验手册（4~5h）</h1>
+<h2 id="31-190">3.1 任务 1：项目验收（90 分钟）</h2>
+<p>对照你自己的 README 验收：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>验收单（2026-xx-xx）
+□ 项目能按 README 跑通（干净环境从零执行）
+□ 演示：录屏 + 讲解稿念一遍（5 分钟）
+□ 结果图/数据：路径截图 or 回环闭合对比图
+□ 单测/验证：改参数有预期变化？
+□ 已知限制写清楚
+</code></pre></div>
+
+<h2 id="32-240">3.2 任务 2：对照"参数→行为对照表"完整复盘（40 分钟）</h2>
+<p>把三个月攒的对照表 v2（≥15 参数）从头过一遍，每个参数问自己：<strong>现在能不看笔记说出它的原理吗？</strong> 说不出的标红，回看对应周教材。</p>
+<h2 id="33-3bug-60">3.3 任务 3：Bug 案例库整理成正式文档（60 分钟）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>1. 数一数 bug_cases/ 有几个案例（目标 ≥12）
+2. 按模块分类（定位/建图/规划/控制/ROS2）
+3. 挑 3 个最有代表性的，写&quot;复盘升级版&quot;：
+   - 当时卡了多久？卡在哪一步？
+   - 现在重新做，能多快？
+   - 给一个月前自己的建议？
+4. 输出正式文档《Bug 案例库（3 个月）》
+</code></pre></div>
+
+<h2 id="34-430">3.4 任务 4：演示彩排（30 分钟）</h2>
+<p>录屏 + 念稿 + 自己看一遍 → 修改 → 完成。</p>
+<h2 id="35">3.5 周六检查清单</h2>
+<ul>
+<li>[ ] 项目验收全部打勾</li>
+<li>[ ] 对照表复盘完成</li>
+<li>[ ] Bug 案例 ≥12（正式文档）</li>
+<li>[ ] 演示视频完成</li>
+<li>[ ] git tag v1.0</li>
+</ul>
+<hr />
+<h1 id="4-12h">第 4 章 周日复盘（1~2h）：三个月总结</h1>
+<h2 id="41">4.1 三个月验收清单（逐项自评，必须诚实）</h2>
+<p>对照原清单文末，逐项打勾：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>三个月验收清单（2026-xx-xx）
+□ 能不看文档讲出 FAST-LIO2 完整数据流
+□ 能讲出 Nav2 从目标到 cmd_vel 的完整链路
+□ 能说出云深处机器狗主要接口话题与四足运动约束
+□ 完成双雷达外参标定与融合实验并写出评估报告
+□ 参数→行为对照表 ≥15 个参数
+□ Bug 案例库 ≥12 个（其中四足专属 ≥5）
+□ 完成最终项目（方案 A/B）
+□ 能对 AI 生成的代码逐行审查并指出错误
+□ 能演示 recovery behaviors 全流程 + 定位失效降级思路
+□ 能说清 LIO 地图 → 导航地图工作流与常见坑
+□ 能用一句话说清 FAST-LIO2 为什么在流形上做迭代更新
+□ 量化指标：仿真导航成功率 ≥90%、Bug 平均定位 ≤2h
+□ 完成复盘 + 下一阶段计划
+</code></pre></div>
+
+<p><strong>没打勾的怎么办</strong>：写进下一阶段计划（4.2），不要假装会。</p>
+<h2 id="42">4.2 下一阶段计划（中级路线）</h2>
+<p>写一个明确的下一阶段计划（从清单建议展开）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>下一阶段计划（2026-xx-xx）
+目标：从&quot;看懂&quot;到&quot;能设计&quot;
+1. 数学：手推 Barfoot《状态估计》（第 2~7 章，每周 2h）
+2. 视觉：视觉惯性里程计（VINS-Mono 精读）
+3. 实践：闭卷重写 FAST-LIO2 前端（不看源码，自己写 iEKF + 配准）
+4. 工作：真机导航成功率提升到 95%+（对照表 v3）
+5. 每周节奏：源码阅读 + 主线路 + Bug 案例（同前）
+</code></pre></div>
+
+<h2 id="43">4.3 给自己写一封信（存档）</h2>
+<p><strong>任务</strong>：写一封"三个月后想成为什么样的人"的信（写给三个月前的自己 / 三个月后的自己），存档。不用长，真诚即可。<strong>三个月后回来读。</strong></p>
+<h2 id="44">4.4 周日自测（最终）</h2>
+<ol>
+<li>回环 5 步流程？</li>
+<li>ScanContext 指纹怎么造？</li>
+<li>位姿图优化解决什么问题？</li>
+<li>你项目里最难的一个点 + 你怎么解决的？</li>
+<li>三个月前 → 现在，你最强的三样东西？</li>
+</ol>
+<hr />
+<h1 id="5">第 5 章 第十二周验收清单</h1>
+<ul>
+<li>[ ] ScanContext 原理 + 源码核心函数</li>
+<li>[ ] 回环流程 + 流程图</li>
+<li>[ ] 几何验证（ICP）拒绝误检</li>
+<li>[ ] 位姿图/因子图/GTSAM 最小示例</li>
+<li>[ ] 最终项目完成（README + 演示 + 单测）</li>
+<li>[ ] 每天 git 提交</li>
+<li>[ ] 三个月验收清单逐项自评</li>
+<li>[ ] 下一阶段计划</li>
+<li>[ ] 给自己的一封信</li>
+<li>[ ] Bug 案例库 ≥12（正式文档）</li>
+<li>[ ] 对照表复盘</li>
+<li>[ ] 每日自测 ≥ 60%</li>
+</ul>
+<hr />
+<h1 id="12_2">附录：术语表（第 12 周新增）</h1>
+<table>
+<thead>
+<tr>
+<th>术语</th>
+<th>大白话解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>累积漂移</td>
+<td>每步错一点，攒起来变成大错</td>
+</tr>
+<tr>
+<td>回环检测</td>
+<td>认出"这地方我来过"</td>
+</tr>
+<tr>
+<td>ScanContext</td>
+<td>点云的极坐标高度指纹</td>
+</tr>
+<tr>
+<td>Ring Key</td>
+<td>每圈的快速哈希指纹</td>
+</tr>
+<tr>
+<td>描述子</td>
+<td>数据的压缩"指纹"</td>
+</tr>
+<tr>
+<td>候选检索</td>
+<td>先筛出可能回环的帧</td>
+</tr>
+<tr>
+<td>几何验证</td>
+<td>ICP 确认是否真回环</td>
+</tr>
+<tr>
+<td>误检</td>
+<td>假回环（相似但不同地方）</td>
+</tr>
+<tr>
+<td>位姿图</td>
+<td>位姿=珠子、约束=线的图</td>
+</tr>
+<tr>
+<td>因子图</td>
+<td>位姿图 + 观测约束</td>
+</tr>
+<tr>
+<td>BetweenFactor</td>
+<td>两节点间的相对变换约束</td>
+</tr>
+<tr>
+<td>GTSAM</td>
+<td>因子图优化库</td>
+</tr>
+<tr>
+<td>后端优化</td>
+<td>对整条轨迹做整体优化</td>
+</tr>
+<tr>
+<td>回环闭合</td>
+<td>地图首尾接上</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="_2">附：三个月总复习地图（一周回看一页）</h1>
+<table>
+<thead>
+<tr>
+<th>周</th>
+<th>核心一句话</th>
+<th>回看</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>W1</td>
+<td>矩阵 = 变形说明书；坐标 = 配方</td>
+<td>第 1 周教材</td>
+</tr>
+<tr>
+<td>W2</td>
+<td>雅可比 = 变化一览表；点云畸变 = 位姿在变</td>
+<td>第 2 周教材</td>
+</tr>
+<tr>
+<td>W3</td>
+<td>贝叶斯 = 新证据更新信念；Kalman = 预测+更新循环</td>
+<td>第 3 周教材</td>
+</tr>
+<tr>
+<td>W4</td>
+<td>优化 = 反复算误差→改参数；五步法 = 调试骨架</td>
+<td>第 4 周教材</td>
+</tr>
+<tr>
+<td>W5</td>
+<td>Nav2 四大件：BT→全局→局部→底盘</td>
+<td>第 5 周教材</td>
+</tr>
+<tr>
+<td>W6</td>
+<td>EKF = 多变量 Kalman；四足漂移 = 打滑/浮动/航向</td>
+<td>第 6 周教材</td>
+</tr>
+<tr>
+<td>W7</td>
+<td>配准 = 对应→变换→迭代；ikd-Tree = 动态地图</td>
+<td>第 7 周教材</td>
+</tr>
+<tr>
+<td>W8</td>
+<td>外参 = 坐标系关系；融合 = 变换+采样+重合区</td>
+<td>第 8 周教材</td>
+</tr>
+<tr>
+<td>W9</td>
+<td>A* = g+h 搜索；参数→行为 = 调试武器</td>
+<td>第 9 周教材</td>
+</tr>
+<tr>
+<td>W10</td>
+<td>Hybrid A<em> = 带运动学的 A</em>；四足 = 宽度+转弯+地形</td>
+<td>第 10 周教材</td>
+</tr>
+<tr>
+<td>W11</td>
+<td>DWA/TEB = 每秒怎么走；防抖五板斧</td>
+<td>第 11 周教材</td>
+</tr>
+<tr>
+<td>W12</td>
+<td>回环 = 认旧地+验证+整体修正</td>
+<td>第 12 周教材</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>教材说明：本教材自包含、零基础友好。外部资料（ScanContext 论文、GTSAM 教程、《Factor Graphs for Robot Perception》）仅作加深。每天学习结束后按"每日学习检测协议"让 AI 追问验证。三个月结束，恭喜你！</em></p>
+<footer>
+<p>四足机器狗导航算法 · 三个月学习计划 · 第 12 周教材</p>
+<p>每天学习结束后，按清单文末「每日学习检测协议」让 AI 追问验证</p>
+</footer>
+</div>
+<script>
+(function(){{
+  var toc = document.getElementById('toc-placeholder');
+  var heads = document.querySelectorAll('h2');
+  var list = document.createElement('ul');
+  heads.forEach(function(h){{
+    var id = h.id || ('h-' + h.textContent.replace(/[^\w\u4e00-\u9fa5]/g, '-').slice(0, 30));
+    h.id = id;
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    list.appendChild(li);
+  }});
+  toc.appendChild(list);
+}})();
+</script>
+</body>
+</html>

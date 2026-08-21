@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>第四周学习教材：优化 + ROS2 进阶 + 调试方法论</title>
+<style>
+:root {{
+  --bg: #f7f5f0;
+  --card: #ffffff;
+  --ink: #1f2430;
+  --muted: #6b7280;
+  --accent: #b45309;
+  --accent-soft: #fef3c7;
+  --line: #e5e0d6;
+  --code-bg: #f4f1ea;
+  --table-head: #f0ece2;
+  --link: #92400e;
+}}
+* {{ box-sizing: border-box; }}
+html {{ -webkit-text-size-adjust: 100%; }}
+body {{
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-size: 16px;
+  line-height: 1.85;
+  word-break: break-word;
+}}
+.wrap {{ max-width: 46rem; margin: 0 auto; padding: 1.2rem 1.1rem 4rem; }}
+header.hero {{
+  background: linear-gradient(135deg, #7c2d12 0%, #b45309 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 1.6rem 1.4rem;
+  margin-bottom: 1.4rem;
+  box-shadow: 0 4px 14px rgba(124, 45, 18, .25);
+}}
+header.hero h1 {{ margin: 0 0 .4rem; font-size: 1.4rem; line-height: 1.4; }}
+header.hero p {{ margin: .2rem 0; font-size: .9rem; opacity: .92; }}
+.nav {{
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  margin-bottom: 1.4rem;
+}}
+.nav a {{
+  display: inline-block; padding: .3rem .7rem; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line);
+  color: var(--link); text-decoration: none; font-size: .82rem;
+}}
+.nav a.on {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
+.toc {{
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 1rem 1.2rem; margin-bottom: 1.6rem; font-size: .92rem;
+}}
+.toc summary {{ cursor: pointer; font-weight: 600; color: var(--accent); }}
+.toc a {{ color: var(--link); text-decoration: none; }}
+.toc a:hover {{ text-decoration: underline; }}
+h1 {{ font-size: 1.5rem; margin: 2.2rem 0 .8rem; padding-bottom: .4rem; border-bottom: 2px solid var(--accent); }}
+h2 {{ font-size: 1.22rem; margin: 1.8rem 0 .6rem; color: #7c2d12; }}
+h3 {{ font-size: 1.05rem; margin: 1.4rem 0 .5rem; }}
+h4 {{ font-size: .98rem; margin: 1.1rem 0 .4rem; color: #444; }}
+p {{ margin: .55rem 0; }}
+ul, ol {{ padding-left: 1.5rem; margin: .5rem 0; }}
+li {{ margin: .28rem 0; }}
+strong {{ color: #7c2d12; }}
+code {{
+  background: var(--code-bg); border-radius: 4px; padding: .12em .35em;
+  font-family: "SF Mono", Consolas, "Courier New", monospace; font-size: .88em; color: #8b4513;
+}}
+pre {{
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px;
+  padding: .9rem 1rem; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  font-size: .84rem; line-height: 1.6;
+}}
+pre code {{ background: none; padding: 0; color: inherit; }}
+blockquote {{
+  margin: .8rem 0; padding: .6rem 1rem; background: var(--accent-soft);
+  border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0;
+}}
+blockquote p {{ margin: .3rem 0; }}
+table {{
+  width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .9rem;
+  display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+}}
+th, td {{ border: 1px solid var(--line); padding: .45rem .6rem; text-align: left; vertical-align: top; }}
+th {{ background: var(--table-head); font-weight: 600; white-space: nowrap; }}
+hr {{ border: none; border-top: 1px solid var(--line); margin: 2rem 0; }}
+input[type="checkbox"] {{ transform: scale(1.2); margin-right: .4em; }}
+footer {{
+  margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: .82rem; text-align: center;
+}}
+</style>
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f8f8f8; }
+.codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+.codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #E40000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #008400 } /* Generic.Inserted */
+.codehilite .go { color: #717171 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #687822 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #800 } /* Name.Constant */
+.codehilite .nd { color: #A2F } /* Name.Decorator */
+.codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #00F } /* Name.Function */
+.codehilite .nl { color: #767600 } /* Name.Label */
+.codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #00F } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<h1>第四周学习教材：优化 + ROS2 进阶 + 调试方法论</h1>
+<p>四足机器狗导航算法工程师 · 三个月学习计划</p>
+<p>零基础自包含版 · 手机阅读 · 单文件离线可用</p>
+</header>
+<nav class="nav">
+<a class="" href="第一周学习教材.html">W1</a>
+<a class="" href="第二周学习教材.html">W2</a>
+<a class="" href="第三周学习教材.html">W3</a>
+<a class="on" href="第四周学习教材.html">W4</a>
+<a class="" href="第五周学习教材.html">W5</a>
+<a class="" href="第六周学习教材.html">W6</a>
+<a class="" href="第七周学习教材.html">W7</a>
+<a class="" href="第八周学习教材.html">W8</a>
+<a class="" href="第九周学习教材.html">W9</a>
+<a class="" href="第十周学习教材.html">W10</a>
+<a class="" href="第十一周学习教材.html">W11</a>
+<a class="" href="第十二周学习教材.html">W12</a>
+</nav>
+<details class="toc" open>
+<summary>📑 目录（点击收起）</summary>
+<div id="toc-placeholder"></div>
+</details>
+<h1 id="ros2">第四周学习教材：优化 + ROS2 进阶 + 调试方法论（零基础版）</h1>
+<blockquote>
+<p>定位：四足机器狗（云深处）导航算法工程师
+周期：第 4 周（共 12 周）· 工作日 1.5~2h + 周六 4~5h 实验 + 周日 1~2h 复盘
+本周目标：<strong>会用 Gauss-Newton/LM/Ceres 解最小二乘；掌握 ROS2 高级机制；建立自己的调试流程。</strong>
+本周交付：曲线拟合三版对比工程 + action demo + Bug 案例 #3 + 阶段一总结</p>
+</blockquote>
+<hr />
+<h1 id="0">第 0 章 开课前必读</h1>
+<h2 id="01">0.1 本周学什么（一句话）</h2>
+<p>上一周学会了 Kalman（滤波：按时间一步步猜位置）。本周学<strong>优化</strong>：一次性调整一堆参数，让"误差总和"最小——这是<strong>配准/建图/标定</strong>的通用工具。同时把 ROS2 的高级机制（action/QoS/lifecycle）补齐，最后建立你自己的<strong>调试方法论</strong>。</p>
+<h2 id="02">0.2 学习进度表</h2>
+<table>
+<thead>
+<tr>
+<th>天</th>
+<th>读什么</th>
+<th>学完能干什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>周一</td>
+<td>1.0–1.1 + 2.0</td>
+<td>懂最小二乘、Gauss-Newton 思想；跑通 Ceres 例 1–2</td>
+</tr>
+<tr>
+<td>周二</td>
+<td>1.2 + 2.1</td>
+<td>懂 LM 阻尼；跑通 Ceres 曲线拟合；懂 QoS/lifecycle</td>
+</tr>
+<tr>
+<td>周三</td>
+<td>1.3 + 3.1</td>
+<td>懂信息矩阵；读 FAST-LIO2 迭代更新段；写注释</td>
+</tr>
+<tr>
+<td>周四</td>
+<td>1.4 + 2.2–2.3</td>
+<td>用 Ceres 写自定义残差；bag 深用；PlotJuggler</td>
+</tr>
+<tr>
+<td>周五</td>
+<td>1.5 + 2.4</td>
+<td>调试五步法；看懂 Nav2 插件机制</td>
+</tr>
+<tr>
+<td>周六</td>
+<td>第 4 章 实验</td>
+<td>曲线拟合三版对比、action demo、PlotJuggler 分析</td>
+</tr>
+<tr>
+<td>周日</td>
+<td>第 5 章 复盘 + 第 6 章 验收</td>
+<td>Bug 案例 #3、阶段一总结</td>
+</tr>
+</tbody>
+</table>
+<h2 id="03">0.3 本周主线问题</h2>
+<blockquote>
+<p><strong>"让误差最小"这件事，数学上怎么做？</strong> —— 从一个初始猜测出发，反复"算误差 → 求改进方向 → 迈一小步"，直到误差不再变小。这就是本周全部内容。</p>
+</blockquote>
+<hr />
+<h1 id="1">第 1 章 优化：找"最好"的数学</h1>
+<h2 id="10">1.0 预备：最小二乘是什么</h2>
+<h3 id="101">1.0.1 先打比方：拟合直线</h3>
+<p>给你一堆点（身高 vs 体重），想画一条直线 y = kx + b 描述规律。哪条线最好？<strong>"每个点到直线的距离加起来最小"的那条。</strong></p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>误差函数（代价函数）：E(k, b) = Σ (预测值 − 真值)²
+每个点：预测值 = k·x + b，真值 = y
+</code></pre></div>
+
+<p>"每个误差平方后求和" = <strong>最小二乘</strong>（平方 = 二乘）。为什么平方？① 正负不抵消；② 误差大的惩罚更重；③ 和"噪声是高斯"的假设完美匹配（高斯噪声下，最小二乘 = 最可能）。</p>
+<h3 id="102">1.0.2 和机器狗的关系</h3>
+<p>SLAM 里几乎所有"求解"都是最小二乘：</p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>误差是什么</th>
+<th>要优化的变量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>曲线拟合</td>
+<td>点到曲线距离</td>
+<td>k, b</td>
+</tr>
+<tr>
+<td>点云配准</td>
+<td>点到面距离（第 1 周学过！）</td>
+<td>位姿 R, t</td>
+</tr>
+<tr>
+<td>双雷达标定</td>
+<td>同一特征点投影差</td>
+<td>外参</td>
+</tr>
+<tr>
+<td>回环优化</td>
+<td>同一位置两次观测的差</td>
+<td>所有位姿</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>一句话总结：<strong>最小二乘 = 找让"误差平方和"最小的参数；SLAM 的求解基本全是它。</strong></p>
+</blockquote>
+<h3 id="10_1">1.0 自测</h3>
+<ol>
+<li>为什么误差要平方？</li>
+<li>配准问题里，误差和变量各是什么？</li>
+</ol>
+<hr />
+<h2 id="11-gauss-newton">1.1 Gauss-Newton：迭代下山（本周核心）</h2>
+<h3 id="111">1.1.1 先打比方：蒙眼下山</h3>
+<p>你站在山上（误差大），想走到谷底（误差最小），但看不见路。怎么办？——<strong>感受脚下的坡，往"下坡"方向迈一步，再感受，再迈一步</strong>。反复走，直到脚下是平的。</p>
+<ul>
+<li><strong>方向</strong> = 误差函数的"坡度"（导数/雅可比）。</li>
+<li><strong>步长</strong> = 怎么决定走多大？Gauss-Newton 用二阶信息（雅可比平方）估算"谷底在哪"，直接一步跳向估算的谷底。</li>
+</ul>
+<h3 id="112">1.1.2 数学（记住思路，公式能对照代码即可）</h3>
+<p>目标：min ‖f(x)‖²（f = 残差向量）。</p>
+<p><strong>泰勒展开</strong>（把 f 在 x 附近展开成线性近似）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>f(x + Δx) ≈ f(x) + J·Δx        （J = 雅可比矩阵，第 2 周学的！）
+</code></pre></div>
+
+<p>把近似代入误差函数，对 Δx 求导置零，得到<strong>增量方程</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>(JᵀJ)·Δx = −Jᵀ·f
+       ↑         ↑
+   信息矩阵     右端项（梯度方向）
+</code></pre></div>
+
+<p><strong>算法循环</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>1. 算残差 f（当前参数下，误差是多少）
+2. 算雅可比 J（参数变一点，残差变多少）
+3. 解增量方程 (JᵀJ)Δx = −Jᵀf，得到改进方向 Δx
+4. 更新：x ← x + Δx
+5. 重复，直到 Δx 很小（收敛）或达到迭代上限
+</code></pre></div>
+
+<h3 id="113">1.1.3 数字例子：拟合直线（跟着算一遍）</h3>
+<p>数据：点 (1,2)、(2,3)、(3,5)。模型 y = kx + b，要优化 x = (k, b)。</p>
+<ul>
+<li>残差：r₁ = k·1+b−2，r₂ = k·2+b−3，r₃ = k·3+b−5。</li>
+<li>初始猜：k=0, b=0。</li>
+<li>雅可比 J（对 k、b 求偏导）：第 i 行 = (xᵢ, 1)：</li>
+</ul>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>J = | 1  1 |
+    | 2  1 |
+    | 3  1 |
+</code></pre></div>
+
+<ul>
+<li>残差 f = (−2, −3, −5)。</li>
+</ul>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>JᵀJ = | 14  6 |      Jᵀf = | −23 |
+       |  6  3 |            | −10 |
+解 (JᵀJ)Δx = −Jᵀf：
+| 14  6 | |Δk|   | 23 |
+|  6  3 | |Δb| = | 10 |
+→ Δk ≈ 1.5, Δb ≈ 0.33
+更新：k = 1.5, b = 0.33
+</code></pre></div>
+
+<p>继续迭代（代码里让循环做），最终收敛到 k≈1.5, b≈0.5（验证：y = 1.5x + 0.5，三个点残差 −0.5、0.5、0）。</p>
+<blockquote>
+<p>一句话总结：<strong>Gauss-Newton = 反复"算残差+雅可比 → 解增量方程 → 更新"，误差逐步变小直到收敛。增量方程里的 JᵀJ 叫信息矩阵。</strong></p>
+</blockquote>
+<h3 id="11">1.1 自测</h3>
+<ol>
+<li>增量方程是什么？JᵀJ 叫什么？</li>
+<li>Gauss-Newton 循环的四步？</li>
+<li>拟合直线例子，初始 k=0,b=0 第一步算出的 Δk 是多少？</li>
+</ol>
+<hr />
+<h2 id="12-levenberg-marquardtlm">1.2 Levenberg-Marquardt（LM）：给下山加"刹车"</h2>
+<h3 id="121">1.2.1 问题</h3>
+<p>Gauss-Newton 步子太自信（直接跳向估算谷底）。如果初始猜测离谷底太远、或雅可比不准，<strong>可能跳过头甚至发散</strong>。怎么防？</p>
+<p><strong>LM = 在增量方程里加一个"阻尼项"</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>(JᵀJ + λ·I)·Δx = −Jᵀf
+       ↑
+    阻尼系数 λ（刹车）
+</code></pre></div>
+
+<ul>
+<li><strong>λ 大</strong>：方程接近 (λI)Δx = −Jᵀf → Δx 指向"最陡下坡"方向（梯度下降，保守、慢、稳）。</li>
+<li><strong>λ 小</strong>：方程接近 Gauss-Newton（快、自信）。</li>
+<li><strong>自适应</strong>：如果这一步让误差变小 → λ 减小（放心大步走）；误差变大 → λ 增大（刹车，退回）。</li>
+</ul>
+<blockquote>
+<p>比喻：<strong>GN 是闭眼直冲，LM 是"冲一步看看，歪了就刹"</strong>。实际工程几乎都用 LM（Ceres 默认）。</p>
+</blockquote>
+<h3 id="122">1.2.2 和机器狗的关系</h3>
+<p>FAST-LIO2 的迭代更新本质就是 LM/GN 思想（在流形上迭代）。Ceres（谷歌的开源优化库）是工业级实现——<strong>你不需要自己写矩阵求解，Ceres 全包</strong>。</p>
+<blockquote>
+<p>一句话总结：<strong>LM = GN + 阻尼 λ；误差变小就松刹车，变大就踩刹车；实际工程默认用 LM。</strong></p>
+</blockquote>
+<h3 id="12">1.2 自测</h3>
+<ol>
+<li>LM 和 GN 的区别？（一个式子说明）</li>
+<li>λ 大时接近什么方法？为什么？</li>
+<li>为什么说 LM 更稳？</li>
+</ol>
+<hr />
+<h2 id="13">1.3 信息矩阵与协方差的关系</h2>
+<h3 id="131">1.3.1 概念</h3>
+<ul>
+<li><strong>协方差 Σ</strong>：不确定度（大 = 没把握）。第 3 周学过。</li>
+<li><strong>信息矩阵 = 协方差的逆</strong>：<strong>Λ = Σ⁻¹</strong>（大 = 信息多 = 有把握）。</li>
+</ul>
+<p><strong>JᵀJ 为什么叫信息矩阵</strong>：在最小二乘里，(JᵀJ)⁻¹ ≈ 估计的协方差——<strong>JᵀJ 越"大"（特征值大），说明这个方向信息越多，估计越准。这和退化判断对上了（第 1 周：JᵀJ 行列式小 = 退化）。</strong></p>
+<h3 id="132">1.3.2 和机器狗的关系</h3>
+<ul>
+<li>定位结果输出"位姿 + 协方差"——协方差就是这么来的（配准问题解完，JᵀJ 求逆）。</li>
+<li><strong>退化检测</strong>：算 JᵀJ 的最小特征值，太小就报警"这个方向不可信"。</li>
+</ul>
+<blockquote>
+<p>一句话总结：<strong>信息矩阵 = 协方差的逆；JᵀJ 特征值小 = 那个方向信息不足 = 定位退化。</strong></p>
+</blockquote>
+<h3 id="13_1">1.3 自测</h3>
+<ol>
+<li>Λ 和 Σ 什么关系？</li>
+<li>为什么 JᵀJ 特征值小 = 退化？</li>
+</ol>
+<hr />
+<h2 id="14-ceres-ceres">1.4 Ceres：开箱即用的优化库（覆盖 Ceres 教程任务）</h2>
+<h3 id="141-ceres">1.4.1 Ceres 是什么</h3>
+<p><strong>Ceres = 谷歌开源的 C++ 优化库</strong>：你只要告诉它"残差怎么算、参数是什么"，它自动做 GN/LM 迭代。SLAM 里几乎所有开源项目（FAST-LIO2 的兄弟项目、VINS、部分建图工具）都用它。</p>
+<h3 id="142">1.4.2 最小用法：曲线拟合（本周任务）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;ceres/ceres.h&gt;</span>
+<span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;iostream&gt;</span>
+
+<span style="color: #3D7B7B; font-style: italic">// ① 定义&quot;残差&quot;：一个点产生的误差</span>
+<span style="color: #008000; font-weight: bold">struct</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">LineResidual</span><span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span><span style="color: #B00040">double</span><span style="color: #BBB"> </span>x,<span style="color: #BBB"> </span>y;
+<span style="color: #BBB">    </span>LineResidual(<span style="color: #B00040">double</span><span style="color: #BBB"> </span>xx,<span style="color: #BBB"> </span><span style="color: #B00040">double</span><span style="color: #BBB"> </span>yy)<span style="color: #BBB"> </span><span style="color: #666">:</span><span style="color: #BBB"> </span>x(xx),<span style="color: #BBB"> </span>y(yy)<span style="color: #BBB"> </span>{}
+
+<span style="color: #BBB">    </span><span style="color: #3D7B7B; font-style: italic">// 模板函数：计算残差（Ceres 自动求导用）</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">template</span><span style="color: #BBB"> </span><span style="color: #666">&lt;</span><span style="color: #008000; font-weight: bold">typename</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">T</span><span style="color: #666">&gt;</span>
+<span style="color: #BBB">    </span><span style="color: #B00040">bool</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">operator</span>()(<span style="color: #008000; font-weight: bold">const</span><span style="color: #BBB"> </span>T<span style="color: #666">*</span><span style="color: #BBB"> </span>k,<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">const</span><span style="color: #BBB"> </span>T<span style="color: #666">*</span><span style="color: #BBB"> </span>b,<span style="color: #BBB"> </span>T<span style="color: #666">*</span><span style="color: #BBB"> </span>residual)<span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">const</span><span style="color: #BBB"> </span>{
+<span style="color: #BBB">        </span>residual[<span style="color: #666">0</span>]<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>k[<span style="color: #666">0</span>]<span style="color: #BBB"> </span><span style="color: #666">*</span><span style="color: #BBB"> </span>x<span style="color: #BBB"> </span><span style="color: #666">+</span><span style="color: #BBB"> </span>b[<span style="color: #666">0</span>]<span style="color: #BBB"> </span><span style="color: #666">-</span><span style="color: #BBB"> </span>y;<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// kx + b - y</span>
+<span style="color: #BBB">        </span><span style="color: #008000; font-weight: bold">return</span><span style="color: #BBB"> </span><span style="color: #008000">true</span>;
+<span style="color: #BBB">    </span>}
+};
+
+<span style="color: #B00040">int</span><span style="color: #BBB"> </span><span style="color: #00F">main</span>()<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span><span style="color: #3D7B7B; font-style: italic">// ② 数据：三个点</span>
+<span style="color: #BBB">    </span><span style="color: #B00040">double</span><span style="color: #BBB"> </span>pts[][<span style="color: #666">2</span>]<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>{{<span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">2</span>},<span style="color: #BBB"> </span>{<span style="color: #666">2</span>,<span style="color: #BBB"> </span><span style="color: #666">3</span>},<span style="color: #BBB"> </span>{<span style="color: #666">3</span>,<span style="color: #BBB"> </span><span style="color: #666">5</span>}};
+
+<span style="color: #BBB">    </span><span style="color: #3D7B7B; font-style: italic">// ③ 初始猜测</span>
+<span style="color: #BBB">    </span><span style="color: #B00040">double</span><span style="color: #BBB"> </span>k<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #666">0.0</span>,<span style="color: #BBB"> </span>b<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #666">0.0</span>;
+
+<span style="color: #BBB">    </span><span style="color: #3D7B7B; font-style: italic">// ④ 建问题：把每个残差加进去</span>
+<span style="color: #BBB">    </span>ceres<span style="color: #666">::</span>Problem<span style="color: #BBB"> </span>problem;
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">for</span><span style="color: #BBB"> </span>(<span style="color: #008000; font-weight: bold">auto</span><span style="color: #666">&amp;</span><span style="color: #BBB"> </span>p<span style="color: #BBB"> </span><span style="color: #666">:</span><span style="color: #BBB"> </span>pts)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">        </span>problem.AddResidualBlock(
+<span style="color: #BBB">            </span><span style="color: #008000; font-weight: bold">new</span><span style="color: #BBB"> </span>ceres<span style="color: #666">::</span>AutoDiffCostFunction<span style="color: #666">&lt;</span>LineResidual,<span style="color: #BBB"> </span><span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">1</span>,<span style="color: #BBB"> </span><span style="color: #666">1&gt;</span>(
+<span style="color: #BBB">                </span><span style="color: #008000; font-weight: bold">new</span><span style="color: #BBB"> </span>LineResidual(p[<span style="color: #666">0</span>],<span style="color: #BBB"> </span>p[<span style="color: #666">1</span>])),
+<span style="color: #BBB">            </span><span style="color: #008000">nullptr</span>,<span style="color: #BBB"> </span><span style="color: #666">&amp;</span>k,<span style="color: #BBB"> </span><span style="color: #666">&amp;</span>b);
+<span style="color: #BBB">    </span>}
+
+<span style="color: #BBB">    </span><span style="color: #3D7B7B; font-style: italic">// ⑤ 求解（默认 LM）</span>
+<span style="color: #BBB">    </span>ceres<span style="color: #666">::</span>Solver<span style="color: #666">::</span>Options<span style="color: #BBB"> </span>options;
+<span style="color: #BBB">    </span>options.linear_solver_type<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>ceres<span style="color: #666">::</span>DENSE_QR;
+<span style="color: #BBB">    </span>ceres<span style="color: #666">::</span>Solver<span style="color: #666">::</span>Summary<span style="color: #BBB"> </span>summary;
+<span style="color: #BBB">    </span>ceres<span style="color: #666">::</span>Solve(options,<span style="color: #BBB"> </span><span style="color: #666">&amp;</span>problem,<span style="color: #BBB"> </span><span style="color: #666">&amp;</span>summary);
+<span style="color: #BBB">    </span>std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>summary.BriefReport()<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;</span><span style="color: #AA5D1F; font-weight: bold">\n</span><span style="color: #BA2121">&quot;</span>;
+<span style="color: #BBB">    </span>std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;k = &quot;</span><span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>k<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;, b = &quot;</span><span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span>b<span style="color: #BBB"> </span><span style="color: #666">&lt;&lt;</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;</span><span style="color: #AA5D1F; font-weight: bold">\n</span><span style="color: #BA2121">&quot;</span>;<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// ≈ 1.5, 0.5</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">return</span><span style="color: #BBB"> </span><span style="color: #666">0</span>;
+}
+</code></pre></div>
+
+<p><strong>三段式</strong>：定义残差 → 加入问题 → 求解。<strong>以后你写任何"拟合/标定/配准"任务都是这个套路。</strong></p>
+<h3 id="143-ceres">1.4.3 概念映射（Ceres 语言 ↔ 数学语言）</h3>
+<table>
+<thead>
+<tr>
+<th>Ceres 概念</th>
+<th>数学概念</th>
+<th>大白话</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ResidualBlock</td>
+<td>残差项 f</td>
+<td>一条"误差"</td>
+</tr>
+<tr>
+<td>AutoDiffCostFunction</td>
+<td>自动求雅可比</td>
+<td>不用手写导数，Ceres 自动算</td>
+</tr>
+<tr>
+<td>ParameterBlock</td>
+<td>变量 x</td>
+<td>要优化的量（k, b, 位姿）</td>
+</tr>
+<tr>
+<td>Solver</td>
+<td>求解器</td>
+<td>自动迭代</td>
+</tr>
+<tr>
+<td>LossFunction（nullptr 处）</td>
+<td>鲁棒核</td>
+<td>抗"野点"（下面讲）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>鲁棒核（LossFunction）</strong>：数据里有一两个"野点"（严重错误测量），平方误差会把优化拉偏。鲁棒核 = "误差大到一定程度不再重罚"，让野点影响变小。<strong>实际配准/标定必须加</strong>（如 <code>new ceres::HuberLoss(1.0)</code>）。</p>
+<blockquote>
+<p>一句话总结：<strong>Ceres = 三段式（定义残差 → 加进问题 → 求解）；自动求导不用手写雅可比；野点多要加鲁棒核。</strong></p>
+</blockquote>
+<h3 id="14">1.4 自测</h3>
+<ol>
+<li>Ceres 编程三段式？</li>
+<li>鲁棒核是干什么的？什么时候必须加？</li>
+<li>AutoDiff 是什么意思？</li>
+</ol>
+<hr />
+<h2 id="15">1.5 系统化调试五步法（本周核心技能，记住！）</h2>
+<blockquote>
+<p>这是你三个月里排查一切 Bug 的骨架。每个 Bug 案例都用它。</p>
+</blockquote>
+<h3 id="151">1.5.1 五步（实际是七步，两步合并理解）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>① 复现（Reproduce）
+   让 Bug 稳定出现。不能稳定复现的问题没法查。
+   → 录 bag、写最小复现脚本、记下触发条件
+
+② 最小化（Minimize）
+   把无关因素全砍掉：只留最必要的环节。
+   → 关掉不相关的节点、用固定数据、删掉花哨功能
+
+③ 二分定位（Bisect）
+   在链路中间切开：上面好还是下面好？每次砍一半。
+   → 看数据流：&quot;断在哪一段&quot;（rqt_graph 看链路，topic hz 看数据）
+
+④ 假设 → 验证（Hypothesize &amp; Verify）
+   提出可能原因（1 个或多个），设计实验验证，逐个排除。
+   → 改参数试、加打印、看日志、对照源码
+
+⑤ 修复 → 回归（Fix &amp; Regression）
+   修复后验证：Bug 没了，且原有功能没坏。
+   → 跑一遍原场景 + 相邻场景
+</code></pre></div>
+
+<h3 id="152">1.5.2 和机器狗工作结合</h3>
+<table>
+<thead>
+<tr>
+<th>现象</th>
+<th>第一步</th>
+<th>常用工具</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>导航不动</td>
+<td>复现：录 bag + 触发条件</td>
+<td>ros2 bag、rqt_graph</td>
+</tr>
+<tr>
+<td>定位漂移</td>
+<td>最小化：只开 SLAM，关导航</td>
+<td>PlotJuggler 看轨迹</td>
+</tr>
+<tr>
+<td>点云错位</td>
+<td>二分：单雷达 vs 双雷达</td>
+<td>分别看两路点云</td>
+</tr>
+<tr>
+<td>速度突跳</td>
+<td>假设验证：停掉 smoother 试试</td>
+<td>参数开关</td>
+</tr>
+</tbody>
+</table>
+<h3 id="153-bug">1.5.3 写 Bug 案例的时机</h3>
+<p><strong>每个 Bug 修完，立刻按模板记录</strong>（现象/复现/根因/修复/验证/可复用经验）——三个月攒 12 个，就是你的"排查手册"。</p>
+<blockquote>
+<p>一句话总结：<strong>调试五步 = 复现 → 最小化 → 二分 → 假设验证 → 修复回归。所有 Bug 排查都走这个流程。</strong></p>
+</blockquote>
+<h3 id="15_1">1.5 自测</h3>
+<ol>
+<li>五步是什么？为什么"复现"排第一？</li>
+<li>"二分定位"是什么意思？举例。</li>
+<li>为什么修完要"回归"？</li>
+</ol>
+<hr />
+<h1 id="2-ros2">第 2 章 ROS2 进阶</h1>
+<h2 id="20-action-action">2.0 Action：可取消的长任务（覆盖 action 任务）</h2>
+<h3 id="201">2.0.1 为什么需要</h3>
+<p>话题（广播）没有"完成没完成"；服务（问答）不能取消。<strong>导航到某个点 = 长任务（可能 10 秒，可能失败）</strong>——需要：开始、进度回报、可取消。这就是 <strong>action</strong>。</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>客户端（导航请求方）          服务端（导航执行方）
+  |-- 发送目标(Goal) -----------→|
+  |←---- 反馈(Feedback) ---------|  （“走了 30%...”）
+  |←---- 结果(Result) -----------|  （“到达了！”）
+  |-- 取消(Cancel) -------------→|  （“算了，停下来”）
+</code></pre></div>
+
+<p><strong>Nav2 的导航动作</strong>：<code>NavigateToPose</code>——它的 Goal = 目标坐标，Feedback = 进度，Result = 成败。<strong>这是你以后调导航时最常见的 action。</strong></p>
+<h3 id="202-action-serverceresaction">2.0.2 最小 action server（Ceres/action 示例按官方教程跑通即可，理解结构）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>写 action 定义（.action 文件：goal/feedback/result 三个部分）
+→ 生成消息类型 → server 端处理 goal 回调 + 周期发 feedback → client 端发 goal
+</code></pre></div>
+
+<h2 id="21-qos-lifecycle">2.1 QoS 与 Lifecycle（覆盖概念任务）</h2>
+<h3 id="211-qos">2.1.1 QoS：数据的"服务质量"契约</h3>
+<p>发布者和订阅者要<strong>谈好"怎么传数据"</strong>，否则连不上。关键设置：</p>
+<table>
+<thead>
+<tr>
+<th>QoS</th>
+<th>含义</th>
+<th>用在哪</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reliability</td>
+<td>可靠（丢了重发）/ 尽力（丢了不管）</td>
+<td>控制指令必须可靠；点云可尽力</td>
+</tr>
+<tr>
+<td>Durability</td>
+<td>消息存不存（新订阅者能不能拿到旧数据）</td>
+<td>地图/TF 静态变换要"存"</td>
+</tr>
+<tr>
+<td>History/Depth</td>
+<td>缓存多少条</td>
+<td>内存 vs 完整</td>
+</tr>
+</tbody>
+</table>
+<p><strong>经典 Bug</strong>：两个节点连不上（<code>subscription ... offered incompatible QoS</code>）——<strong>多半是 QoS 没谈拢</strong>。修法：对齐双方设置。</p>
+<h3 id="212-lifecycle">2.1.2 Lifecycle：节点的"开关机状态机"</h3>
+<p>普通节点只有"运行"。<strong>Lifecycle 节点有状态</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>Unconfigured → Inactive → Active → Finalized
+   （未配置）   （配置好没开工）（干活中）   （清理）
+</code></pre></div>
+
+<p><strong>为什么需要</strong>：传感器/导航节点要按顺序启动（先配参数 → 再开跑）。Nav2 的节点几乎全是 lifecycle 节点——<strong>导航时"节点 Inactive/Active"的变化就是状态机在走</strong>。命令行 <code>ros2 lifecycle get /节点名</code> 查看。</p>
+<h2 id="22-ros2-bag">2.2 ros2 bag 深用（覆盖任务）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>ros2<span style="color: #BBB"> </span>bag<span style="color: #BBB"> </span>record<span style="color: #BBB"> </span>/topic1<span style="color: #BBB"> </span>/topic2<span style="color: #BBB"> </span>-o<span style="color: #BBB"> </span>bag1<span style="color: #BBB">          </span><span style="color: #3D7B7B; font-style: italic"># 录多个话题</span>
+ros2<span style="color: #BBB"> </span>bag<span style="color: #BBB"> </span>play<span style="color: #BBB"> </span>bag1<span style="color: #BBB"> </span>--loop<span style="color: #BBB">                         </span><span style="color: #3D7B7B; font-style: italic"># 循环回放</span>
+ros2<span style="color: #BBB"> </span>bag<span style="color: #BBB"> </span>play<span style="color: #BBB"> </span>bag1<span style="color: #BBB"> </span>--rate<span style="color: #BBB"> </span><span style="color: #666">0</span>.5<span style="color: #BBB">                     </span><span style="color: #3D7B7B; font-style: italic"># 慢放（好观察）</span>
+ros2<span style="color: #BBB"> </span>bag<span style="color: #BBB"> </span>play<span style="color: #BBB"> </span>bag1<span style="color: #BBB"> </span>--topics<span style="color: #BBB"> </span>/turtle1/pose<span style="color: #BBB">         </span><span style="color: #3D7B7B; font-style: italic"># 只回放部分话题</span>
+ros2<span style="color: #BBB"> </span>bag<span style="color: #BBB"> </span>convert<span style="color: #BBB"> </span>...<span style="color: #BBB">                              </span><span style="color: #3D7B7B; font-style: italic"># 格式转换</span>
+</code></pre></div>
+
+<p><strong>深用技巧</strong>：录 bag 时把 <code>/tf</code>、<code>/tf_static</code>、时钟话题一起录——回放才完整。</p>
+<h2 id="23-plotjuggler">2.3 PlotJuggler（覆盖工具任务）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>ros2<span style="color: #BBB"> </span>run<span style="color: #BBB"> </span>plotjuggler<span style="color: #BBB"> </span>plotjuggler<span style="color: #BBB"> </span>--ros-args<span style="color: #BBB"> </span>--remap<span style="color: #BBB"> </span>/plotjuggler/odom:<span style="color: #666">=</span>/odom
+</code></pre></div>
+
+<ul>
+<li><strong>加载</strong>：点击"数据源" → ROS2 bag / 实时订阅。</li>
+<li><strong>画曲线</strong>：把变量拖进画布（位置、速度、角速度）。</li>
+<li><strong>滤波</strong>：右键曲线 → 加移动平均等。</li>
+<li><strong>多曲线对比</strong>：把指令和实际叠一起，看"指令 vs 执行"差异。</li>
+</ul>
+<p><strong>工作场景</strong>：调导航时"机器人走走停停"→ 用 PlotJuggler 同时看 cmd_vel（指令）和 odom（实际速度），一眼看出是"指令没发"还是"发了没执行"。</p>
+<h2 id="24-nav2">2.4 Nav2 插件机制（覆盖"插件教程"任务）</h2>
+<h3 id="241">2.4.1 插件是什么</h3>
+<p><strong>插件 = 可插拔的算法模块</strong>。Nav2 的规划器/控制器/层都是插件：想换一种算法，不用改主程序，<strong>配置里换个插件名</strong>即可。</p>
+<h3 id="242-inflation-layer">2.4.2 插件怎么注册（读 inflation layer 源码时对照）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>pluginlib 机制三步：
+① 写算法类，继承基类（如 nav2_costmap_2d::Layer）
+② 注册宏：PLUGINLIB_EXPORT_CLASS(类名, 基类)
+③ 声明 XML：告诉系统&quot;这个名字 → 这个类&quot;
+</code></pre></div>
+
+<p><strong>inflation layer 里你会看到</strong>（<code>inflation_layer.hpp</code> 底部）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>PLUGINLIB_EXPORT_CLASS(
+<span style="color: #BBB">    </span>nav2_costmap_2d<span style="color: #666">::</span>InflationLayer,<span style="color: #BBB"> </span>nav2_costmap_2d<span style="color: #666">::</span>Layer)
+</code></pre></div>
+
+<p><strong>这行的意思</strong>："把 InflationLayer 注册成 Layer 插件"。配置 yaml 里写 <code>plugin: "nav2_costmap_2d::InflationLayer"</code> 就能加载。</p>
+<p><strong>第 12 周最终项目之一 = 写一个自定义 controller 插件</strong>——你到时会完整走一遍这三步。</p>
+<blockquote>
+<p>一句话总结：<strong>插件 = 可插拔算法模块；三步注册（继承 → 导出宏 → XML 声明）；Nav2 的规划/控制/图层全是插件。</strong></p>
+</blockquote>
+<h3 id="2-ros2_1">第 2 章自测（ROS2 进阶）</h3>
+<ol>
+<li>话题、服务、动作各适合什么场景？</li>
+<li>QoS 不匹配会怎样？常见修法？</li>
+<li>Lifecycle 节点的状态机是啥？</li>
+<li>插件注册的三步？</li>
+</ol>
+<hr />
+<h1 id="3-fast-lio2">第 3 章 读 FAST-LIO2 迭代更新段（覆盖源码任务）</h1>
+<h2 id="31">3.1 找到代码（周三）</h2>
+<p>在 <code>include/IKFoM_toolkit/esekfom/esekfom.hpp</code>（或 <code>IMU_Processing.hpp</code>）里找：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>update_iterated_dyn_share_modified()     ← 迭代更新主函数
+</code></pre></div>
+
+<h2 id="32">3.2 读的时候对照这张"翻译表"</h2>
+<table>
+<thead>
+<tr>
+<th>代码里</th>
+<th>本周学的概念</th>
+<th>大白话</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>h_x</code> / 残差向量</td>
+<td>f(x) 残差</td>
+<td>"现在差多少"</td>
+</tr>
+<tr>
+<td><code>jacobian</code></td>
+<td>雅可比 J</td>
+<td>"变一点会差多少"</td>
+</tr>
+<tr>
+<td><code>JtJ</code> / <code>Jt</code></td>
+<td>JᵀJ、Jᵀ</td>
+<td>信息矩阵（第 1.3 节）</td>
+</tr>
+<tr>
+<td>迭代循环 <code>for iter &lt; max_iteration</code></td>
+<td>GN/LM 迭代</td>
+<td>反复修正</td>
+</tr>
+<tr>
+<td>更新 <code>x += Δx</code></td>
+<td>第 1.1 节第 4 步</td>
+<td>迈一步</td>
+</tr>
+</tbody>
+</table>
+<h2 id="33-5">3.3 任务：写 5 行中文注释</h2>
+<p>挑一段迭代更新代码（比如残差计算段），用你自己的话写 5 行中文注释，例如：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic">// 1. 对每个激光点：找地图最近面</span>
+<span style="color: #3D7B7B; font-style: italic">// 2. 算点到面的距离（残差）——距离不为 0 说明位姿没对齐</span>
+<span style="color: #3D7B7B; font-style: italic">// 3. 雅可比：位姿变一点，这个距离变多少</span>
+<span style="color: #3D7B7B; font-style: italic">// 4. 把所有点的信息累加进 JtJ（信息矩阵）</span>
+<span style="color: #3D7B7B; font-style: italic">// 5. 解增量方程，得到位姿修正量</span>
+</code></pre></div>
+
+<p><strong>写完让 AI 对照源码检查你的注释对不对</strong>——这是训练"看懂代码"的方法。</p>
+<hr />
+<h1 id="4-45h">第 4 章 周六实验手册（4~5h）</h1>
+<h2 id="41-190">4.1 任务 1：曲线拟合三版对比（90 分钟，核心交付）</h2>
+<p>同一组数据（带噪声的抛物线点），用三种方法拟合，输出<strong>误差对比表</strong>：</p>
+<p><strong>数据</strong>（Python 生成，存 csv）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">numpy</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">as</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">np</span>
+np<span style="color: #666">.</span>random<span style="color: #666">.</span>seed(<span style="color: #666">1</span>)
+x <span style="color: #666">=</span> np<span style="color: #666">.</span>linspace(<span style="color: #666">-2</span>, <span style="color: #666">2</span>, <span style="color: #666">20</span>)
+y <span style="color: #666">=</span> <span style="color: #666">0.5*</span>x<span style="color: #666">*</span>x <span style="color: #666">+</span> <span style="color: #666">1.0</span> <span style="color: #666">+</span> np<span style="color: #666">.</span>random<span style="color: #666">.</span>normal(<span style="color: #666">0</span>, <span style="color: #666">0.3</span>, <span style="color: #666">20</span>)   <span style="color: #3D7B7B; font-style: italic"># 真模型：y = 0.5x² + 1</span>
+np<span style="color: #666">.</span>savetxt(<span style="color: #BA2121">&#39;data.csv&#39;</span>, np<span style="color: #666">.</span>column_stack([x, y]), delimiter<span style="color: #666">=</span><span style="color: #BA2121">&#39;,&#39;</span>)
+</code></pre></div>
+
+<p><strong>版本 1：手写 GN</strong>（Python，按 1.1 节公式）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">numpy</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">as</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">np</span>
+data <span style="color: #666">=</span> np<span style="color: #666">.</span>loadtxt(<span style="color: #BA2121">&#39;data.csv&#39;</span>, delimiter<span style="color: #666">=</span><span style="color: #BA2121">&#39;,&#39;</span>)
+x, y <span style="color: #666">=</span> data[:, <span style="color: #666">0</span>], data[:, <span style="color: #666">1</span>]
+
+<span style="color: #3D7B7B; font-style: italic"># 模型 y = a*x² + b，参数 [a, b]，残差 r = a*x² + b - y</span>
+a, b <span style="color: #666">=</span> <span style="color: #666">0.0</span>, <span style="color: #666">0.0</span>
+<span style="color: #008000; font-weight: bold">for</span> it <span style="color: #A2F; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666">20</span>):
+    r <span style="color: #666">=</span> a<span style="color: #666">*</span>x<span style="color: #666">**2</span> <span style="color: #666">+</span> b <span style="color: #666">-</span> y                       <span style="color: #3D7B7B; font-style: italic"># 残差</span>
+    J <span style="color: #666">=</span> np<span style="color: #666">.</span>column_stack([x<span style="color: #666">**2</span>, np<span style="color: #666">.</span>ones_like(x)])  <span style="color: #3D7B7B; font-style: italic"># 雅可比（对 a、b 求偏导）</span>
+    H <span style="color: #666">=</span> J<span style="color: #666">.</span>T <span style="color: #666">@</span> J                               <span style="color: #3D7B7B; font-style: italic"># JᵀJ（信息矩阵）</span>
+    g <span style="color: #666">=</span> J<span style="color: #666">.</span>T <span style="color: #666">@</span> r                               <span style="color: #3D7B7B; font-style: italic"># Jᵀf</span>
+    delta <span style="color: #666">=</span> np<span style="color: #666">.</span>linalg<span style="color: #666">.</span>solve(H, <span style="color: #666">-</span>g)            <span style="color: #3D7B7B; font-style: italic"># 解增量方程</span>
+    a <span style="color: #666">+=</span> delta[<span style="color: #666">0</span>]; b <span style="color: #666">+=</span> delta[<span style="color: #666">1</span>]
+    <span style="color: #008000">print</span>(<span style="color: #BA2121">f&quot;iter </span><span style="color: #A45A77; font-weight: bold">{</span>it<span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BA2121">: a=</span><span style="color: #A45A77; font-weight: bold">{</span>a<span style="color: #A45A77; font-weight: bold">:</span><span style="color: #BA2121">.4f</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BA2121">, b=</span><span style="color: #A45A77; font-weight: bold">{</span>b<span style="color: #A45A77; font-weight: bold">:</span><span style="color: #BA2121">.4f</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BA2121">, cost=</span><span style="color: #A45A77; font-weight: bold">{</span>np<span style="color: #666">.</span>sum(r<span style="color: #666">**2</span>)<span style="color: #A45A77; font-weight: bold">:</span><span style="color: #BA2121">.4f</span><span style="color: #A45A77; font-weight: bold">}</span><span style="color: #BA2121">&quot;</span>)
+<span style="color: #008000">print</span>(<span style="color: #BA2121">&quot;GN 结果:&quot;</span>, a, b)                       <span style="color: #3D7B7B; font-style: italic"># 应 ≈ 0.5, 1.0</span>
+</code></pre></div>
+
+<p><strong>版本 2：手写 LM</strong>（把 H 换成 H + λI，自适应 λ）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>a, b, lam <span style="color: #666">=</span> <span style="color: #666">0.0</span>, <span style="color: #666">0.0</span>, <span style="color: #666">1e-3</span>
+cost <span style="color: #666">=</span> np<span style="color: #666">.</span>inf
+<span style="color: #008000; font-weight: bold">for</span> it <span style="color: #A2F; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666">50</span>):
+    r <span style="color: #666">=</span> a<span style="color: #666">*</span>x<span style="color: #666">**2</span> <span style="color: #666">+</span> b <span style="color: #666">-</span> y
+    J <span style="color: #666">=</span> np<span style="color: #666">.</span>column_stack([x<span style="color: #666">**2</span>, np<span style="color: #666">.</span>ones_like(x)])
+    H <span style="color: #666">=</span> J<span style="color: #666">.</span>T <span style="color: #666">@</span> J; g <span style="color: #666">=</span> J<span style="color: #666">.</span>T <span style="color: #666">@</span> r
+    delta <span style="color: #666">=</span> np<span style="color: #666">.</span>linalg<span style="color: #666">.</span>solve(H <span style="color: #666">+</span> lam<span style="color: #666">*</span>np<span style="color: #666">.</span>eye(<span style="color: #666">2</span>), <span style="color: #666">-</span>g)
+    a2, b2 <span style="color: #666">=</span> a <span style="color: #666">+</span> delta[<span style="color: #666">0</span>], b <span style="color: #666">+</span> delta[<span style="color: #666">1</span>]
+    cost2 <span style="color: #666">=</span> np<span style="color: #666">.</span>sum((a2<span style="color: #666">*</span>x<span style="color: #666">**2</span> <span style="color: #666">+</span> b2 <span style="color: #666">-</span> y)<span style="color: #666">**2</span>)
+    <span style="color: #008000; font-weight: bold">if</span> cost2 <span style="color: #666">&lt;</span> cost:           <span style="color: #3D7B7B; font-style: italic"># 变好了：接受，松刹车</span>
+        a, b, cost <span style="color: #666">=</span> a2, b2, cost2
+        lam <span style="color: #666">*=</span> <span style="color: #666">0.7</span>
+    <span style="color: #008000; font-weight: bold">else</span>:                      <span style="color: #3D7B7B; font-style: italic"># 变差了：拒绝，踩刹车</span>
+        lam <span style="color: #666">*=</span> <span style="color: #666">2.0</span>
+<span style="color: #008000">print</span>(<span style="color: #BA2121">&quot;LM 结果:&quot;</span>, a, b)
+</code></pre></div>
+
+<p><strong>版本 3：Ceres</strong>（按 1.4 节模板，拟合 y = a·x² + b）。</p>
+<p><strong>输出对比表</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>收敛结果 a</th>
+<th>b</th>
+<th>迭代次数</th>
+<th>收敛时成本</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>手写 GN</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>手写 LM</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Ceres</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>✅ 三种方法结果应一致（≈0.5, ≈1.0），LM 和 GN 迭代次数可不同。<strong>提交 git。</strong></p>
+<p><strong>思考题</strong>：给数据里加 2 个"野点"（比如 y=10 的离谱值），三种方法谁受影响最大？加了鲁棒核的 Ceres 会怎样？——这个实验做完，你对"鲁棒核"的理解就落地了。</p>
+<h2 id="42-2-action-serverclient50">4.2 任务 2：自定义 action server/client（50 分钟）</h2>
+<p>按 ROS2 官方 action 教程写一个最小例子（或让 AI 生成后你逐行注释）：
+1. action 定义：<code>CountUntil.action</code>（goal = 数到几，feedback = 当前数到哪，result = 总耗时）。
+2. server：收到 goal 后每秒报一次 feedback，数完返回 result，支持取消。
+3. client：发 goal，打印 feedback，等 result。
+4. 用命令行触发：<code>ros2 action send_goal /count_until 你定义的包/action/CountUntil "{num: 5}" --feedback</code></p>
+<p>✅ 看到 feedback 打印出来 = 成功。<strong>提交 git。</strong></p>
+<h2 id="43-3plotjuggler-bag50">4.3 任务 3：PlotJuggler 分析 bag（50 分钟）</h2>
+<ol>
+<li>录一段乌龟跑动的 bag（第 3 周学过）。</li>
+<li>PlotJuggler 加载，同时画：cmd_vel.linear.x（指令速度）和 pose.x 的变化率（实际速度）。</li>
+<li>写一句话结论："指令和实际的关系"。</li>
+<li>对 pose 数据做一次简单滤波，对比滤波前后曲线。</li>
+</ol>
+<h2 id="44-440">4.4 任务 4：调试五步法演练（40 分钟）</h2>
+<p>用今天实验里最可能出现的一个 Bug（比如"LM 发散"），完整走一遍五步法并记录：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>现象：LM 迭代发散（数值变 NaN）
+① 复现：固定随机种子，必现
+② 最小化：单点数据 → 两点 → 二十点，找最早发散的数据量
+③ 二分：GN 发散吗？→ 锁定问题在阻尼逻辑
+④ 假设：λ 更新逻辑写反了？→ 打印每步 cost 验证
+⑤ 修复：修正 λ 更新方向 → 验证不发散 + 回归
+</code></pre></div>
+
+<h2 id="45">4.5 周六检查清单</h2>
+<ul>
+<li>[ ] 三版对比表完成（结果一致）</li>
+<li>[ ] 野点实验完成（可选加分项）</li>
+<li>[ ] action demo 跑通</li>
+<li>[ ] PlotJuggler 分析完成</li>
+<li>[ ] 五步法演练记录</li>
+<li>[ ] git 提交 ≥ 4 次</li>
+</ul>
+<hr />
+<h1 id="5-12h">第 5 章 周日复盘（1~2h）</h1>
+<h2 id="51">5.1 阶段一总结（本周核心交付）</h2>
+<p>写一页《我现在能看懂什么》：</p>
+<ol>
+<li>数学：线性代数（第 1 周）+ 微积分/雅可比（第 2 周）+ 概率/Kalman（第 3 周）+ 优化（本周）——四条线串起来了：<strong>雅可比描述变化 → 最小二乘衡量好坏 → GN/LM 找最好 → Kalman 按时间顺序做同样的事。</strong></li>
+<li>代码：能读懂 FAST-LIO2 的数据流 + 关键数据结构 + 迭代更新的大致逻辑。</li>
+<li>工具：ROS2 通信、TF、bag、PlotJuggler、Ceres。</li>
+<li>列出"我还看不懂的清单"（比如李群流形、ikd-Tree 细节）——留给第 6、7 周。</li>
+</ol>
+<h2 id="52-bug-3">5.2 Bug 案例 #3（必须完成）</h2>
+<p>从本周实验或工作中选一个真 Bug，完整走五步法并入库 <code>bug_cases/bug_003.md</code>。没有现成的就用 4.4 的 LM 发散案例。</p>
+<h2 id="53-15">5.3 下周预习（15 分钟）</h2>
+<p>第 5 周：Nav2 总览 + 云深处接口 + 仿真。先看 Nav2 官方 Concepts 页（planner/controller/costmap/BT 概念），或让 AI 用大白话讲"导航四大件"。</p>
+<h2 id="54">5.4 周日自测</h2>
+<ol>
+<li>增量方程 (JᵀJ)Δx = −Jᵀf 里每部分是什么？</li>
+<li>LM 和 GN 区别？λ 怎么自适应？</li>
+<li>信息矩阵和协方差什么关系？和退化什么关系？</li>
+<li>调试五步法是什么？</li>
+<li>Ceres 编程三段式？</li>
+</ol>
+<hr />
+<h1 id="6">第 6 章 第四周验收清单</h1>
+<ul>
+<li>[ ] 最小二乘概念 + 高斯噪声关系</li>
+<li>[ ] GN 循环四步 + 手写实现</li>
+<li>[ ] LM 阻尼 + 手写实现</li>
+<li>[ ] 信息矩阵/协方差/退化关系</li>
+<li>[ ] Ceres 曲线拟合 + 自定义残差 + 鲁棒核</li>
+<li>[ ] ROS2 action/QoS/lifecycle 概念</li>
+<li>[ ] bag 深用 + PlotJuggler</li>
+<li>[ ] 调试五步法能复述并用过</li>
+<li>[ ] 阶段一总结一页</li>
+<li>[ ] Bug 案例 #3</li>
+<li>[ ] 每日自测 ≥ 60%</li>
+</ul>
+<hr />
+<h1 id="4">附录：术语表（第 4 周新增）</h1>
+<table>
+<thead>
+<tr>
+<th>术语</th>
+<th>大白话解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>最小二乘</td>
+<td>让误差平方和最小</td>
+</tr>
+<tr>
+<td>代价/误差函数</td>
+<td>衡量"错多少"的函数</td>
+</tr>
+<tr>
+<td>残差</td>
+<td>单条误差（预测−真值）</td>
+</tr>
+<tr>
+<td>Gauss-Newton</td>
+<td>用雅可比算"下山方向"的迭代优化</td>
+</tr>
+<tr>
+<td>增量方程</td>
+<td>(JᵀJ)Δx = −Jᵀf，解出改进步长</td>
+</tr>
+<tr>
+<td>信息矩阵</td>
+<td>JᵀJ，协方差的逆；特征值小 = 信息少</td>
+</tr>
+<tr>
+<td>LM</td>
+<td>GN + 阻尼 λ（自适应刹车）</td>
+</tr>
+<tr>
+<td>阻尼系数 λ</td>
+<td>大 = 保守（梯度下降）；小 = 激进（GN）</td>
+</tr>
+<tr>
+<td>鲁棒核</td>
+<td>让野点影响变小的损失函数</td>
+</tr>
+<tr>
+<td>Ceres</td>
+<td>谷歌优化库，三段式使用</td>
+</tr>
+<tr>
+<td>自动求导</td>
+<td>编译器自动算雅可比，不用手写</td>
+</tr>
+<tr>
+<td>插件</td>
+<td>可插拔算法模块（继承→导出宏→XML）</td>
+</tr>
+<tr>
+<td>QoS</td>
+<td>数据传递契约（可靠/尽力、存/不存）</td>
+</tr>
+<tr>
+<td>Lifecycle</td>
+<td>节点的状态机（未配置→就绪→运行）</td>
+</tr>
+<tr>
+<td>Action</td>
+<td>可取消、带反馈的长任务</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>教材说明：本教材自包含、零基础友好。外部资料（Ceres 教程、高翔《视觉SLAM十四讲》第 6 章）仅作加深。每天学习结束后按"每日学习检测协议"让 AI 追问验证。</em></p>
+<footer>
+<p>四足机器狗导航算法 · 三个月学习计划 · 第 4 周教材</p>
+<p>每天学习结束后，按清单文末「每日学习检测协议」让 AI 追问验证</p>
+</footer>
+</div>
+<script>
+(function(){{
+  var toc = document.getElementById('toc-placeholder');
+  var heads = document.querySelectorAll('h2');
+  var list = document.createElement('ul');
+  heads.forEach(function(h){{
+    var id = h.id || ('h-' + h.textContent.replace(/[^\w\u4e00-\u9fa5]/g, '-').slice(0, 30));
+    h.id = id;
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    list.appendChild(li);
+  }});
+  toc.appendChild(list);
+}})();
+</script>
+</body>
+</html>

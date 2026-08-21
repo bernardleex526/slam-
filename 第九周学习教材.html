@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>第九周学习教材：图搜索 + costmap + Nav2 全链路调参</title>
+<style>
+:root {{
+  --bg: #f7f5f0;
+  --card: #ffffff;
+  --ink: #1f2430;
+  --muted: #6b7280;
+  --accent: #b45309;
+  --accent-soft: #fef3c7;
+  --line: #e5e0d6;
+  --code-bg: #f4f1ea;
+  --table-head: #f0ece2;
+  --link: #92400e;
+}}
+* {{ box-sizing: border-box; }}
+html {{ -webkit-text-size-adjust: 100%; }}
+body {{
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-size: 16px;
+  line-height: 1.85;
+  word-break: break-word;
+}}
+.wrap {{ max-width: 46rem; margin: 0 auto; padding: 1.2rem 1.1rem 4rem; }}
+header.hero {{
+  background: linear-gradient(135deg, #7c2d12 0%, #b45309 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 1.6rem 1.4rem;
+  margin-bottom: 1.4rem;
+  box-shadow: 0 4px 14px rgba(124, 45, 18, .25);
+}}
+header.hero h1 {{ margin: 0 0 .4rem; font-size: 1.4rem; line-height: 1.4; }}
+header.hero p {{ margin: .2rem 0; font-size: .9rem; opacity: .92; }}
+.nav {{
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  margin-bottom: 1.4rem;
+}}
+.nav a {{
+  display: inline-block; padding: .3rem .7rem; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line);
+  color: var(--link); text-decoration: none; font-size: .82rem;
+}}
+.nav a.on {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
+.toc {{
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 1rem 1.2rem; margin-bottom: 1.6rem; font-size: .92rem;
+}}
+.toc summary {{ cursor: pointer; font-weight: 600; color: var(--accent); }}
+.toc a {{ color: var(--link); text-decoration: none; }}
+.toc a:hover {{ text-decoration: underline; }}
+h1 {{ font-size: 1.5rem; margin: 2.2rem 0 .8rem; padding-bottom: .4rem; border-bottom: 2px solid var(--accent); }}
+h2 {{ font-size: 1.22rem; margin: 1.8rem 0 .6rem; color: #7c2d12; }}
+h3 {{ font-size: 1.05rem; margin: 1.4rem 0 .5rem; }}
+h4 {{ font-size: .98rem; margin: 1.1rem 0 .4rem; color: #444; }}
+p {{ margin: .55rem 0; }}
+ul, ol {{ padding-left: 1.5rem; margin: .5rem 0; }}
+li {{ margin: .28rem 0; }}
+strong {{ color: #7c2d12; }}
+code {{
+  background: var(--code-bg); border-radius: 4px; padding: .12em .35em;
+  font-family: "SF Mono", Consolas, "Courier New", monospace; font-size: .88em; color: #8b4513;
+}}
+pre {{
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px;
+  padding: .9rem 1rem; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  font-size: .84rem; line-height: 1.6;
+}}
+pre code {{ background: none; padding: 0; color: inherit; }}
+blockquote {{
+  margin: .8rem 0; padding: .6rem 1rem; background: var(--accent-soft);
+  border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0;
+}}
+blockquote p {{ margin: .3rem 0; }}
+table {{
+  width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .9rem;
+  display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+}}
+th, td {{ border: 1px solid var(--line); padding: .45rem .6rem; text-align: left; vertical-align: top; }}
+th {{ background: var(--table-head); font-weight: 600; white-space: nowrap; }}
+hr {{ border: none; border-top: 1px solid var(--line); margin: 2rem 0; }}
+input[type="checkbox"] {{ transform: scale(1.2); margin-right: .4em; }}
+footer {{
+  margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: .82rem; text-align: center;
+}}
+</style>
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f8f8f8; }
+.codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+.codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #E40000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #008400 } /* Generic.Inserted */
+.codehilite .go { color: #717171 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #687822 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #800 } /* Name.Constant */
+.codehilite .nd { color: #A2F } /* Name.Decorator */
+.codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #00F } /* Name.Function */
+.codehilite .nl { color: #767600 } /* Name.Label */
+.codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #00F } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<h1>第九周学习教材：图搜索 + costmap + Nav2 全链路调参</h1>
+<p>四足机器狗导航算法工程师 · 三个月学习计划</p>
+<p>零基础自包含版 · 手机阅读 · 单文件离线可用</p>
+</header>
+<nav class="nav">
+<a class="" href="第一周学习教材.html">W1</a>
+<a class="" href="第二周学习教材.html">W2</a>
+<a class="" href="第三周学习教材.html">W3</a>
+<a class="" href="第四周学习教材.html">W4</a>
+<a class="" href="第五周学习教材.html">W5</a>
+<a class="" href="第六周学习教材.html">W6</a>
+<a class="" href="第七周学习教材.html">W7</a>
+<a class="" href="第八周学习教材.html">W8</a>
+<a class="on" href="第九周学习教材.html">W9</a>
+<a class="" href="第十周学习教材.html">W10</a>
+<a class="" href="第十一周学习教材.html">W11</a>
+<a class="" href="第十二周学习教材.html">W12</a>
+</nav>
+<details class="toc" open>
+<summary>📑 目录（点击收起）</summary>
+<div id="toc-placeholder"></div>
+</details>
+<h1 id="costmap-nav2">第九周学习教材：图搜索 + costmap + Nav2 全链路调参（零基础版）</h1>
+<blockquote>
+<p>定位：四足机器狗（云深处）导航算法工程师
+周期：第 9 周（共 12 周）· 工作日 1.5~2h + 周六 4~5h 实验 + 周日 1~2h 复盘
+本周目标：<strong>看懂规划器原理；建立"参数→行为"对照表。</strong>
+本周交付：网格 A* 代码 + 参数→行为对照表 v1 + Bug 案例 #8</p>
+</blockquote>
+<hr />
+<h1 id="0">第 0 章 开课前必读</h1>
+<h2 id="01">0.1 本周学什么（一句话）</h2>
+<p>第 5 周你让机器狗"导航到点"跑通了，但不知道里面怎么规划的。本周打开黑盒：<strong>A*（最短路径搜索）</strong> + <strong>costmap 机制深挖</strong> + <strong>参数怎么影响行为</strong>——这是你以后调"导航不顺"问题的核心武器。</p>
+<h2 id="02">0.2 学习进度表</h2>
+<table>
+<thead>
+<tr>
+<th>天</th>
+<th>读什么</th>
+<th>学完能干什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>周一</td>
+<td>1.0–1.1 + 2.0</td>
+<td>懂图与 A<em>；写网格 A</em></td>
+</tr>
+<tr>
+<td>周二</td>
+<td>1.2 + 2.1</td>
+<td>懂 Dijkstra vs A<em>；读 NavFn/Theta</em> 入口</td>
+</tr>
+<tr>
+<td>周三</td>
+<td>1.3 + 2.2</td>
+<td>懂 costmap 机制与代价曲线；记录 yaml 参数</td>
+</tr>
+<tr>
+<td>周四</td>
+<td>1.4 + 2.3</td>
+<td>懂 BT 导航器；看双层 costmap；懂感知缺陷</td>
+</tr>
+<tr>
+<td>周五</td>
+<td>1.5 + 2.4–2.5</td>
+<td>建对照表 v1；懂建图→导航工作流；懂重定位</td>
+</tr>
+<tr>
+<td>周六</td>
+<td>第 3 章 实验</td>
+<td>多目标导航 + 逐参数实验 + recovery 复现</td>
+</tr>
+<tr>
+<td>周日</td>
+<td>第 4 章 复盘 + 第 5 章 验收</td>
+<td>Bug 案例 #8、下周预习</td>
+</tr>
+</tbody>
+</table>
+<h2 id="03">0.3 本周主线问题</h2>
+<blockquote>
+<p><strong>"最短路径"是怎么找出来的？参数又是怎么影响路径的？</strong> —— 图搜索回答前者（把地图当格子，像走迷宫一样搜）；代价地图回答后者（格子上的数决定"哪条路更便宜"）。</p>
+</blockquote>
+<hr />
+<h1 id="1">第 1 章 图搜索：怎么找最短路径</h1>
+<h2 id="10">1.0 图与迷宫</h2>
+<h3 id="101">1.0.1 地图 = 图</h3>
+<p><strong>图（Graph）</strong> = 一堆"节点"（格子）+ 一堆"边"（格子间的连接）。导航地图就是一整张图：每个格子是一个节点，相邻格子之间有边，边的"代价" = 走这一步的难度（代价地图的数值！）。</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>起点 S → ① → ② → ③ → 终点 G
+          ↓    ↓    ↓
+         ④ → ⑤ → ⑥ → ⑦
+</code></pre></div>
+
+<h3 id="102">1.0.2 问题</h3>
+<p><strong>找从 S 到 G 代价最小的路径。</strong> 这就是"路径搜索"。两个基本算法：Dijkstra（万能）和 A*（更快）。</p>
+<blockquote>
+<p>一句话总结：<strong>地图 = 图（格子 + 连接）；导航 = 找代价最小的路径。</strong></p>
+</blockquote>
+<h3 id="10_1">1.0 自测</h3>
+<ol>
+<li>图的"节点"和"边"是什么？</li>
+<li>"代价"在导航里指什么？</li>
+</ol>
+<hr />
+<h2 id="11-a">1.1 A*：带指南针的搜索（本周核心）</h2>
+<h3 id="111-vs">1.1.1 先打比方：蒙眼找路 vs 看着地图找路</h3>
+<ul>
+<li><strong>Dijkstra（BFS 类）</strong>：从起点一圈圈往外扩，直到碰到终点——像<strong>蒙着眼</strong>，不知道终点在哪，只能一圈圈试。</li>
+<li><strong>A</strong><em>：每步都</em><em>朝着终点方向优先</em><em>试——像</em><em>看着地图</em>*，知道大概方向，走得更快。</li>
+</ul>
+<h3 id="112-a">1.1.2 A* 的两个表</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>open 表（待探索）：还没决定往这走不走，候选池
+closed 表（已探索）：已经确定&quot;到这里的路最便宜&quot;，不再改
+</code></pre></div>
+
+<h3 id="113-a">1.1.3 A* 的评分（核心公式）</h3>
+<p>每个节点 f = g + h：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>g = 从起点到这里的实际代价（走过就知道）
+h = 从这里到终点的估计代价（启发式：直线距离，只是猜）
+f = g + h  ← 越小越优先探索
+</code></pre></div>
+
+<p><strong>流程</strong>（跟着走一遍）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>1. 把起点放进 open（g=0, h=直线距离, f=h）
+2. 循环：
+   a. 从 open 取 f 最小的节点 → 移入 closed
+   b. 如果它就是终点 → 完成，回溯路径
+   c. 对它的每个邻居：
+      - 算新 g = 当前 g + 走过去代价
+      - 如果邻居不在 open/closed → 加入 open
+      - 如果新 g 比邻居已有 g 小 → 更新（找到更短路了）
+3. 直到 open 空（无路）或找到终点
+</code></pre></div>
+
+<p><strong>路径回溯</strong>：每个节点记"我从哪来"，到终点后从后往前倒着走回去 = 路径。</p>
+<h3 id="114">1.1.4 关键概念</h3>
+<ul>
+<li><strong>启发式 h</strong>：不能高估（"直线距离"是最安全的，永远不会高估真实路径）——高估会漏掉最优解。</li>
+<li><strong>8 邻域</strong>：允许斜着走（对角）时路径更短更自然。</li>
+<li><strong>h = 0 时 A* 退化成 Dijkstra</strong>。</li>
+</ul>
+<blockquote>
+<p>一句话总结：<strong>A* = g（走来的代价）+ h（到终点的估计）；每次探索 f 最小的格子；记下"我从哪来"最后回溯出路径。</strong></p>
+</blockquote>
+<h3 id="11">1.1 自测</h3>
+<ol>
+<li>g、h、f 各是什么？</li>
+<li>open 和 closed 表各放什么？</li>
+<li>为什么 h 不能高估？</li>
+<li>A* 和 Dijkstra 的区别？</li>
+</ol>
+<hr />
+<h2 id="12-dijkstra-vs-ad-lite">1.2 Dijkstra vs A<em>；D</em> Lite（了解）</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Dijkstra</th>
+<th>A*</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>启发式</td>
+<td>无（一圈圈扩）</td>
+<td>有 h（朝终点方向优先）</td>
+</tr>
+<tr>
+<td>速度</td>
+<td>慢（探索多）</td>
+<td>快（探索少）</td>
+</tr>
+<tr>
+<td>正确性</td>
+<td>保证最优</td>
+<td>保证最优（h 不高估时）</td>
+</tr>
+<tr>
+<td>场景</td>
+<td>多目标/未知目标</td>
+<td>单目标导航（Nav2 默认）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>D* Lite</strong>：动态环境（障碍变了）里能<strong>增量重规划</strong>——不用全部重搜。了解存在即可（Nav2 的插件体系里也有）。</p>
+<h2 id="13-costmap">1.3 costmap 层机制与代价曲线（周三）</h2>
+<h3 id="131-2">1.3.1 回顾（第 2 周）＋深化</h3>
+<p>三层叠加：静态（预建地图）+ 障碍（实时）+ 膨胀（安全圈）。</p>
+<p><strong>关键新概念：膨胀代价曲线</strong>——离障碍物距离 d，代价怎么衰减：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>代价(d)
+ 254 │●                ← 障碍物本身
+     │  ●
+ 128 │     ●            ← 半危险（机器人边缘可能擦到）
+     │        ●
+  50 │           ●
+  0  │              ●●  ← 0 = 安全
+     └──────────────────→ 距离 d
+     0    inflate_radius
+</code></pre></div>
+
+<p><strong>两个关键参数</strong>（Nav2 里要调的就是它们）：
+- <strong>inflation_radius</strong>：影响圈有多大（距离超过它 = 代价 0）。
+- <strong>cost_scaling_factor</strong>：衰减有多陡（越大 = 越接近障碍才变危险 = 机器人可以贴墙走）。</p>
+<h3 id="132">1.3.2 "参数→行为"的第一组例子</h3>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>调大</th>
+<th>调小</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>inflation_radius</td>
+<td>路径离墙更远（绕路）</td>
+<td>路径贴墙（可能蹭）</td>
+</tr>
+<tr>
+<td>cost_scaling_factor</td>
+<td>更敢贴近障碍走</td>
+<td>更保守绕远</td>
+</tr>
+</tbody>
+</table>
+<p><strong>这就是"参数→行为"对照表的雏形</strong>——本周五建立 v1，第 10~11 周补充到 v2（≥15 个参数）。</p>
+<h2 id="14-bt_navigator-costmap">1.4 bt_navigator 与双层 costmap（周四）</h2>
+<h3 id="141-bt_navigator">1.4.1 bt_navigator（覆盖源码任务）</h3>
+<p><strong>bt_navigator = 行为树（第 5 周）在 Nav2 里的执行器</strong>。它的源码结构（<code>nav2_bt_navigator/</code>）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>bt_navigator 主逻辑：
+1. 收 action 目标（NavigateToPose）
+2. 加载行为树 XML（定义了导航流程）
+3. 行为树节点们调用 planner/controller/恢复模块
+4. 回报 feedback / result
+</code></pre></div>
+
+<p><strong>读法</strong>：看它加载的 XML 行为树文件（<code>behavior_trees/</code> 目录），看懂"流程是什么"——比读 C++ 更重要。你会在 XML 里看到第 5 周说过的"计算路径/跟随/恢复"节点。</p>
+<h3 id="142-costmaprviz2">1.4.2 双层 costmap（rviz2 里观察）</h3>
+<p>Nav2 维护<strong>两张</strong>代价地图：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>全局 costmap（大、慢更新、低分辨率）→ 全局规划用
+局部 costmap（小、快更新、高分辨率）→ 局部规划用
+</code></pre></div>
+
+<p>rviz2 里添加 Map 显示，分别选 <code>/global_costmap/costmap</code> 和 <code>/local_costmap/costmap</code>，观察两张图的区别（大小、分辨率、更新速度）。</p>
+<h3 id="143-3d-2d">1.4.3 3D 激光投影 2D 的感知缺陷（重点认知）</h3>
+<p><strong>3D 激光 → 2D costmap 时信息被压缩，会产生盲区</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>缺陷</th>
+<th>场景</th>
+<th>后果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>玻璃/反光</td>
+<td>玻璃幕墙</td>
+<td>激光穿透/反射 → 以为没墙 → 撞</td>
+</tr>
+<tr>
+<td>悬空障碍</td>
+<td>桌面上方的吊灯</td>
+<td>2D 投影只看到桌面 → 撞上吊灯</td>
+</tr>
+<tr>
+<td>低矮障碍</td>
+<td>矮台阶、电线</td>
+<td>2D 层看不到 → 绊倒</td>
+</tr>
+<tr>
+<td>动态物体</td>
+<td>行人</td>
+<td>残影/幽灵障碍 → 急停</td>
+</tr>
+</tbody>
+</table>
+<p><strong>这就是为什么机器狗比轮式车更需要 3D 感知</strong>——四足能爬台阶，但 2D costmap 看不懂台阶。第 10 周的地形感知是解法之一。</p>
+<h2 id="15">1.5 全局重定位（周五，覆盖资料任务）</h2>
+<h3 id="151">1.5.1 两个定位启动场景</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>冷启动：机器狗开机，完全不知道在哪 → 需要&quot;初始化定位&quot;（告诉它大概位置）
+绑架场景（kidnapped robot）：中途被人搬走 → 定位失效，需要自己重新找自己
+</code></pre></div>
+
+<h3 id="152-nav2-amcl">1.5.2 Nav2 的做法（AMCL）</h3>
+<p><strong>AMCL</strong>（自适应蒙特卡洛定位）：撒一堆"粒子"（猜的位置），用激光观测不断淘汰不匹配的粒子，收敛到真实位置。</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic"># rviz2 里用 2D Pose Estimate 撒初始粒子（第 5 周学过！）</span>
+<span style="color: #3D7B7B; font-style: italic"># 参数：particles 数量（越多越稳越慢）</span>
+</code></pre></div>
+
+<h3 id="153">1.5.3 实践要点</h3>
+<ul>
+<li>导航前<strong>必须</strong>初始化（否则 AMCL 收敛不到或很慢）。</li>
+<li>地图和真实现场<strong>不一样</strong>（装修/变动）→ 粒子会乱 → 需要重新建图或局部修图。</li>
+</ul>
+<hr />
+<h1 id="2">第 2 章 实操部分</h1>
+<h2 id="20-a">2.0 网格 A*（周一，核心交付）</h2>
+<p>用 Python 写 8 邻域 A*：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">heapq</span>
+
+<span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">a_star</span>(grid, start, goal):
+<span style="color: #BBB">    </span><span style="color: #BA2121; font-style: italic">&quot;&quot;&quot;grid: 2D 数组，0=可走，1=障碍&quot;&quot;&quot;</span>
+    h, w <span style="color: #666">=</span> <span style="color: #008000">len</span>(grid), <span style="color: #008000">len</span>(grid[<span style="color: #666">0</span>])
+    open_set <span style="color: #666">=</span> []
+    heapq<span style="color: #666">.</span>heappush(open_set, (<span style="color: #666">0</span>, start))     <span style="color: #3D7B7B; font-style: italic"># (f, node)</span>
+    came_from <span style="color: #666">=</span> {}                            <span style="color: #3D7B7B; font-style: italic"># 记录&quot;我从哪来&quot;</span>
+    g <span style="color: #666">=</span> {start: <span style="color: #666">0</span>}
+    f <span style="color: #666">=</span> {start: <span style="color: #666">0</span>}
+    dirs <span style="color: #666">=</span> [(<span style="color: #666">-1</span>,<span style="color: #666">0</span>),(<span style="color: #666">1</span>,<span style="color: #666">0</span>),(<span style="color: #666">0</span>,<span style="color: #666">-1</span>),(<span style="color: #666">0</span>,<span style="color: #666">1</span>),(<span style="color: #666">-1</span>,<span style="color: #666">-1</span>),(<span style="color: #666">-1</span>,<span style="color: #666">1</span>),(<span style="color: #666">1</span>,<span style="color: #666">-1</span>),(<span style="color: #666">1</span>,<span style="color: #666">1</span>)]  <span style="color: #3D7B7B; font-style: italic"># 8 邻域</span>
+
+    <span style="color: #008000; font-weight: bold">while</span> open_set:
+        _, current <span style="color: #666">=</span> heapq<span style="color: #666">.</span>heappop(open_set)
+        <span style="color: #008000; font-weight: bold">if</span> current <span style="color: #666">==</span> goal:                   <span style="color: #3D7B7B; font-style: italic"># 到终点</span>
+            path <span style="color: #666">=</span> []
+            <span style="color: #008000; font-weight: bold">while</span> current <span style="color: #A2F; font-weight: bold">in</span> came_from:
+                path<span style="color: #666">.</span>append(current)
+                current <span style="color: #666">=</span> came_from[current]
+            path<span style="color: #666">.</span>reverse()
+            <span style="color: #008000; font-weight: bold">return</span> path
+
+        <span style="color: #008000; font-weight: bold">for</span> dx, dy <span style="color: #A2F; font-weight: bold">in</span> dirs:
+            nx, ny <span style="color: #666">=</span> current[<span style="color: #666">0</span>]<span style="color: #666">+</span>dx, current[<span style="color: #666">1</span>]<span style="color: #666">+</span>dy
+            <span style="color: #008000; font-weight: bold">if</span> <span style="color: #A2F; font-weight: bold">not</span> (<span style="color: #666">0</span> <span style="color: #666">&lt;=</span> nx <span style="color: #666">&lt;</span> h <span style="color: #A2F; font-weight: bold">and</span> <span style="color: #666">0</span> <span style="color: #666">&lt;=</span> ny <span style="color: #666">&lt;</span> w): <span style="color: #008000; font-weight: bold">continue</span>
+            <span style="color: #008000; font-weight: bold">if</span> grid[nx][ny] <span style="color: #666">==</span> <span style="color: #666">1</span>: <span style="color: #008000; font-weight: bold">continue</span>    <span style="color: #3D7B7B; font-style: italic"># 障碍</span>
+            ng <span style="color: #666">=</span> g[current] <span style="color: #666">+</span> (<span style="color: #666">1.414</span> <span style="color: #008000; font-weight: bold">if</span> dx <span style="color: #A2F; font-weight: bold">and</span> dy <span style="color: #008000; font-weight: bold">else</span> <span style="color: #666">1.0</span>)  <span style="color: #3D7B7B; font-style: italic"># 对角代价√2</span>
+            <span style="color: #008000; font-weight: bold">if</span> ng <span style="color: #666">&lt;</span> g<span style="color: #666">.</span>get((nx, ny), <span style="color: #008000">float</span>(<span style="color: #BA2121">&#39;inf&#39;</span>)):
+                came_from[(nx, ny)] <span style="color: #666">=</span> current
+                g[(nx, ny)] <span style="color: #666">=</span> ng
+                hh <span style="color: #666">=</span> <span style="color: #008000">abs</span>(nx<span style="color: #666">-</span>goal[<span style="color: #666">0</span>]) <span style="color: #666">+</span> <span style="color: #008000">abs</span>(ny<span style="color: #666">-</span>goal[<span style="color: #666">1</span>])        <span style="color: #3D7B7B; font-style: italic"># 曼哈顿距离启发式</span>
+                f[(nx, ny)] <span style="color: #666">=</span> ng <span style="color: #666">+</span> hh
+                heapq<span style="color: #666">.</span>heappush(open_set, (f[(nx, ny)], (nx, ny)))
+    <span style="color: #008000; font-weight: bold">return</span> <span style="color: #008000; font-weight: bold">None</span>                               <span style="color: #3D7B7B; font-style: italic"># 无路</span>
+
+<span style="color: #3D7B7B; font-style: italic"># 测试：10×10 地图，中间一堵墙</span>
+grid <span style="color: #666">=</span> [[<span style="color: #666">0</span>]<span style="color: #666">*10</span> <span style="color: #008000; font-weight: bold">for</span> _ <span style="color: #A2F; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666">10</span>)]
+<span style="color: #008000; font-weight: bold">for</span> r <span style="color: #A2F; font-weight: bold">in</span> <span style="color: #008000">range</span>(<span style="color: #666">3</span>, <span style="color: #666">7</span>): grid[r][<span style="color: #666">5</span>] <span style="color: #666">=</span> <span style="color: #666">1</span>          <span style="color: #3D7B7B; font-style: italic"># 墙</span>
+path <span style="color: #666">=</span> a_star(grid, (<span style="color: #666">0</span>, <span style="color: #666">0</span>), (<span style="color: #666">9</span>, <span style="color: #666">9</span>))
+<span style="color: #008000">print</span>(<span style="color: #BA2121">&quot;路径:&quot;</span>, path)
+</code></pre></div>
+
+<p>✅ <strong>验证</strong>：画出来看路径是否绕墙。<strong>再测试</strong>：① 墙封死（无路 → 返回 None）；② 起点=终点（单点路径）。</p>
+<h2 id="21-nav2-planner-20">2.1 读 Nav2 内置 planner 入口（周二 20 分钟）</h2>
+<p><code>navigation2/nav2_navfn_planner/</code> 或 <code>nav2_theta_star_planner/</code>：
+- 找"插件注册"（第 4 周学的三步）。
+- 找核心算法函数（<code>computePotential</code> 或 <code>createPlan</code>）。
+- 记录：它是 Dijkstra 还是 A*？启发式是什么？</p>
+<h2 id="22">2.2 记录当前导航参数（周三，先不调！）</h2>
+<p>把你们平台导航 yaml 全部参数抄下来（只记录，不改）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>导航参数快照（2026-xx-xx）
+- planner: 全局规划器插件名 + 参数
+- controller: 局部控制器插件名 + 参数
+- costmap: inflation_radius / cost_scaling_factor / footprint ...
+- 速度限制: max_vel_x / max_vel_theta / accel 限制 ...
+- 行为树: XML 文件名
+</code></pre></div>
+
+<p><strong>这是对照表 v1 的原料</strong>——第 9~11 周不断回填"参数 → 行为"。</p>
+<h2 id="23-rviz2-costmap">2.3 rviz2 观察双层 costmap（周四）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>ros2<span style="color: #BBB"> </span>run<span style="color: #BBB"> </span>rviz2<span style="color: #BBB"> </span>rviz2
+<span style="color: #3D7B7B; font-style: italic"># 添加 2 个 Map 显示：</span>
+<span style="color: #3D7B7B; font-style: italic"># /global_costmap/costmap（大图）</span>
+<span style="color: #3D7B7B; font-style: italic"># /local_costmap/costmap（小图）</span>
+</code></pre></div>
+
+<p><strong>记录</strong>：两张图的大小、分辨率、障碍/膨胀显示差异。</p>
+<h2 id="24-lio">2.4 LIO 建图 → 导航地图工作流（周五）</h2>
+<p><strong>工作场景</strong>（重要）：SLAM 建的 3D 地图不能直接用，要转成 Nav2 要的 2D 地图：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>FAST-LIO2 建的 3D 点云地图
+   → ① 抽稀（降采样，减内存）
+   → ② 去动态物体（人/车留下的残影）
+   → ③ 投影成 2D 占据栅格（有东西=1，没东西=0）
+   → ④ 存成 pgm/yaml 地图文件
+   → ⑤ Nav2 map_server 加载
+</code></pre></div>
+
+<p><strong>常见坑</strong>：
+- 没去动态物体 → 地图里有幽灵障碍 → 导航绕路/卡住。
+- 抽稀太多 → 墙变"透" → 障碍漏检。
+- 投影阈值错 → 悬空物变成地面障碍 → 无法通行。</p>
+<h2 id="25">2.5 全局重定位/初始化（周五）</h2>
+<ol>
+<li>启动 Nav2 仿真。</li>
+<li>故意<strong>不初始化</strong>就下目标 → 记录现象（导航乱走/粒子散开）。</li>
+<li>用 2D Pose Estimate 初始化 → 导航正常 → 记录对比。</li>
+</ol>
+<hr />
+<h1 id="3-45h">第 3 章 周六实验手册（4~5h）</h1>
+<h2 id="31-160">3.1 任务 1：仿真导航到多个点（60 分钟）</h2>
+<p>场景组合（各跑一次并截图）：
+1. 普通房间：A → B。
+2. <strong>窄通道</strong>：两个障碍中间的小缝。
+3. <strong>墙角</strong>：绕直角墙走。
+4. <strong>障碍群</strong>：一堆障碍中间穿。</p>
+<p><strong>记录</strong>：路径质量（绕路？贴墙？穿缝成功？）+ cmd_vel 曲线特点。</p>
+<h2 id="32-290">3.2 任务 2：逐参数实验（90 分钟，核心交付）</h2>
+<p><strong>每次只改一个参数，记录行为差异（截图/录屏）</strong>，建议顺序：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>实验 1：inflation_radius：0.3 / 0.8 / 1.5
+   → 观察：路径离墙距离、是否绕远路
+实验 2：cost_scaling_factor：1 / 5 / 10
+   → 观察：贴墙程度
+实验 3：max_vel_x：0.3 / 0.8 / 1.5
+   → 观察：走多快、转弯时会不会&quot;冲过头&quot;
+实验 4：全局规划器：NavFn vs Theta*
+   → 观察：路径形状（斜线？直角？）
+实验 5：footprint 尺寸
+   → 观察：窄通道能否通过
+</code></pre></div>
+
+<p><strong>输出</strong>：每实验一张对比图 + 一句话"参数→行为"结论。</p>
+<h2 id="33-3recovery-60">3.3 任务 3：recovery 全流程复现（60 分钟）</h2>
+<p><strong>复现"目标不可达 → 恢复 → 重规划"</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>1. 设一个&quot;被障碍围死&quot;的目标点（如四面墙中间）
+2. 观察行为树怎么走：
+   全局规划失败？→ recovery 1：清除代价地图
+   局部卡住？→ recovery 2：旋转 / 后退
+   还不行 → 重规划 / 放弃
+3. 记录：每个 recovery 的触发条件、动作、耗时
+</code></pre></div>
+
+<p><strong>输出</strong>：recovery 行为记录表（触发条件/动作/结果）。</p>
+<h2 id="34-4odom-30">3.4 任务 4：odom 故障注入（30 分钟）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>给 odom 注入问题（在 /odom 前加一个&quot;故障节点&quot;或直接停发布）：
+1. 加噪声：odom 乱跳 → 观察导航行为退化
+2. 断流：停 odom → 观察定位失效怎么表现（卡住？急停？）
+3. 记录：现象 + 你判断的降级策略（如果这是你的系统，你该怎么办）
+</code></pre></div>
+
+<h2 id="35-5-v130">3.5 任务 5：填写对照表 v1（30 分钟）</h2>
+<p>把 3.2 的实验结果回填进对照表（≥8 个参数）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>参数→行为对照表 v1（2026-xx-xx）
+| 参数 | 调大效果 | 调小效果 | 原理 | 验证记录 |
+|---|---|---|---|---|
+| inflation_radius | 绕路 | 贴墙 | 膨胀圈变大 | 实验1 截图 |
+| cost_scaling_factor | 贴墙 | 保守 | 衰减陡 | 实验2 截图 |
+| max_vel_x | 快但冲 | 慢而稳 | 速度限制 | 实验3 截图 |
+| ... |
+</code></pre></div>
+
+<h2 id="36">3.6 周六检查清单</h2>
+<ul>
+<li>[ ] 4 个场景导航跑通</li>
+<li>[ ] ≥4 组逐参数实验 + 结论</li>
+<li>[ ] recovery 全流程记录</li>
+<li>[ ] odom 故障注入观察</li>
+<li>[ ] 对照表 v1（≥8 参数）</li>
+<li>[ ] git 提交 ≥ 4 次</li>
+</ul>
+<hr />
+<h1 id="4-12h">第 4 章 周日复盘（1~2h）</h1>
+<h2 id="41">4.1 本周总结（一页）</h2>
+<ol>
+<li>图搜索：图 = 格子 + 代价；A* = g + h，open/closed 两表。</li>
+<li>costmap：双层（全局/局部）+ 代价曲线 + 膨胀参数。</li>
+<li>感知缺陷：玻璃/悬空/低矮/动态——2D 投影的盲区。</li>
+<li>参数→行为：本周 8+ 个参数已验证。</li>
+<li>工作流：LIO 建图 → 抽稀 → 去动态 → 2D 投影 → 导航。</li>
+</ol>
+<h2 id="42-bug-8">4.2 Bug 案例 #8（必须完成）</h2>
+<p><strong>贴墙走/穿障碍类问题</strong>：用本周实验或工作现场，走五步法，填 <code>bug_cases/bug_008.md</code>。线索：膨胀参数太小？footprint 错？costmap 没更新？</p>
+<h2 id="43-15">4.3 下周预习（15 分钟）</h2>
+<p>第 10 周：全局规划器（Hybrid A<em>）+ 四足通过性。先想：</em><em>"小车能原地转，机器狗转弯有什么限制？路径怎么考虑这个？"</em><em> —— 运动学约束。让 AI 讲讲 Hybrid A</em>。</p>
+<h2 id="44">4.4 周日自测</h2>
+<ol>
+<li>A* 的 g、h、f？open/closed？</li>
+<li>inflation_radius 调大会怎样？（参数→行为）</li>
+<li>双层 costmap 区别？</li>
+<li>2D 投影的 4 个感知缺陷？</li>
+<li>LIO 地图 → 导航地图的 5 步？</li>
+</ol>
+<hr />
+<h1 id="5">第 5 章 第九周验收清单</h1>
+<ul>
+<li>[ ] 图/节点/边概念</li>
+<li>[ ] A* 手写跑通（含无路/对角）</li>
+<li>[ ] Dijkstra vs A<em>、D</em> Lite 概念</li>
+<li>[ ] costmap 代价曲线 + 膨胀参数</li>
+<li>[ ] 双层 costmap 观察</li>
+<li>[ ] 感知缺陷 4 类</li>
+<li>[ ] recovery 机制 + 全流程复现</li>
+<li>[ ] LIO→导航地图工作流</li>
+<li>[ ] 参数→行为对照表 v1（≥8）</li>
+<li>[ ] Bug 案例 #8</li>
+<li>[ ] 每日自测 ≥ 60%</li>
+</ul>
+<p><strong>未达标</strong>：砍 1.2 D<em> Lite 与 2.1 源码深读。</em><em>A</em> 代码和逐参数实验不可砍。**</p>
+<hr />
+<h1 id="9">附录：术语表（第 9 周新增）</h1>
+<table>
+<thead>
+<tr>
+<th>术语</th>
+<th>大白话解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>图</td>
+<td>节点 + 边（地图 = 格子图）</td>
+</tr>
+<tr>
+<td>节点/边</td>
+<td>格子 / 格子间的连接</td>
+</tr>
+<tr>
+<td>代价</td>
+<td>走一步的难度（0=随便走）</td>
+</tr>
+<tr>
+<td>搜索</td>
+<td>在图上找路径</td>
+</tr>
+<tr>
+<td>Dijkstra</td>
+<td>一圈圈扩的搜索（无启发式）</td>
+</tr>
+<tr>
+<td>A*</td>
+<td>带启发式的搜索（g+h）</td>
+</tr>
+<tr>
+<td>启发式 h</td>
+<td>到终点的估计距离</td>
+</tr>
+<tr>
+<td>open/closed 表</td>
+<td>待探索 / 已定案</td>
+</tr>
+<tr>
+<td>8 邻域</td>
+<td>允许 8 个方向走（含对角）</td>
+</tr>
+<tr>
+<td>D* Lite</td>
+<td>动态环境增量重规划</td>
+</tr>
+<tr>
+<td>膨胀代价曲线</td>
+<td>离障碍越近代价越高的曲线</td>
+</tr>
+<tr>
+<td>inflation_radius</td>
+<td>膨胀影响半径</td>
+</tr>
+<tr>
+<td>cost_scaling_factor</td>
+<td>代价衰减陡峭度</td>
+</tr>
+<tr>
+<td>全局/局部 costmap</td>
+<td>大而慢 / 小而快</td>
+</tr>
+<tr>
+<td>AMCL</td>
+<td>粒子滤波定位（撒粒子淘汰）</td>
+</tr>
+<tr>
+<td>绑架问题</td>
+<td>被搬走后的定位恢复</td>
+</tr>
+<tr>
+<td>占据栅格</td>
+<td>2D 地图格子（有/无东西）</td>
+</tr>
+<tr>
+<td>recovery</td>
+<td>恢复行为（清图/旋转/后退）</td>
+</tr>
+<tr>
+<td>幽灵障碍</td>
+<td>动态物体留下的假障碍</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>教材说明：本教材自包含、零基础友好。外部资料（Nav2 参数文档、LaValle《Planning Algorithms》）仅作加深。每天学习结束后按"每日学习检测协议"让 AI 追问验证。</em></p>
+<footer>
+<p>四足机器狗导航算法 · 三个月学习计划 · 第 9 周教材</p>
+<p>每天学习结束后，按清单文末「每日学习检测协议」让 AI 追问验证</p>
+</footer>
+</div>
+<script>
+(function(){{
+  var toc = document.getElementById('toc-placeholder');
+  var heads = document.querySelectorAll('h2');
+  var list = document.createElement('ul');
+  heads.forEach(function(h){{
+    var id = h.id || ('h-' + h.textContent.replace(/[^\w\u4e00-\u9fa5]/g, '-').slice(0, 30));
+    h.id = id;
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    list.appendChild(li);
+  }});
+  toc.appendChild(list);
+}})();
+</script>
+</body>
+</html>

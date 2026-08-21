@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>第三周学习教材：概率/Kalman + ROS2 入门 + TF</title>
+<style>
+:root {{
+  --bg: #f7f5f0;
+  --card: #ffffff;
+  --ink: #1f2430;
+  --muted: #6b7280;
+  --accent: #b45309;
+  --accent-soft: #fef3c7;
+  --line: #e5e0d6;
+  --code-bg: #f4f1ea;
+  --table-head: #f0ece2;
+  --link: #92400e;
+}}
+* {{ box-sizing: border-box; }}
+html {{ -webkit-text-size-adjust: 100%; }}
+body {{
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-size: 16px;
+  line-height: 1.85;
+  word-break: break-word;
+}}
+.wrap {{ max-width: 46rem; margin: 0 auto; padding: 1.2rem 1.1rem 4rem; }}
+header.hero {{
+  background: linear-gradient(135deg, #7c2d12 0%, #b45309 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 1.6rem 1.4rem;
+  margin-bottom: 1.4rem;
+  box-shadow: 0 4px 14px rgba(124, 45, 18, .25);
+}}
+header.hero h1 {{ margin: 0 0 .4rem; font-size: 1.4rem; line-height: 1.4; }}
+header.hero p {{ margin: .2rem 0; font-size: .9rem; opacity: .92; }}
+.nav {{
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  margin-bottom: 1.4rem;
+}}
+.nav a {{
+  display: inline-block; padding: .3rem .7rem; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line);
+  color: var(--link); text-decoration: none; font-size: .82rem;
+}}
+.nav a.on {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
+.toc {{
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 1rem 1.2rem; margin-bottom: 1.6rem; font-size: .92rem;
+}}
+.toc summary {{ cursor: pointer; font-weight: 600; color: var(--accent); }}
+.toc a {{ color: var(--link); text-decoration: none; }}
+.toc a:hover {{ text-decoration: underline; }}
+h1 {{ font-size: 1.5rem; margin: 2.2rem 0 .8rem; padding-bottom: .4rem; border-bottom: 2px solid var(--accent); }}
+h2 {{ font-size: 1.22rem; margin: 1.8rem 0 .6rem; color: #7c2d12; }}
+h3 {{ font-size: 1.05rem; margin: 1.4rem 0 .5rem; }}
+h4 {{ font-size: .98rem; margin: 1.1rem 0 .4rem; color: #444; }}
+p {{ margin: .55rem 0; }}
+ul, ol {{ padding-left: 1.5rem; margin: .5rem 0; }}
+li {{ margin: .28rem 0; }}
+strong {{ color: #7c2d12; }}
+code {{
+  background: var(--code-bg); border-radius: 4px; padding: .12em .35em;
+  font-family: "SF Mono", Consolas, "Courier New", monospace; font-size: .88em; color: #8b4513;
+}}
+pre {{
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px;
+  padding: .9rem 1rem; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  font-size: .84rem; line-height: 1.6;
+}}
+pre code {{ background: none; padding: 0; color: inherit; }}
+blockquote {{
+  margin: .8rem 0; padding: .6rem 1rem; background: var(--accent-soft);
+  border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0;
+}}
+blockquote p {{ margin: .3rem 0; }}
+table {{
+  width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .9rem;
+  display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
+}}
+th, td {{ border: 1px solid var(--line); padding: .45rem .6rem; text-align: left; vertical-align: top; }}
+th {{ background: var(--table-head); font-weight: 600; white-space: nowrap; }}
+hr {{ border: none; border-top: 1px solid var(--line); margin: 2rem 0; }}
+input[type="checkbox"] {{ transform: scale(1.2); margin-right: .4em; }}
+footer {{
+  margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: .82rem; text-align: center;
+}}
+</style>
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f8f8f8; }
+.codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+.codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #E40000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #008400 } /* Generic.Inserted */
+.codehilite .go { color: #717171 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #687822 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #800 } /* Name.Constant */
+.codehilite .nd { color: #A2F } /* Name.Decorator */
+.codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #00F } /* Name.Function */
+.codehilite .nl { color: #767600 } /* Name.Label */
+.codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #00F } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<h1>第三周学习教材：概率/Kalman + ROS2 入门 + TF</h1>
+<p>四足机器狗导航算法工程师 · 三个月学习计划</p>
+<p>零基础自包含版 · 手机阅读 · 单文件离线可用</p>
+</header>
+<nav class="nav">
+<a class="" href="第一周学习教材.html">W1</a>
+<a class="" href="第二周学习教材.html">W2</a>
+<a class="on" href="第三周学习教材.html">W3</a>
+<a class="" href="第四周学习教材.html">W4</a>
+<a class="" href="第五周学习教材.html">W5</a>
+<a class="" href="第六周学习教材.html">W6</a>
+<a class="" href="第七周学习教材.html">W7</a>
+<a class="" href="第八周学习教材.html">W8</a>
+<a class="" href="第九周学习教材.html">W9</a>
+<a class="" href="第十周学习教材.html">W10</a>
+<a class="" href="第十一周学习教材.html">W11</a>
+<a class="" href="第十二周学习教材.html">W12</a>
+</nav>
+<details class="toc" open>
+<summary>📑 目录（点击收起）</summary>
+<div id="toc-placeholder"></div>
+</details>
+<h1 id="kalman-ros2-tf">第三周学习教材：概率/Kalman + ROS2 入门 + TF（零基础版）</h1>
+<blockquote>
+<p>定位：四足机器狗（云深处）导航算法工程师
+周期：第 3 周（共 12 周）· 工作日 1.5~2h + 周六 4~5h 实验 + 周日 1~2h 复盘
+本周目标：<strong>理解贝叶斯与高斯；跑通 ROS2 基础通信；会查 TF 问题。</strong>
+本周交付：一维 Kalman 工程 + ROS2 通信/TF 实验 + Bug 案例 #2</p>
+</blockquote>
+<hr />
+<h1 id="0">第 0 章 开课前必读</h1>
+<h2 id="01">0.1 本周学什么（一句话）</h2>
+<p>机器狗有好多传感器，它们说的<strong>互相矛盾</strong>（IMU 说往左，激光说往右）——<strong>概率论</strong>教你"怎么相信它们"；<strong>Kalman 滤波</strong>把"猜 + 测 + 信"变成一套循环；<strong>ROS2</strong> 是机器狗身上程序之间"传话"的框架；<strong>TF</strong> 是"坐标系关系"的广播站。</p>
+<h2 id="02">0.2 学习进度表</h2>
+<table>
+<thead>
+<tr>
+<th>天</th>
+<th>读什么</th>
+<th>学完能干什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>周一</td>
+<td>1.0–1.1 + 2.0–2.1 + 3.1</td>
+<td>懂概率/样本空间；装 ROS2 跑通 turtlesim</td>
+</tr>
+<tr>
+<td>周二</td>
+<td>1.2（贝叶斯）+ 2.2–2.4 + 3.2</td>
+<td>懂贝叶斯公式；写 pub/sub 节点；会查话题</td>
+</tr>
+<tr>
+<td>周三</td>
+<td>1.3（正态分布）+ 2.5–2.6</td>
+<td>懂高斯分布；懂 TF；画 TF 树</td>
+</tr>
+<tr>
+<td>周四</td>
+<td>1.4（多元高斯）+ 2.7–2.8 + 3.3</td>
+<td>懂条件分布；会用 service/参数/launch</td>
+</tr>
+<tr>
+<td>周五</td>
+<td>1.5（Kalman 推导）+ 2.9–2.10</td>
+<td>手推一维 Kalman；会录 bag；读参考实现</td>
+</tr>
+<tr>
+<td>周六</td>
+<td>第 4 章 实验</td>
+<td>实现一维 Kalman；TF 错误定位；bag 分析</td>
+</tr>
+<tr>
+<td>周日</td>
+<td>第 5 章 复盘 + 第 6 章 验收</td>
+<td>Bug 案例 #2、下周预习</td>
+</tr>
+</tbody>
+</table>
+<h2 id="03">0.3 本周主线问题</h2>
+<blockquote>
+<p><strong>两个传感器说的不一样，我信谁？</strong> —— 信"更准的那个"，还要根据每次测量动态调整。Kalman 滤波就是这套"动态相信"的算法。</p>
+</blockquote>
+<hr />
+<h1 id="1">第 1 章 概率：怎么"相信"不确定的事</h1>
+<h2 id="10-stat110-l1l2">1.0 预备：样本空间、概率、随机变量（相当于 STAT110 L1–L2）</h2>
+<h3 id="101">1.0.1 先打比方：掷骰子</h3>
+<ul>
+<li><strong>样本空间</strong> = 所有可能的结果：{1, 2, 3, 4, 5, 6}。</li>
+<li><strong>事件</strong> = 你关心的结果集合：如"掷出偶数" = {2, 4, 6}。</li>
+<li><strong>概率</strong> = 事件发生的可能性（0~1 之间的数）：</li>
+<li>P(掷出偶数) = 3/6 = 0.5。</li>
+<li>P(永远不可能) = 0；P(一定发生) = 1。</li>
+</ul>
+<p><strong>概率的性质</strong>：所有结果的概率加起来 = 1；两个互斥事件至少一个发生 = 概率相加。</p>
+<h3 id="102">1.0.2 随机变量：把结果变成数字</h3>
+<ul>
+<li><strong>离散随机变量</strong>：结果是一个个数（骰子 1~6、传感器报文数）。</li>
+<li><strong>连续随机变量</strong>：结果是一段范围内的任意值（速度 1.234…m/s、位置坐标）。</li>
+</ul>
+<p><strong>期望值（均值）</strong> = 长期平均：掷骰子 1000 次的平均值 ≈ 3.5。记作 E[X]。
+<strong>方差</strong> = 结果"散"不散（波动大不大）；<strong>标准差</strong> = 方差的平方根（和原数据同单位）。</p>
+<blockquote>
+<p>比喻：均值 = 平均值；方差 = "大家跟平均差多远"。</p>
+</blockquote>
+<h3 id="103">1.0.3 和机器狗的关系</h3>
+<p>机器狗的位置<strong>不是确定的数，而是"一个概率分布"</strong>——"我有 95% 把握在 3 米附近，误差 ±0.2 米"。SLAM 的输出就是这样：<strong>位置 + 不确定度（协方差）</strong>。本周学概率，就是为了看懂"不确定度"的语言。</p>
+<blockquote>
+<p>一句话总结：<strong>概率 = 0~1 的可能性；样本空间 = 所有结果；随机变量 = 结果变数字；期望 = 平均值；方差 = 波动大小。</strong></p>
+</blockquote>
+<h3 id="10">1.0 自测</h3>
+<ol>
+<li>掷硬币 P(正面) = ?</li>
+<li>期望和方差各代表什么？</li>
+<li>机器狗"位置 + 不确定度"为什么要用概率语言？</li>
+</ol>
+<hr />
+<h2 id="11-stat110-l3">1.1 条件概率与贝叶斯公式（相当于 STAT110 L3，本周重点）</h2>
+<h3 id="111">1.1.1 条件概率：有了新信息，重新评估</h3>
+<p><strong>P(A | B)</strong> = "已知 B 发生了，A 发生的概率"（读作：在 B 条件下 A 的概率）。</p>
+<p>例：机器狗在房间 A（60% 概率）或房间 B（40%）。突然激光测到"前方有楼梯"——房间 B 有楼梯的概率更大。<strong>看到楼梯后，重新评估"我在哪"——这就是条件概率。</strong></p>
+<p>公式：<code>P(A|B) = P(A∩B) / P(B)</code></p>
+<h3 id="112">1.1.2 贝叶斯公式：新证据更新旧信念（核心！）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>P(A|B) = P(B|A) × P(A) / P(B)
+</code></pre></div>
+
+<p>拆开看（SLAM 语言）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>P(位姿 | 观测) = P(观测 | 位姿) × P(位姿) / P(观测)
+      ↑                ↑              ↑         ↑
+  后验（信完新      似然（如果     先验（之前 归一化（保证加起来=1）
+  证据后的把握）   位姿是真，      的把握）
+                   看到这个观测
+                   的可能性）
+</code></pre></div>
+
+<p><strong>大白话</strong>：<strong>先验 × 似然 → 后验</strong>。"我原来这么想（先验）→ 看到新证据（似然）→ 更新想法（后验）"。<strong>这就是 SLAM/滤波器的灵魂：每一次测量都在更新信念。</strong></p>
+<h3 id="113">1.1.3 例：机器狗版本</h3>
+<ul>
+<li>先验：P(我在走廊) = 0.7。</li>
+<li>似然：如果在走廊，测到"两边都是墙"的概率 = 0.9。</li>
+<li>后验：P(我在走廊 | 测到两边墙) = 0.9 × 0.7 / P(观测) —— P(观测) 是"整体上测到两边墙的概率"，算出来最后结果约 0.95。</li>
+</ul>
+<p><strong>新证据让"在走廊"从 0.7 涨到 0.95。这就是贝叶斯更新。</strong></p>
+<blockquote>
+<p>一句话总结：<strong>贝叶斯 = 用新证据更新旧信念：后验 ∝ 似然 × 先验。滤波器（Kalman）就是反复做这件事。</strong></p>
+</blockquote>
+<h3 id="11">1.1 自测</h3>
+<ol>
+<li>P(A|B) 是什么意思？</li>
+<li>贝叶斯公式的 SLAM 版本怎么写？</li>
+<li>"先验 × 似然 → 后验"各是什么？</li>
+</ol>
+<hr />
+<h2 id="12-stat110-l7l8">1.2 连续分布与正态分布（相当于 STAT110 L7–L8）</h2>
+<h3 id="121">1.2.1 连续分布</h3>
+<p>结果是一个范围内的任意值，用<strong>概率密度函数（pdf）</strong>描述：曲线高 = 那个值附近可能性大。曲线下方总面积 = 1。</p>
+<h3 id="122">1.2.2 正态分布（高斯分布）：宇宙最常用的分布</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>钟形曲线：中间高、两边低、对称
+           μ（均值）    → 曲线的中心（最可能的值）
+           σ（标准差）  → 曲线的胖瘦（σ 大 = 胖 = 不确定；σ 小 = 瘦 = 确定）
+</code></pre></div>
+
+<p>记号：<code>X ~ N(μ, σ²)</code>（读作：X 服从均值为 μ、方差为 σ² 的正态分布）。</p>
+<p><strong>为什么处处是高斯</strong>（中心极限定理，记住结论即可）：一堆独立小误差加起来，误差总和趋近正态分布。<strong>传感器的噪声基本都是高斯</strong>——这是 Kalman 滤波的前提。</p>
+<p><strong>68-95-99.7 法则</strong>：落在 μ±σ 内概率 68%，±2σ 内 95%，±3σ 内 99.7%。</p>
+<h3 id="123">1.2.3 和机器狗的关系</h3>
+<ul>
+<li><strong>噪声 = 高斯</strong>：激光测距误差 ≈ N(0, σ²)。这是数学模型的现实基础。</li>
+<li><strong>状态 = 高斯</strong>：Kalman 滤波假设"我的位置信念是一个高斯分布"——均值 = 最可能的位姿，方差 = 不确定度。</li>
+<li><strong>输出"位置 ± 不确定度"</strong>：其实就是"均值 ± 方差"的高斯。</li>
+</ul>
+<blockquote>
+<p>一句话总结：<strong>正态分布 = 钟形曲线；μ 定中心、σ 定胖瘦；传感器噪声≈高斯；Kalman 就是"我的位置是个高斯，不断用测量把它变准"。</strong></p>
+</blockquote>
+<h3 id="12">1.2 自测</h3>
+<ol>
+<li>正态分布的两个参数 μ、σ 各代表什么？</li>
+<li>为什么"噪声是高斯"很重要？</li>
+<li>68-95-99.7 法则是什么？</li>
+</ol>
+<hr />
+<h2 id="13">1.3 多元高斯：不止一个变量的高斯</h2>
+<h3 id="131">1.3.1 从一维到多维</h3>
+<p>机器狗的状态有 6 个量（3 位置 + 3 姿态），每个量都有自己的不确定度，<strong>量之间还互相影响</strong>（x 不准，y 也可能受影响）。<strong>多元高斯 = 一堆变量的联合分布</strong>。</p>
+<p>写法：均值向量 μ（每个变量的均值）+ <strong>协方差矩阵 Σ</strong>（每对变量的关系）。</p>
+<h3 id="132">1.3.2 协方差矩阵：不确定度的"户口本"</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>Σ = | σx²   σxy |       对角线上 = 各自的方差（自己不确定多少）
+    | σxy   σy² |       非对角线 = 协方差（两者一起变的趋势）
+</code></pre></div>
+
+<ul>
+<li>σxy &gt; 0：x 偏大时 y 也偏大（正相关）。</li>
+<li>σxy = 0：x、y 互不相干。</li>
+<li><strong>几何上，Σ 对应一个椭圆（误差椭球）</strong>：主轴方向 = 特征向量，轴长 = 特征值开根号（第 1 周学过！）。</li>
+</ul>
+<h3 id="133">1.3.3 条件分布：只关注一部分变量</h3>
+<p><strong>多元高斯条件分布</strong> = 已知 x 的值，y 的条件分布是什么？结论（了解公式存在，会用工具即可）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>已知 x，y 的均值要修正（向&quot;跟 x 相关的方向&quot;靠），方差会缩小（信息更多，更确定）
+</code></pre></div>
+
+<p><strong>这正是 Kalman 更新的数学</strong>：已知"激光观测"，修正"位置的均值"，缩小"方差"。</p>
+<blockquote>
+<p>一句话总结：<strong>多元高斯 = 多变量的联合不确定度；协方差矩阵记录每个变量的方差和变量间的关系；条件分布 = 知道一部分变量后，其余变量的分布被修正（方差变小）。</strong></p>
+</blockquote>
+<h3 id="13_1">1.3 自测</h3>
+<ol>
+<li>协方差矩阵对角线和非对角线各是什么？</li>
+<li>误差椭球的主轴和特征值什么关系？（回忆第 1 周）</li>
+<li>为什么"知道了观测，位置方差会变小"？</li>
+</ol>
+<hr />
+<h2 id="14-kalman">1.4 一维 Kalman 滤波：手推全过程（本周核心）</h2>
+<h3 id="141">1.4.1 场景</h3>
+<p>机器狗沿直线走。我们有两个信息：</p>
+<ol>
+<li><strong>预测</strong>：根据 IMU/运动模型，推测现在应该在 5m 处，但不确定（σ=0.5m）。</li>
+<li><strong>测量</strong>：激光测距仪说在 5.3m 处，也不确定（σ=0.2m）。</li>
+</ol>
+<p><strong>Kalman 滤波 = 把这两个信息按"谁更准信谁"合起来。</strong></p>
+<h3 id="142-predict-update">1.4.2 两步：预测（Predict）→ 更新（Update）</h3>
+<p><strong>① 预测（Predict）</strong>：用运动模型向前推</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>x̂_预测 = x̂_上次 + 速度 × Δt
+P_预测 = P_上次 + 过程噪声 Q        （走一步，不确定性变大一点）
+</code></pre></div>
+
+<p><strong>② 更新（Update）</strong>：用测量修正</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>① 算&quot;测量有多可信&quot;：卡尔曼增益 K
+   K = P_预测 / (P_预测 + R)         （R = 测量噪声方差）
+   K 在 0~1 之间：K 大 = 信测量；K 小 = 信预测
+
+② 修正均值：预测结果 + K × (测量 − 预测)
+   x̂_更新 = x̂_预测 + K × (z − x̂_预测)
+   （z − x̂_预测）叫&quot;残差/新息&quot;：测量和预测差多少
+
+③ 修正方差：更新后不确定性变小
+   P_更新 = (1 − K) × P_预测
+</code></pre></div>
+
+<h3 id="143">1.4.3 数字例子（跟着算一遍）</h3>
+<ul>
+<li>预测：x̂ = 5.0，P = 0.25（σ² = 0.5²）</li>
+<li>测量：z = 5.3，R = 0.04（σ² = 0.2²）</li>
+</ul>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>K = 0.25 / (0.25 + 0.04) = 0.25/0.29 ≈ 0.862   （测量更准，K 大 → 更信测量）
+x̂_更新 = 5.0 + 0.862 × (5.3 − 5.0) = 5.0 + 0.259 ≈ 5.26
+P_更新 = (1 − 0.862) × 0.25 ≈ 0.0345   （方差大幅缩小：更有把握了）
+</code></pre></div>
+
+<p><strong>结果</strong>：位置从 5.0 修正到 5.26（偏向更准的测量），不确定性从 0.25 缩到 0.034。</p>
+<p><strong>下一次循环</strong>：把 x̂_更新、P_更新当"上一次"，再来一遍——<strong>预测 → 更新 → 预测 → 更新……这就是滤波器的循环</strong>。</p>
+<blockquote>
+<p>一句话总结：<strong>Kalman = 预测（模型往前推，不确定性变大）+ 更新（用测量修正，按"谁准信谁"，不确定性变小），反复循环。</strong></p>
+</blockquote>
+<h3 id="14">1.4 自测</h3>
+<ol>
+<li>K（卡尔曼增益）大意味着信谁？公式是什么？</li>
+<li>数字例子：如果测量比预测更不准（R 很大），结果会怎样？</li>
+<li>为什么更新后方差会变小？</li>
+</ol>
+<hr />
+<h1 id="2-ros2">第 2 章 ROS2：程序之间怎么"传话"</h1>
+<h2 id="20-ros2">2.0 预备：ROS2 是什么</h2>
+<p><strong>ROS2 = 机器人操作系统</strong>（不是真的操作系统，是一套"程序之间传数据"的框架 + 一堆现成工具）。</p>
+<p>机器狗身上有很多程序：激光驱动、IMU 驱动、SLAM、导航、底盘控制……它们要互相传数据。ROS2 的答案是：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>  话题（Topic）：广播——&quot;我发数据，谁需要谁订阅&quot;
+  服务（Service）：问答——&quot;你问我答&quot;
+  动作（Action）：长任务——&quot;开始做、进度回报、可取消&quot;
+  参数（Parameter）：配置——&quot;改设置&quot;
+</code></pre></div>
+
+<h2 id="21-ros2-turtlesim">2.1 安装 + 第一个程序（覆盖"安装 ROS2 + turtlesim"任务）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic"># Ubuntu 安装（Jazzy 或你平台使用的版本，按官方文档）</span>
+sudo<span style="color: #BBB"> </span>apt<span style="color: #BBB"> </span>install<span style="color: #BBB"> </span>ros-jazzy-desktop
+
+<span style="color: #3D7B7B; font-style: italic"># 配置环境（每次新终端执行）</span>
+<span style="color: #008000">source</span><span style="color: #BBB"> </span>/opt/ros/jazzy/setup.bash
+
+<span style="color: #3D7B7B; font-style: italic"># 三个终端分别跑：</span>
+ros2<span style="color: #BBB"> </span>run<span style="color: #BBB"> </span>turtlesim<span style="color: #BBB"> </span>turtlesim_node<span style="color: #BBB">      </span><span style="color: #3D7B7B; font-style: italic"># 终端1：乌龟模拟器</span>
+ros2<span style="color: #BBB"> </span>run<span style="color: #BBB"> </span>turtlesim<span style="color: #BBB"> </span>turtle_teleop_key<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic"># 终端2：键盘控制</span>
+ros2<span style="color: #BBB"> </span>topic<span style="color: #BBB"> </span><span style="color: #008000">echo</span><span style="color: #BBB"> </span>/turtle1/pose<span style="color: #BBB">          </span><span style="color: #3D7B7B; font-style: italic"># 终端3：看乌龟位置数据</span>
+</code></pre></div>
+
+<p><strong>看到什么</strong>：终端 3 在"订阅"乌龟的 <code>/turtle1/pose</code> 话题，实时打印位置。<strong>这就是 ROS2 的最小通信：一个节点发布（键盘→cmd_vel），一个节点订阅（显示 pose）。</strong></p>
+<p><strong>colcon 工作空间</strong>（以后写自己的包用）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>mkdir<span style="color: #BBB"> </span>-p<span style="color: #BBB"> </span>~/ros2_ws/src<span style="color: #BBB"> </span><span style="color: #666">&amp;&amp;</span><span style="color: #BBB"> </span><span style="color: #008000">cd</span><span style="color: #BBB"> </span>~/ros2_ws/src
+ros2<span style="color: #BBB"> </span>pkg<span style="color: #BBB"> </span>create<span style="color: #BBB"> </span>--build-type<span style="color: #BBB"> </span>ament_cmake<span style="color: #BBB"> </span>my_first_node<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic"># 创建包</span>
+<span style="color: #008000">cd</span><span style="color: #BBB"> </span>~/ros2_ws<span style="color: #BBB"> </span><span style="color: #666">&amp;&amp;</span><span style="color: #BBB"> </span>colcon<span style="color: #BBB"> </span>build<span style="color: #BBB"> </span><span style="color: #666">&amp;&amp;</span><span style="color: #BBB"> </span><span style="color: #008000">source</span><span style="color: #BBB"> </span>install/setup.bash<span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic"># 编译</span>
+</code></pre></div>
+
+<h2 id="22-c-c">2.2 写一个发布者 + 订阅者（C++）（覆盖"写两个 C++ 节点"任务）</h2>
+<p><strong>发布者 publisher（发 /hello 消息）</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;rclcpp/rclcpp.hpp&gt;</span>
+<span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;std_msgs/msg/string.hpp&gt;</span>
+
+<span style="color: #B00040">int</span><span style="color: #BBB"> </span><span style="color: #00F">main</span>(<span style="color: #B00040">int</span><span style="color: #BBB"> </span>argc,<span style="color: #BBB"> </span><span style="color: #B00040">char</span><span style="color: #666">**</span><span style="color: #BBB"> </span>argv)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span>rclcpp<span style="color: #666">::</span>init(argc,<span style="color: #BBB"> </span>argv);<span style="color: #BBB">                          </span><span style="color: #3D7B7B; font-style: italic">// 初始化</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">auto</span><span style="color: #BBB"> </span>node<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>std<span style="color: #666">::</span>make_shared<span style="color: #666">&lt;</span>rclcpp<span style="color: #666">::</span>Node<span style="color: #666">&gt;</span>(<span style="color: #BA2121">&quot;talker&quot;</span>);<span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic">// 建节点</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">auto</span><span style="color: #BBB"> </span>pub<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>node<span style="color: #666">-&gt;</span>create_publisher<span style="color: #666">&lt;</span>std_msgs<span style="color: #666">::</span>msg<span style="color: #666">::</span>String<span style="color: #666">&gt;</span>(<span style="color: #BA2121">&quot;hello&quot;</span>,<span style="color: #BBB"> </span><span style="color: #666">10</span>);<span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic">// 建发布者</span>
+<span style="color: #BBB">    </span>rclcpp<span style="color: #666">::</span>Rate<span style="color: #BBB"> </span>rate(<span style="color: #666">1</span>);<span style="color: #BBB">                              </span><span style="color: #3D7B7B; font-style: italic">// 每秒 1 次</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">while</span><span style="color: #BBB"> </span>(rclcpp<span style="color: #666">::</span>ok())<span style="color: #BBB"> </span>{
+<span style="color: #BBB">        </span><span style="color: #008000; font-weight: bold">auto</span><span style="color: #BBB"> </span>msg<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>std_msgs<span style="color: #666">::</span>msg<span style="color: #666">::</span>String();
+<span style="color: #BBB">        </span>msg.data<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;你好，机器狗&quot;</span>;
+<span style="color: #BBB">        </span>pub<span style="color: #666">-&gt;</span>publish(msg);<span style="color: #BBB">                             </span><span style="color: #3D7B7B; font-style: italic">// 发布</span>
+<span style="color: #BBB">        </span>rate.sleep();
+<span style="color: #BBB">    </span>}
+<span style="color: #BBB">    </span>rclcpp<span style="color: #666">::</span>shutdown();
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">return</span><span style="color: #BBB"> </span><span style="color: #666">0</span>;
+}
+</code></pre></div>
+
+<p><strong>订阅者 subscriber（收 /hello 消息）</strong>：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;rclcpp/rclcpp.hpp&gt;</span>
+<span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;std_msgs/msg/string.hpp&gt;</span>
+
+<span style="color: #B00040">void</span><span style="color: #BBB"> </span><span style="color: #00F">callback</span>(<span style="color: #008000; font-weight: bold">const</span><span style="color: #BBB"> </span>std_msgs<span style="color: #666">::</span>msg<span style="color: #666">::</span>String<span style="color: #666">::</span>SharedPtr<span style="color: #BBB"> </span>msg)<span style="color: #BBB"> </span>{<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 收到消息自动执行</span>
+<span style="color: #BBB">    </span>RCLCPP_INFO(rclcpp<span style="color: #666">::</span>get_logger(<span style="color: #BA2121">&quot;listener&quot;</span>),<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;收到: %s&quot;</span>,<span style="color: #BBB"> </span>msg<span style="color: #666">-&gt;</span>data.c_str());
+}
+
+<span style="color: #B00040">int</span><span style="color: #BBB"> </span><span style="color: #00F">main</span>(<span style="color: #B00040">int</span><span style="color: #BBB"> </span>argc,<span style="color: #BBB"> </span><span style="color: #B00040">char</span><span style="color: #666">**</span><span style="color: #BBB"> </span>argv)<span style="color: #BBB"> </span>{
+<span style="color: #BBB">    </span>rclcpp<span style="color: #666">::</span>init(argc,<span style="color: #BBB"> </span>argv);
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">auto</span><span style="color: #BBB"> </span>node<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>std<span style="color: #666">::</span>make_shared<span style="color: #666">&lt;</span>rclcpp<span style="color: #666">::</span>Node<span style="color: #666">&gt;</span>(<span style="color: #BA2121">&quot;listener&quot;</span>);
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">auto</span><span style="color: #BBB"> </span>sub<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>node<span style="color: #666">-&gt;</span>create_subscription<span style="color: #666">&lt;</span>std_msgs<span style="color: #666">::</span>msg<span style="color: #666">::</span>String<span style="color: #666">&gt;</span>(
+<span style="color: #BBB">        </span><span style="color: #BA2121">&quot;hello&quot;</span>,<span style="color: #BBB"> </span><span style="color: #666">10</span>,<span style="color: #BBB"> </span>callback);<span style="color: #BBB">                          </span><span style="color: #3D7B7B; font-style: italic">// 订阅 + 绑定回调</span>
+<span style="color: #BBB">    </span>rclcpp<span style="color: #666">::</span>spin(node);<span style="color: #BBB">                                  </span><span style="color: #3D7B7B; font-style: italic">// 挂起，等消息</span>
+<span style="color: #BBB">    </span><span style="color: #008000; font-weight: bold">return</span><span style="color: #BBB"> </span><span style="color: #666">0</span>;
+}
+</code></pre></div>
+
+<p><strong>回调（callback）</strong>：你上周看 FAST-LIO2 时见过"laserCloudHandler"——<strong>它就是回调：数据一到，程序自动执行这个函数</strong>。这是 ROS 编程的骨架。</p>
+<h2 id="23">2.3 常用诊断命令（覆盖工具任务）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>ros2<span style="color: #BBB"> </span>node<span style="color: #BBB"> </span>list<span style="color: #BBB">              </span><span style="color: #3D7B7B; font-style: italic"># 看有哪些节点</span>
+ros2<span style="color: #BBB"> </span>topic<span style="color: #BBB"> </span>list<span style="color: #BBB">             </span><span style="color: #3D7B7B; font-style: italic"># 看有哪些话题</span>
+ros2<span style="color: #BBB"> </span>topic<span style="color: #BBB"> </span>info<span style="color: #BBB"> </span>/turtle1/pose<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic"># 话题类型、发布者、订阅者</span>
+ros2<span style="color: #BBB"> </span>topic<span style="color: #BBB"> </span>hz<span style="color: #BBB"> </span>/turtle1/pose<span style="color: #BBB">     </span><span style="color: #3D7B7B; font-style: italic"># 发布频率（Hz）——排查&quot;数据卡了没&quot;</span>
+ros2<span style="color: #BBB"> </span>topic<span style="color: #BBB"> </span><span style="color: #008000">echo</span><span style="color: #BBB"> </span>/turtle1/pose<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic"># 打印内容</span>
+ros2<span style="color: #BBB"> </span>doctor<span style="color: #BBB">                 </span><span style="color: #3D7B7B; font-style: italic"># 一键体检（配置问题排查）</span>
+rqt_graph<span style="color: #BBB">                   </span><span style="color: #3D7B7B; font-style: italic"># 图形化看节点-话题关系图</span>
+</code></pre></div>
+
+<p><strong>工作场景</strong>：客户说"导航不动了"。第一步：<code>ros2 topic hz /odom</code>（里程计还发不发？）→ <code>rqt_graph</code>（看链路哪里断了）→ 定位到断点。</p>
+<h2 id="24-service">2.4 服务 Service：一问一答</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic">// 客户端（问）</span>
+rclcpp<span style="color: #666">::</span>Client<span style="color: #666">&lt;</span>std_srvs<span style="color: #666">::</span>srv<span style="color: #666">::</span>SetBool<span style="color: #666">&gt;::</span>SharedPtr<span style="color: #BBB"> </span>client;
+<span style="color: #008000; font-weight: bold">auto</span><span style="color: #BBB"> </span>request<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>std<span style="color: #666">::</span>make_shared<span style="color: #666">&lt;</span>std_srvs<span style="color: #666">::</span>srv<span style="color: #666">::</span>SetBool<span style="color: #666">::</span>Request<span style="color: #666">&gt;</span>();
+request<span style="color: #666">-&gt;</span>data<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #008000">true</span>;
+<span style="color: #008000; font-weight: bold">auto</span><span style="color: #BBB"> </span>future<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>client<span style="color: #666">-&gt;</span>async_send_request(request);<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 发问，等回答</span>
+</code></pre></div>
+
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>ros2<span style="color: #BBB"> </span>service<span style="color: #BBB"> </span>list<span style="color: #BBB">            </span><span style="color: #3D7B7B; font-style: italic"># 看有哪些服务</span>
+ros2<span style="color: #BBB"> </span>service<span style="color: #BBB"> </span>call<span style="color: #BBB"> </span>/服务名<span style="color: #BBB"> </span>std_srvs/srv/SetBool<span style="color: #BBB"> </span><span style="color: #BA2121">&quot;{data: true}&quot;</span><span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic"># 命令行调用</span>
+</code></pre></div>
+
+<p><strong>和话题的区别</strong>：话题 = 广播（发出去不管）；服务 = 问答（问了必须答）。</p>
+<h2 id="25-tf2">2.5 TF2：坐标系关系广播站（本周核心概念）</h2>
+<h3 id="251-tf">2.5.1 TF 是什么</h3>
+<p>机器狗有多个坐标系（世界系、机体系、雷达系、IMU 系……）。<strong>每个程序都需要知道"坐标系之间什么关系"</strong>——TF 就是"谁在谁的哪里"的广播表。</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>TF 树（坐标系关系树）：
+map（地图系）
+ └── odom（里程计系）
+      └── base_link（机体系）★
+           ├── laser（雷达系）
+           ├── imu_link（IMU 系）
+           └── 四条腿的关节系…
+</code></pre></div>
+
+<p><strong>TF 树 = 坐标系的家谱</strong>。任何两个坐标系之间，沿着树找路径就能算变换（比如"雷达看到的点，在世界系坐标是多少"）。</p>
+<h3 id="252-tf">2.5.2 两种 TF（记住区别）</h3>
+<ul>
+<li><strong>静态变换</strong>：永远不变的（雷达装在机体的位置）——发布一次就行。</li>
+<li><strong>动态变换</strong>：不断变化的（机体在世界里的位姿）——实时更新。</li>
+</ul>
+<h3 id="253">2.5.3 常用命令</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>ros2<span style="color: #BBB"> </span>run<span style="color: #BBB"> </span>tf2_tools<span style="color: #BBB"> </span>view_frames<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic"># 生成 TF 树图片（PDF）</span>
+ros2<span style="color: #BBB"> </span>run<span style="color: #BBB"> </span>tf2_ros<span style="color: #BBB"> </span>tf2_echo<span style="color: #BBB"> </span>map<span style="color: #BBB"> </span>base_link<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic"># 看两个系之间的变换</span>
+ros2<span style="color: #BBB"> </span>topic<span style="color: #BBB"> </span><span style="color: #008000">echo</span><span style="color: #BBB"> </span>/tf<span style="color: #BBB">              </span><span style="color: #3D7B7B; font-style: italic"># 看 TF 数据流</span>
+</code></pre></div>
+
+<p><strong>排查工作流</strong>（Bug 案例 #2 的预备）："TF 抖动" = 某个变换跳来跳去 → 看发布频率和内容；"TF 超时" = 某个变换迟迟不发 → 看 TF 树是否断链、谁没发。</p>
+<h3 id="254-tf">2.5.4 手写 TF（静态 + 监听）</h3>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;tf2_ros/static_transform_broadcaster.h&gt;</span>
+<span style="color: #9C6500">#include</span><span style="color: #BBB"> </span><span style="color: #3D7B7B; font-style: italic">&lt;geometry_msgs/msg/transform_stamped.h&gt;</span>
+
+<span style="color: #3D7B7B; font-style: italic">// 发布静态变换：laser 在 base_link 前方 0.2m</span>
+<span style="color: #008000; font-weight: bold">auto</span><span style="color: #BBB"> </span>broadcaster<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>std<span style="color: #666">::</span>make_shared<span style="color: #666">&lt;</span>tf2_ros<span style="color: #666">::</span>StaticTransformBroadcaster<span style="color: #666">&gt;</span>(node);
+geometry_msgs<span style="color: #666">::</span>msg<span style="color: #666">::</span>TransformStamped<span style="color: #BBB"> </span>t;
+t.header.stamp<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>node<span style="color: #666">-&gt;</span>now();
+t.header.frame_id<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;base_link&quot;</span>;<span style="color: #BBB">         </span><span style="color: #3D7B7B; font-style: italic">// 父系</span>
+t.child_frame_id<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #BA2121">&quot;laser&quot;</span>;<span style="color: #BBB">              </span><span style="color: #3D7B7B; font-style: italic">// 子系</span>
+t.transform.translation.x<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #666">0.2</span>;<span style="color: #BBB">         </span><span style="color: #3D7B7B; font-style: italic">// 位置</span>
+t.transform.rotation.w<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span><span style="color: #666">1.0</span>;<span style="color: #BBB">            </span><span style="color: #3D7B7B; font-style: italic">// 旋转（单位四元数 = 不转）</span>
+broadcaster<span style="color: #666">-&gt;</span>sendTransform(t);
+</code></pre></div>
+
+<h2 id="26-rviz2">2.6 rviz2：可视化</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>ros2<span style="color: #BBB"> </span>run<span style="color: #BBB"> </span>rviz2<span style="color: #BBB"> </span>rviz2
+</code></pre></div>
+
+<ul>
+<li>添加 TF 显示 → 看坐标系；添加 LaserScan → 看激光；添加 RobotModel → 看模型。</li>
+<li><strong>2D Pose Estimate</strong>：手动告诉系统"我大概在这"（初始化定位）。</li>
+</ul>
+<h2 id="27-parameter">2.7 参数 Parameter：配置文件</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>node<span style="color: #666">-&gt;</span>declare_parameter<span style="color: #666">&lt;</span><span style="color: #B00040">double</span><span style="color: #666">&gt;</span>(<span style="color: #BA2121">&quot;max_speed&quot;</span>,<span style="color: #BBB"> </span><span style="color: #666">1.0</span>);<span style="color: #BBB">   </span><span style="color: #3D7B7B; font-style: italic">// 声明默认值</span>
+<span style="color: #B00040">double</span><span style="color: #BBB"> </span>v<span style="color: #BBB"> </span><span style="color: #666">=</span><span style="color: #BBB"> </span>node<span style="color: #666">-&gt;</span>get_parameter(<span style="color: #BA2121">&quot;max_speed&quot;</span>).as_double();<span style="color: #BBB">  </span><span style="color: #3D7B7B; font-style: italic">// 读取</span>
+</code></pre></div>
+
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>ros2<span style="color: #BBB"> </span>param<span style="color: #BBB"> </span>list<span style="color: #BBB"> </span>/节点名
+ros2<span style="color: #BBB"> </span>param<span style="color: #BBB"> </span>get<span style="color: #BBB"> </span>/节点名<span style="color: #BBB"> </span>max_speed
+ros2<span style="color: #BBB"> </span>param<span style="color: #BBB"> </span><span style="color: #008000">set</span><span style="color: #BBB"> </span>/节点名<span style="color: #BBB"> </span>max_speed<span style="color: #BBB"> </span><span style="color: #666">0</span>.5<span style="color: #BBB">    </span><span style="color: #3D7B7B; font-style: italic"># 运行时改（热修改）</span>
+</code></pre></div>
+
+<p><strong>工作场景</strong>：改导航参数（如最大速度）不用重编译——参数就是"运行时设置的开关"。</p>
+<h2 id="28-launch">2.8 launch：一键启动一堆程序</h2>
+<p>launch 文件（Python 写）把多个节点 + 参数打包：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">launch</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> LaunchDescription
+<span style="color: #008000; font-weight: bold">from</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">launch_ros.actions</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">import</span> Node
+
+<span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">generate_launch_description</span>():
+    <span style="color: #008000; font-weight: bold">return</span> LaunchDescription([
+        Node(package<span style="color: #666">=</span><span style="color: #BA2121">&#39;my_pkg&#39;</span>, executable<span style="color: #666">=</span><span style="color: #BA2121">&#39;talker&#39;</span>, name<span style="color: #666">=</span><span style="color: #BA2121">&#39;talker&#39;</span>),
+        Node(package<span style="color: #666">=</span><span style="color: #BA2121">&#39;my_pkg&#39;</span>, executable<span style="color: #666">=</span><span style="color: #BA2121">&#39;listener&#39;</span>, name<span style="color: #666">=</span><span style="color: #BA2121">&#39;listener&#39;</span>),
+    ])
+</code></pre></div>
+
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>ros2<span style="color: #BBB"> </span>launch<span style="color: #BBB"> </span>my_pkg<span style="color: #BBB"> </span>my_launch.py
+</code></pre></div>
+
+<h2 id="29-ros2-bag-bag">2.9 ros2 bag：录数据、回放（覆盖 bag 任务）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>ros2<span style="color: #BBB"> </span>bag<span style="color: #BBB"> </span>record<span style="color: #BBB"> </span>/turtle1/pose<span style="color: #BBB"> </span>-o<span style="color: #BBB"> </span>my_bag<span style="color: #BBB">     </span><span style="color: #3D7B7B; font-style: italic"># 录制话题</span>
+ros2<span style="color: #BBB"> </span>bag<span style="color: #BBB"> </span>play<span style="color: #BBB"> </span>my_bag<span style="color: #BBB">                         </span><span style="color: #3D7B7B; font-style: italic"># 回放</span>
+ros2<span style="color: #BBB"> </span>bag<span style="color: #BBB"> </span>info<span style="color: #BBB"> </span>my_bag<span style="color: #BBB">                         </span><span style="color: #3D7B7B; font-style: italic"># 看包里有什么（话题、时长、大小）</span>
+</code></pre></div>
+
+<p><strong>工作场景（最重要技能之一）</strong>：真机出问题时<strong>录一段 bag</strong>（所有话题数据）→ 带回办公室回放分析 → 问题可复现。<strong>"录数据"是排查一切现场问题的第一步。</strong></p>
+<h2 id="210-kalman">2.10 Kalman 参考实现阅读</h2>
+<p>找一个 Python/C++ 一维 Kalman 开源实现（或让 AI 生成），对照 1.4 节的公式逐行看。周六你要自己实现一版。</p>
+<hr />
+<h1 id="3-fast-lio2-imu-20">第 3 章 FAST-LIO2 里的 IMU 数据（覆盖源码 20 分钟任务）</h1>
+<h2 id="31-imu">3.1 IMU 数据怎么进系统</h2>
+<p>回头看第 1 周数据流图第 ① 步。IMU 在 FAST-LIO2 里的路径：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code>IMU 硬件 → 驱动 → /livox/imu 话题（200Hz）
+   → imuHandler 回调：收到就存进队列 imu_buffer
+   → 主回调：取出一段 IMU → esekf.predict() 状态传播
+</code></pre></div>
+
+<p><strong>关键字段</strong>（看 <code>sensor_msgs/msg/Imu</code> 消息）：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>linear_acceleration</td>
+<td>加速度（x,y,z）</td>
+</tr>
+<tr>
+<td>angular_velocity</td>
+<td>角速度（x,y,z）</td>
+</tr>
+<tr>
+<td>orientation</td>
+<td>四元数姿态（可选，不常信）</td>
+</tr>
+<tr>
+<td>header.stamp</td>
+<td>时间戳（关键！对齐用）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>为什么时间戳重要</strong>：预测要用"准确的时刻差"积分；激光和 IMU 要按时间对齐。<strong>时间戳乱 = 数据全乱。</strong> 周六你会检查 bag 里的时间戳。</p>
+<h2 id="32-imu_processinghpp">3.2 读源码：IMU_Processing.hpp 状态传播段（周四周五任务）</h2>
+<p><code>include/IMU_Processing.hpp</code> 里的核心函数（第 1 周见过名字）：</p>
+<ul>
+<li><strong><code>predict(dt, IMU_in, IMU_out)</code></strong>：输入两帧 IMU 和间隔 dt，用 IMU 数据把状态（位姿/速度/零偏）向前推——<strong>这就是 1.3 节的"积分"，误差状态卡尔曼（ESKF）的预测步</strong>。</li>
+<li><strong><code>update_iterated_dyn_share_modified()</code></strong>：用点云做迭代更新（第 4 周精读）。</li>
+</ul>
+<p><strong>本周要求</strong>：找到 predict 函数，看它的输入输出，能说出"它把什么往前推了"即可。内部数学（误差状态、旋转扰动）第 6 周李群李代数后再精读。</p>
+<hr />
+<h1 id="4-45h">第 4 章 周六实验手册（4~5h）</h1>
+<h2 id="41-1-kalman-90">4.1 任务 1：一维 Kalman 实现 + 三个场景测试（90 分钟，核心交付）</h2>
+<p>用 Python 实现一维 Kalman（或 C++，你选）：</p>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #008000; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">numpy</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">as</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">np</span>
+<span style="color: #008000; font-weight: bold">import</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">matplotlib.pyplot</span><span style="color: #BBB"> </span><span style="color: #008000; font-weight: bold">as</span><span style="color: #BBB"> </span><span style="color: #00F; font-weight: bold">plt</span>
+
+<span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">kalman_predict</span>(x, P, Q, v, dt):
+<span style="color: #BBB">    </span><span style="color: #BA2121; font-style: italic">&quot;&quot;&quot;预测：匀速模型 x&#39; = x + v*dt&quot;&quot;&quot;</span>
+    x_pred <span style="color: #666">=</span> x <span style="color: #666">+</span> v <span style="color: #666">*</span> dt
+    P_pred <span style="color: #666">=</span> P <span style="color: #666">+</span> Q               <span style="color: #3D7B7B; font-style: italic"># 过程噪声：不确定性变大</span>
+    <span style="color: #008000; font-weight: bold">return</span> x_pred, P_pred
+
+<span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">kalman_update</span>(x_pred, P_pred, z, R):
+<span style="color: #BBB">    </span><span style="color: #BA2121; font-style: italic">&quot;&quot;&quot;更新：用测量 z 修正&quot;&quot;&quot;</span>
+    K <span style="color: #666">=</span> P_pred <span style="color: #666">/</span> (P_pred <span style="color: #666">+</span> R)    <span style="color: #3D7B7B; font-style: italic"># 卡尔曼增益</span>
+    x_upd <span style="color: #666">=</span> x_pred <span style="color: #666">+</span> K <span style="color: #666">*</span> (z <span style="color: #666">-</span> x_pred)
+    P_upd <span style="color: #666">=</span> (<span style="color: #666">1</span> <span style="color: #666">-</span> K) <span style="color: #666">*</span> P_pred
+    <span style="color: #008000; font-weight: bold">return</span> x_upd, P_upd, K
+
+<span style="color: #3D7B7B; font-style: italic"># 仿真：真值 = 匀速直线 + 噪声测量</span>
+np<span style="color: #666">.</span>random<span style="color: #666">.</span>seed(<span style="color: #666">42</span>)
+true_x <span style="color: #666">=</span> <span style="color: #666">0.0</span>
+v <span style="color: #666">=</span> <span style="color: #666">0.5</span>                          <span style="color: #3D7B7B; font-style: italic"># 速度 0.5 m/s</span>
+dt <span style="color: #666">=</span> <span style="color: #666">0.1</span>
+R <span style="color: #666">=</span> <span style="color: #666">0.04</span>                         <span style="color: #3D7B7B; font-style: italic"># 测量噪声方差（σ=0.2）</span>
+Q <span style="color: #666">=</span> <span style="color: #666">0.01</span>                         <span style="color: #3D7B7B; font-style: italic"># 过程噪声</span>
+N <span style="color: #666">=</span> <span style="color: #666">100</span>
+
+x, P <span style="color: #666">=</span> <span style="color: #666">0.0</span>, <span style="color: #666">1.0</span>                  <span style="color: #3D7B7B; font-style: italic"># 初始状态（很没把握）</span>
+traj, meas, est <span style="color: #666">=</span> [], [], []
+<span style="color: #008000; font-weight: bold">for</span> i <span style="color: #A2F; font-weight: bold">in</span> <span style="color: #008000">range</span>(N):
+    true_x <span style="color: #666">+=</span> v <span style="color: #666">*</span> dt
+    z <span style="color: #666">=</span> true_x <span style="color: #666">+</span> np<span style="color: #666">.</span>random<span style="color: #666">.</span>normal(<span style="color: #666">0</span>, np<span style="color: #666">.</span>sqrt(R))   <span style="color: #3D7B7B; font-style: italic"># 测量 = 真值 + 噪声</span>
+    x, P <span style="color: #666">=</span> kalman_predict(x, P, Q, v, dt)
+    x, P, K <span style="color: #666">=</span> kalman_update(x, P, z, R)
+    traj<span style="color: #666">.</span>append(true_x); meas<span style="color: #666">.</span>append(z); est<span style="color: #666">.</span>append(x)
+
+plt<span style="color: #666">.</span>plot(traj, <span style="color: #BA2121">&#39;k-&#39;</span>, label<span style="color: #666">=</span><span style="color: #BA2121">&#39;真值&#39;</span>); plt<span style="color: #666">.</span>plot(meas, <span style="color: #BA2121">&#39;r.&#39;</span>, label<span style="color: #666">=</span><span style="color: #BA2121">&#39;测量（噪声）&#39;</span>)
+plt<span style="color: #666">.</span>plot(est, <span style="color: #BA2121">&#39;b-&#39;</span>, label<span style="color: #666">=</span><span style="color: #BA2121">&#39;Kalman 估计&#39;</span>)
+plt<span style="color: #666">.</span>legend(); plt<span style="color: #666">.</span>grid(); plt<span style="color: #666">.</span>savefig(<span style="color: #BA2121">&#39;kalman1d.png&#39;</span>, dpi<span style="color: #666">=150</span>)
+</code></pre></div>
+
+<p>✅ 检查点：蓝线明显比红点平滑、贴近黑线。</p>
+<p><strong>三个场景测试（记录结果）</strong>：
+1. <strong>噪声大</strong>（R=4）：估计线会"不太跟测量"——K 小，更信预测。
+2. <strong>噪声小</strong>（R=0.0004）：估计线紧贴测量——K 大，信测量。
+3. <strong>模型失配</strong>（真值突然加速，模型还是匀速）：估计会滞后——这解释了"模型错 + 信模型 = 误差"。</p>
+<p><strong>输出</strong>：三张对比图 + 每张图一句话结论，存仓库提交 git。</p>
+<h2 id="42-2tf-tf-60">4.2 任务 2：TF 树 + 人为制造 TF 错误并定位（60 分钟）</h2>
+<ol>
+<li>启动 turtlesim（或任何有 TF 的程序）：
+   <code>bash
+   ros2 run turtlesim turtlesim_node
+   ros2 run tf2_tools view_frames    # 生成 TF 树，看它长啥样</code></li>
+<li><strong>人为制造一个 TF 错误</strong>（三选一）：</li>
+<li>停掉一个发布者（Ctrl+C 掉一个节点）→ 制造"TF 超时"；</li>
+<li>改错一个静态变换的值（比如把 x 写成 100）→ 制造"跳变"；</li>
+<li>删掉一个坐标系发布 → 制造"断链"。</li>
+<li>用 <code>ros2 topic hz /tf</code>、<code>ros2 topic echo /tf</code>、<code>view_frames</code>、<code>tf2_echo</code> 定位问题出在哪。</li>
+<li>把"现象 → 诊断命令 → 定位结果"记进笔记。</li>
+</ol>
+<h2 id="43-3-bag-plotjuggler-60">4.3 任务 3：录 bag + PlotJuggler 看数据（60 分钟）</h2>
+<div class="codehilite" style="background: #f8f8f8"><pre style="line-height: 125%;"><span></span><code><span style="color: #3D7B7B; font-style: italic"># 录乌龟运动数据</span>
+ros2<span style="color: #BBB"> </span>bag<span style="color: #BBB"> </span>record<span style="color: #BBB"> </span>/turtle1/pose<span style="color: #BBB"> </span>/turtle1/cmd_vel<span style="color: #BBB"> </span>-o<span style="color: #BBB"> </span>turtle_bag
+<span style="color: #3D7B7B; font-style: italic"># 开 PlotJuggler</span>
+ros2<span style="color: #BBB"> </span>run<span style="color: #BBB"> </span>plotjuggler<span style="color: #BBB"> </span>plotjuggler
+<span style="color: #3D7B7B; font-style: italic"># 回放</span>
+ros2<span style="color: #BBB"> </span>bag<span style="color: #BBB"> </span>play<span style="color: #BBB"> </span>turtle_bag
+</code></pre></div>
+
+<ol>
+<li>在 PlotJuggler 里加载 bag，画乌龟 x 坐标随时间曲线。</li>
+<li>把 cmd_vel（速度指令）和 pose（实际位置）叠在一起看——<strong>理解"指令 → 运动"的关系</strong>。</li>
+<li>用 <code>ros2 bag info</code> 看包里的话题列表。</li>
+</ol>
+<h2 id="44-4-fast-lio2-imu-30">4.4 任务 4：把 FAST-LIO2 的 IMU 链路读一遍（30 分钟）</h2>
+<p>回到 FAST-LIO2 源码：
+1. 找到订阅 IMU 的代码（<code>subscribe(imu_topic, ...)</code>）。
+2. 找到 imuHandler，画出"IMU 进来到哪里去"。
+3. 记录：话题名、消息类型、缓存队列大小。</p>
+<h2 id="45">4.5 周六检查清单</h2>
+<ul>
+<li>[ ] 一维 Kalman 三个场景跑通 + 结论记录</li>
+<li>[ ] TF 错误人为制造 + 定位成功</li>
+<li>[ ] bag 录制/回放 + PlotJuggler 画图</li>
+<li>[ ] FAST-LIO2 IMU 链路图</li>
+<li>[ ] 全程 git 提交 ≥ 4 次</li>
+</ul>
+<hr />
+<h1 id="5-12h">第 5 章 周日复盘（1~2h）</h1>
+<h2 id="51">5.1 本周总结（一页）</h2>
+<ol>
+<li>概率：样本空间 → 条件概率 → 贝叶斯（先验×似然→后验）。</li>
+<li>高斯：μ 中心、σ 胖瘦；噪声 ≈ 高斯；多元高斯 = 均值 + 协方差矩阵。</li>
+<li>Kalman：预测（不确定变大）→ 更新（K 决定信谁，不确定变小）→ 循环。</li>
+<li>ROS2：话题/服务/动作/参数；回调 = 数据到了自动干活。</li>
+<li>TF：坐标系家谱；静态 vs 动态；view_frames/tf2_echo 诊断。</li>
+</ol>
+<h2 id="52-bug-2">5.2 Bug 案例 #2（必须完成）</h2>
+<p><strong>TF 抖动/超时类问题</strong>（用仿真或你工作环境复现）：填 <code>bug_cases/bug_002.md</code>。建议场景：故意停掉 TF 发布者，记录报错信息（"Could not get transform ... timeout"），走完 现象→复现→根因→修复→验证。</p>
+<h2 id="53-15">5.3 下周预习（15 分钟）</h2>
+<p>第 4 周：优化（Gauss-Newton）+ ROS2 进阶 + 调试方法论。先想：<strong>"怎么调整位姿让所有点到面的距离加起来最小？"</strong> —— 下周的 Gauss-Newton 就是干这个的。可以找高翔《视觉SLAM十四讲》第 6 章或让 AI 讲"最小二乘"预热。</p>
+<h2 id="54">5.4 周日自测</h2>
+<ol>
+<li>贝叶斯公式的 SLAM 版本？"先验×似然→后验"举例。</li>
+<li>K 大信谁？K 怎么算？</li>
+<li>话题、服务、动作的区别？</li>
+<li>TF 树断了怎么排查？（说出 2 个命令）</li>
+<li>Kalman 循环的两步是什么？各自改变什么？</li>
+</ol>
+<hr />
+<h1 id="6">第 6 章 第三周验收清单</h1>
+<ul>
+<li>[ ] 样本空间/条件概率/贝叶斯公式能讲</li>
+<li>[ ] 正态分布 μ、σ 含义；68-95-99.7</li>
+<li>[ ] 多元高斯与协方差矩阵概念清楚</li>
+<li>[ ] 一维 Kalman 手推 + 实现（三场景）</li>
+<li>[ ] ROS2 装好，turtlesim、pub/sub、topic 命令熟练</li>
+<li>[ ] TF 树概念 + 诊断命令会用</li>
+<li>[ ] bag 录制/回放 + PlotJuggler</li>
+<li>[ ] Bug 案例 #2 入库</li>
+<li>[ ] 每日自测正确率 ≥ 60%</li>
+</ul>
+<p><strong>未达标</strong>：砍 1.3 多元高斯推导细节、2.8 launch 深用。<strong>源码阅读和周六实验不可砍。</strong></p>
+<hr />
+<h1 id="3">附录：术语表（第 3 周新增）</h1>
+<table>
+<thead>
+<tr>
+<th>术语</th>
+<th>大白话解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>样本空间</td>
+<td>所有可能结果的集合</td>
+</tr>
+<tr>
+<td>概率</td>
+<td>0~1 的可能性</td>
+</tr>
+<tr>
+<td>条件概率</td>
+<td>已知一件事后，另一件事的概率</td>
+</tr>
+<tr>
+<td>贝叶斯公式</td>
+<td>用新证据更新旧信念：后验 ∝ 似然 × 先验</td>
+</tr>
+<tr>
+<td>先验/后验</td>
+<td>看证据前的把握 / 看证据后的把握</td>
+</tr>
+<tr>
+<td>正态分布</td>
+<td>钟形曲线；μ 定中心、σ 定胖瘦</td>
+</tr>
+<tr>
+<td>期望</td>
+<td>平均值</td>
+</tr>
+<tr>
+<td>方差/标准差</td>
+<td>波动大小 / 波动的平方根</td>
+</tr>
+<tr>
+<td>协方差矩阵</td>
+<td>多变量不确定度 + 互相关系</td>
+</tr>
+<tr>
+<td>Kalman 滤波</td>
+<td>预测+更新循环的状态估计器</td>
+</tr>
+<tr>
+<td>卡尔曼增益 K</td>
+<td>0~1 的权重：大 = 信测量，小 = 信预测</td>
+</tr>
+<tr>
+<td>残差/新息</td>
+<td>测量 − 预测（差多少）</td>
+</tr>
+<tr>
+<td>过程噪声 Q</td>
+<td>模型的不可靠程度</td>
+</tr>
+<tr>
+<td>测量噪声 R</td>
+<td>传感器的不可靠程度</td>
+</tr>
+<tr>
+<td>ROS2</td>
+<td>机器人程序间传数据的框架</td>
+</tr>
+<tr>
+<td>节点</td>
+<td>ROS2 里的一个程序</td>
+</tr>
+<tr>
+<td>话题</td>
+<td>广播频道（发布/订阅）</td>
+</tr>
+<tr>
+<td>服务</td>
+<td>一问一答</td>
+</tr>
+<tr>
+<td>动作</td>
+<td>可取消的长任务</td>
+</tr>
+<tr>
+<td>回调</td>
+<td>数据到达时自动执行的函数</td>
+</tr>
+<tr>
+<td>TF</td>
+<td>坐标系关系广播表</td>
+</tr>
+<tr>
+<td>TF 树</td>
+<td>坐标系家谱</td>
+</tr>
+<tr>
+<td>静态变换</td>
+<td>永远不变的坐标系关系</td>
+</tr>
+<tr>
+<td>bag</td>
+<td>录制/回放话题数据的文件</td>
+</tr>
+<tr>
+<td>时间戳</td>
+<td>数据产生的时刻</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>教材说明：本教材自包含、零基础友好。外部资源（STAT110 视频、ROS2 官方教程）仅作加深用。每天学习结束后按清单文末"每日学习检测协议"让 AI 追问验证。</em></p>
+<footer>
+<p>四足机器狗导航算法 · 三个月学习计划 · 第 3 周教材</p>
+<p>每天学习结束后，按清单文末「每日学习检测协议」让 AI 追问验证</p>
+</footer>
+</div>
+<script>
+(function(){{
+  var toc = document.getElementById('toc-placeholder');
+  var heads = document.querySelectorAll('h2');
+  var list = document.createElement('ul');
+  heads.forEach(function(h){{
+    var id = h.id || ('h-' + h.textContent.replace(/[^\w\u4e00-\u9fa5]/g, '-').slice(0, 30));
+    h.id = id;
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    list.appendChild(li);
+  }});
+  toc.appendChild(list);
+}})();
+</script>
+</body>
+</html>
