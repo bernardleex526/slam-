@@ -3,13 +3,37 @@
   const KEY = 'slam-learning-v1';
   let records = {};
   let storageOK = true;
-  try { records = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (_) { storageOK = false; }
+  function readRecords() {
+    let result = {};
+    try { result = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (_) { /* 可恢复旧格式损坏 */ }
+    if (!result || typeof result !== 'object' || Array.isArray(result)) result = {};
+    // 各字段独立保存，避免不同页面用过期的整份快照覆盖彼此。
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key?.startsWith(KEY + ':')) continue;
+      const match = key.slice(KEY.length + 1).match(/^(\d{4}|home):(answer|reason|state|updated|review)$/);
+      if (!match) continue;
+      const value = localStorage.getItem(key);
+      if (value === null) continue;
+      const [_, id, field] = match;
+      if (!result[id] || typeof result[id] !== 'object') result[id] = {};
+      result[id][field] = value;
+    }
+    return result;
+  }
+  try { records = readRecords(); } catch (_) { storageOK = false; }
   if (!records || typeof records !== 'object' || Array.isArray(records)) records = {};
   const lessonID = document.body.dataset.lesson;
   const status = document.getElementById('save-status');
   const fields = [...document.querySelectorAll('[data-save]')];
-  function persist() {
-    try { localStorage.setItem(KEY, JSON.stringify(records)); storageOK = true; }
+  function persist(changes) {
+    for (const [id, values] of Object.entries(changes)) records[id] = {...records[id], ...values};
+    try {
+      for (const [id, values] of Object.entries(changes)) {
+        for (const [field, value] of Object.entries(values)) localStorage.setItem(`${KEY}:${id}:${field}`, value);
+      }
+      records = readRecords(); storageOK = true;
+    }
     catch (_) { storageOK = false; }
     if (status) status.textContent = storageOK ? '已保存在此浏览器。建议导出备份。' : '浏览器未允许持久保存；本页仍可使用，请离开前导出。';
   }
@@ -17,10 +41,8 @@
     const saved = records[lessonID]?.[el.dataset.save];
     if (typeof saved === 'string') el.value = saved;
     el.addEventListener('input', () => {
-      records[lessonID] = records[lessonID] || {};
-      records[lessonID][el.dataset.save] = el.value;
-      records[lessonID].updated = new Date().toISOString();
-      persist();
+      // 同一字段在多个页面编辑时，最后一次保存生效；其他字段不受影响。
+      persist({[lessonID]: {[el.dataset.save]: el.value, updated: new Date().toISOString()}});
     });
   });
   if (status) status.textContent = storageOK ? '记录仅存于当前浏览器；尚未提交任何掌握证明。' : '本地存储不可用，请导出备份。';
@@ -31,6 +53,7 @@
   }
   updateCards();
   document.querySelectorAll('[data-export]').forEach(button => button.addEventListener('click', () => {
+    if (storageOK) { try { records = readRecords(); } catch (_) { storageOK = false; } }
     const blob = new Blob([JSON.stringify({version: 1, exported: new Date().toISOString(), records}, null, 2)], {type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'learning-export-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
@@ -52,8 +75,8 @@
         }
       }
       // 同课以导入内容为准，其他课记录保留。只接收限定字段，不解析 HTML。
-      records = {...records, ...clean}; persist(); updateCards();
-      feedback.textContent = '已导入；同课采用导入记录，其他课保留。';
+      persist(clean); updateCards();
+      feedback.textContent = storageOK ? '已导入；同课采用导入字段，其他记录保留。' : '已在本页载入，但浏览器无法持久保存；请离开前导出。';
     } catch (err) { feedback.textContent = '未导入：'+err.message+'。请选择本教材导出的 JSON。'; }
   });
   document.querySelectorAll('[data-filter]').forEach(input => input.addEventListener('input', () => {

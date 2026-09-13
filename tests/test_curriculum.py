@@ -131,6 +131,10 @@ class ArtifactTests(unittest.TestCase):
         result=subprocess.run(['node','--check',str(ROOT/'assets/app.js')],capture_output=True,text=True)
         self.assertEqual(result.returncode,0,result.stderr)
 
+    def test_cross_page_learning_records(self):
+        result=subprocess.run(['node',str(ROOT/'tests/storage.test.js')],capture_output=True,text=True)
+        self.assertEqual(result.returncode,0,result.stderr)
+
     def test_legacy_css_fixed(self):
         for file in ROOT.glob('第*周学习教材.html'):
             text=file.read_text(encoding='utf-8')
