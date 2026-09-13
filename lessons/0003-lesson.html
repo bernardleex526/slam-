@@ -1,0 +1,23 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>坐标和向量：数字必须带上参考系 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0003"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">A · 找回基础 / LESSON 03</div><h1>坐标和向量：数字必须带上参考系</h1><p>解释一个二维向量，并判断两个数能否直接相加。</p><p class="subtle">先修：<a href="0001-lesson.html">01 · 先认识问题：机器人到底不知道什么</a>；<a href="0002-lesson.html">02 · 读懂一段程序，而不是只会启动它</a></p></header>
+<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>在地板上选一点作为原点，再规定右方为 x 正方向、上方为 y 正方向。点 (3,2) 表示从原点向右 3 米、向上 2 米。这里“上”是纸面方向，三维机器人里的高度要另外定义。</p>
+<p><b>向量</b>可以表示位移：从 (1,1) 走到 (4,3)，位移是 (4−1,3−1)=(3,2)。位置坐标依赖原点，位移的方向和大小不依赖原点平移；它们都可以用两个数表示，但不能因此混为一谈。</p>
+<div class="formula">a+b=(aₓ+bₓ,aᵧ+bᵧ)；‖a‖=√(aₓ²+aᵧ²)</div>
+<p><code>aₓ</code> 指 a 在 x 方向的分量；竖线 <code>‖a‖</code> 表示长度；<code>√</code> 表示找一个非负数，其平方等于里面的数。向量 (3,4) 长度是 5，因为 3²+4²=25，而 5²=25。这是直角三角形的勾股关系。</p>
+<p>你朝北时，“向前 1 米”对应地图的北方；朝东时，同一句话对应东方。机器人坐标中的 (1,0) 不能与地图坐标中的 (1,0) 不加说明地相加。每个空间变量都应注明：哪个坐标系、什么单位、哪个时刻。</p>
+<p><b>点积</b> a·b=aₓbₓ+aᵧbᵧ。如果 b 长度为 1，点积是 a 在 b 方向的带符号投影长度；若 b 不是单位向量，还要除以 ‖b‖ 才得到投影长度。例如 (3,4)·(1,0)=3，说明向右部分是 3。它将在计算“离墙多远”时出现。</p>
+<h2>把公式落实到每行代码</h2><pre><code>import math
+start = (1.0, 1.0)
+end = (4.0, 5.0)
+dx = end[0] - start[0]
+dy = end[1] - start[1]
+distance = math.sqrt(dx**2 + dy**2)
+print(dx, dy, distance)</code></pre><p>(1.0,1.0) 是包含两个数的元组；[0] 取第一个数，[1] 取第二个数，Python 从 0 编号。import math 引入数学函数；sqrt 求平方根。输出 3.0 4.0 5.0，单位都是米。</p>
+<h2>先独立作答，再打开提示</h2><p>位移 a=(−3,4)，长度是多少？在向右的单位方向 (1,0) 上投影是多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>负数平方为正，但点积保留方向符号。</p></details><details><summary>核对解答与常见错因</summary><p>长度 5 米，投影 −3 米。长度没有负号，投影的负号表示向左。</p><p>若还无法解释，回到先修：<a href="0001-lesson.html">01 · 先认识问题：机器人到底不知道什么</a>；<a href="0002-lesson.html">02 · 读懂一段程序，而不是只会启动它</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-3">向量(−3,4)的长度是多少？</label><input id="q-3" type="number" step="any" inputmode="decimal"><button type="button" data-check="5" data-explain="平方相加再开方；负数平方为正。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>(3,4)·(2,0)=6，能说向右走了 6 米吗？不能；第二个向量长度为 2，投影长度为 6/2=3 米。</p></details>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://www.roboticsbook.org/S12_reasoning.html">机器人推理：状态、观测与行动</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0002-lesson.html">02 · 读懂一段程序，而不是只会启动它</a></span><span>下一课<br><a href="0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

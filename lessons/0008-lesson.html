@@ -1,0 +1,25 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>卡尔曼滤波：把运动预测和测量合起来 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0008"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">B · 从测量到估计 / LESSON 08</div><h1>卡尔曼滤波：把运动预测和测量合起来</h1><p>手算一次一维预测与更新，解释每个噪声参数改变什么。</p><p class="subtle">先修：<a href="0006-lesson.html">06 · 概率与方差：承认测量不是完全准确的</a>；<a href="0007-lesson.html">07 · 最小二乘：把好坏写成能计算的分数</a></p></header>
+<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>机器人原位置估计 0 米。轮子报告向前走 1 米，于是预测当前位置 1 米；独立定位传感器却给出 1.2 米。相信哪一个？先为两者的不确定性建模，再按可信程度融合。</p>
+<div class="formula">x⁻=x+u；P⁻=P+Q<br>K=P⁻/(P⁻+R)；x⁺=x⁻+K(z−x⁻)；P⁺=(1−K)P⁻</div>
+<p>x 是位置（米），u 是本步位移（米）；P 是原估计误差方差，Q 是本步运动噪声方差，R 是测量噪声方差（均为米²）。上标 − 表示测量更新前，+ 表示更新后，不是正负位置。K 是无量纲的<b>卡尔曼增益</b>。这里 z 直接测位置，观测函数是 h(x)=x；与第 1 课的墙距模型不同。</p>
+<p>取 P=0.04、Q=0.01、R=0.20，则 P⁻=0.05，K=0.05/0.25=0.2。测量比预测多 0.2 米，只采用其中 20%，结果 1+0.2×0.2=1.04 米。新的方差为 0.04。每步运动会增加不确定性，独立测量可以减小它。</p>
+<p>这组简单公式假设线性系统、独立零均值噪声及相应协方差模型；高斯假设下得到完整的高斯后验解释。非线性时使用雅可比作局部近似就是扩展卡尔曼滤波（EKF）。多次围绕新估计线性化观测就是迭代 EKF 的思路，但不能把同一次观测当成多份独立证据反复累计置信度。</p>
+<p>Q 大表示不信任运动预测，R 大表示不信任观测。滤波输出平滑不等于准确：很大的 R 可能让错误预测长期得不到纠正。若传感器一直偏 0.2 米，独立零均值假设不成立，应处理偏置。重复融合同一信息也会造成虚假的高置信度。</p>
+<h2>改一个条件，观察因果</h2><p>先写下你的预测，再动滑块。图下会展开当前数字的计算过程。</p><section class="lab" data-lab="fusion" aria-label="互动实验"><div class="lab-controls"><label>测量方差 R（米²）<input type="range" name="r" min="0.005" max="1" step="0.005" value="0.2"></label></div><svg viewBox="0 0 440 120" role="img" aria-label="融合位置位于1米预测与1.2米测量之间"><line x1="60" y1="50" x2="360" y2="50" stroke="#aaa"/><circle cx="60" cy="50" r="5" fill="#666"/><circle cx="360" cy="50" r="5" fill="#666"/><circle class="estimate" cx="120" cy="50" r="10" fill="#17604d"/><text x="20" y="100">预测 1米</text><text x="290" y="100">测量 1.2米</text></svg><output aria-live="polite"></output></section><h2>把公式落实到每行代码</h2><pre><code>x, p = 0.0, 0.04
+u, q = 1.0, 0.01
+z, r = 1.2, 0.20
+predicted_x = x + u
+predicted_p = p + q
+k = predicted_p / (predicted_p + r)
+x = predicted_x + k * (z - predicted_x)
+p = (1-k) * predicted_p
+print(round(k, 4), round(x, 4), round(p, 4))</code></pre><p>代码变量 p、q、r 分别对应大写 P、Q、R，r 在这里是方差而非残差；命名随程序而变，必须看定义。输出 0.2 1.04 0.04。</p>
+<h2>先独立作答，再打开提示</h2><p>只把 R 改为 0.05，其余相同，K 和新位置是多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>分母为 0.05+0.05，两个来源一样不确定。</p></details><details><summary>核对解答与常见错因</summary><p>K=0.5，新位置 1.1 米，方差 0.025 米²。不要把标准差 0.05 与方差 0.05 混为一谈。</p><p>若还无法解释，回到先修：<a href="0006-lesson.html">06 · 概率与方差：承认测量不是完全准确的</a>；<a href="0007-lesson.html">07 · 最小二乘：把好坏写成能计算的分数</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-8">P⁻=0.05，R=0.05，K是多少？</label><input id="q-8" type="number" step="any" inputmode="decimal"><button type="button" data-check="0.5" data-explain="K=P⁻/(P⁻+R)。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>R 趋于很大时会怎样？K 趋于 0，新位置靠近预测 1 米；测量几乎不改变结果。R 趋近 0 则反过来靠近测量，但真实测量很少完全无误差。</p></details>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://www.roboticsbook.org/S44_logistics_perception.html">机器人课程书：Localization</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0007-lesson.html">07 · 最小二乘：把好坏写成能计算的分数</a></span><span>下一课<br><a href="0009-lesson.html">09 · 三维位姿：旋转、平移和变换链</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

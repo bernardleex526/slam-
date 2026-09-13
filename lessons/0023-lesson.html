@@ -1,0 +1,25 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>能力验收：用作品判断下一步该学什么 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0023"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">F · 初级到中级 / LESSON 23</div><h1>能力验收：用作品判断下一步该学什么</h1><p>把学习目标变成可观察证据，知道当前作品能证明什么、不能证明什么。</p><p class="subtle">先修：<a href="0014-lesson.html">14 · 项目一：真正同时估计位置和地标</a>；<a href="0018-lesson.html">18 · 评估与排错：从改参数转向验证原因</a>；<a href="0019-lesson.html">19 · 导航：地图、路径和控制不是同一个问题</a>；<a href="0021-lesson.html">21 · VLN：把一句话落到可到达的地方</a>；<a href="0022-lesson.html">22 · 世界模型：学习行动后会发生什么</a></p></header>
+<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>课程完成度和工程能力不是同一个量。这里用三层项目证明能力：先在简单模型里独立解释，再在真实数据里复现与诊断，最后在跨场景实验中设计和验证模块改动。时间由实际困难决定，不承诺第几周获得某个职级。</p>
+<p><b>关卡 A：理解与最小实现。</b>不看答案重新完成坐标变换、数值雅可比、一次滤波更新和一维 SLAM。提交代码，给每个变量写单位、维度、坐标系与时间；改动一个输入前先写预测。四项都能解释且隔天仍能重做，才进入真实系统。</p>
+<p><b>关卡 B：初级 SLAM 工程证据。</b>选择一套公开可重复数据和一个明确提交的上游系统，按匹配的环境复现。保存启动方式、依赖版本、参数、输出、误差与失败片段。完成一次已知时间偏移或外参扰动实验，从日志定位并恢复；让另一人在干净环境按报告复现。能独立完成这些任务比“跑过很多仓库”更有说服力。</p>
+<p><b>关卡 C：向中级发展的证据。</b>选择一个具体问题，例如动态物体导致关联失败。先证明问题在多段数据上存在；提出一个有范围的模块改动；加边界检查和针对性回归测试；固定调参集后在留出的场景评价精度、失败率、耗时和内存。写出收益、代价和仍失败的情况，能够解释为何选此方案而非另一个。职级仍取决于实际工作范围与团队标准。</p>
+<p><b>VLN 延伸项目。</b>先复现人工标签基线，再引入真实图像/深度与语言解析；保持相同场景和任务协议，分开统计识别错、落地错、不可达、控制错和停止错。按场景留出测试，不能把标签基线的成绩当成模型成绩。</p>
+<p><b>世界模型延伸项目。</b>先保留无学习动力学基线，再拟合动作条件模型，分别测试一步、多步、闭环到达与碰撞。加入未见过的摩擦或动作幅度；报告预测误差和任务成功是否一致。只有预测误差降低而任务不改善，也应如实记录。</p>
+<p>每课可安排 30–60 分钟理解与手算，另留练习和隔天复做；复杂项目按多个学习时段拆开。这只是安排单位，不是完成时间保证。若一道题反复卡住，回到它的先修课，而不是继续堆新术语。</p>
+<h2>把公式落实到每行代码</h2><pre><code># 实验记录不是待执行代码
+problem: 转弯时地图重影
+hypothesis: 点云与 IMU 相差固定时间
+baseline: 固定提交 + 参数 + 数据标识
+change: 只校正时间偏差
+measure: 残差、轨迹误差、失败率、耗时
+holdout: 未参与调参的另一段转弯轨迹
+conclusion: 哪些证据支持，哪些仍不能解释</code></pre><p>记录必须填写实际值，不用“效果明显提升”代替指标。无真值时可报告一致性、重复性和任务成功，但不能称为已证明绝对精度。</p>
+<h2>先独立作答，再打开提示</h2><p>你把某参数改后一个录包更好，下一步怎样判断是否值得保留？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>思考控制变量、数据独立性和代价。</p></details><details><summary>核对解答与常见错因</summary><p>复核唯一改动，在调参集验证稳定性，冻结方案后测试留出场景，同时记录失败与资源开销。结果不确定就限定结论，不能只截最好的一帧。</p><p>若还无法解释，回到先修：<a href="0014-lesson.html">14 · 项目一：真正同时估计位置和地标</a>；<a href="0018-lesson.html">18 · 评估与排错：从改参数转向验证原因</a>；<a href="0019-lesson.html">19 · 导航：地图、路径和控制不是同一个问题</a>；<a href="0021-lesson.html">21 · VLN：把一句话落到可到达的地方</a>；<a href="0022-lesson.html">22 · 世界模型：学习行动后会发生什么</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-23">调参后仅测试1个场景，能证明适用于所有场景吗？能填1，不能填0。</label><input id="q-23" type="number" step="any" inputmode="decimal"><button type="button" data-check="0" data-explain="结论必须受数据覆盖和实验条件限制。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>为自己的实际工作选一个关卡 B 或 C 项目，写清输入数据、成功条件和失败条件。此题没有统一数字答案；能由别人按同一标准判定才算完整。</p></details>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://github.com/hku-mars/FAST_LIO">HKU-MARS：FAST_LIO 上游仓库</a>；<a href="https://cvg.cit.tum.de/data/datasets/rgbd-dataset">TUM RGB-D 数据集与基准</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0022-lesson.html">22 · 世界模型：学习行动后会发生什么</a></span><span>下一课<br><a href="../index.html#legacy">按能力回到原教材</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

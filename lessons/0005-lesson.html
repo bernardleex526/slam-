@@ -1,0 +1,23 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>变化率、导数与雅可比：改一点会怎样 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0005"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">A · 找回基础 / LESSON 05</div><h1>变化率、导数与雅可比：改一点会怎样</h1><p>从差值理解导数，解释残差为什么会随状态改变。</p><p class="subtle">先修：<a href="0001-lesson.html">01 · 先认识问题：机器人到底不知道什么</a>；<a href="0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a></p></header>
+<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>把位置从 6 米改到 6.1 米，到墙的预测距离从 4 米变为 3.9 米。位置增加 0.1，距离减少 0.1。因此“输出变化/输入变化”是 −1。这就是变化率。导数描述改动非常小时的局部变化率。</p>
+<div class="formula">h′(x) ≈ [h(x+ε)−h(x)] / ε</div>
+<p>撇号 <code>′</code> 表示导数，ε（读 epsilon）是很小的改变量，分数线就是除法。对 h(x)=10−x，任何非零 ε 都给 −1。对 f(x)=x²，在 x=3、ε=0.01 时，(3.01²−3²)/0.01=6.01；改得更小会趋近 6，所以 f′(3)=6。</p>
+<p>为什么关心局部？把弯曲函数在当前位置附近当成直线，就容易计算修正量。写成 f(x+δ)≈f(x)+f′(x)δ。δ 是打算改多少，≈ 是近似相等。对 x² 在 3 附近，δ=0.1，线性预测 9+6×0.1=9.6，精确值 9.61。δ 太大，误差就不能忽略。</p>
+<p>有多个输入时，先固定其他量，只改变一个量，叫<b>偏导数</b>。把多个输出对多个输入的偏导排成表，就是<b>雅可比矩阵 J</b>。例如观测 h(x,m)=m−x 对 [x,m] 的雅可比是 [−1,1]：第一列回答改 x，第二列回答改 m。输出 1 个、输入 2 个，J 就是 1×2。</p>
+<p>这张表不是“高等数学装饰”：它把测量误差翻译成状态应该怎么改。米对米的导数无量纲；米对弧度的导数单位是米/弧度。数值验证时 ε 太小会受浮点误差影响，太大会偏离局部，应该比较几个量级。</p>
+<h2>把公式落实到每行代码</h2><pre><code>def h(x):
+    return 10.0 - x
+
+x = 6.0
+eps = 0.001
+j = (h(x + eps) - h(x)) / eps
+print(round(j, 6))</code></pre><p>先算右移后的测量，再减原测量，最后除以移动量；输出 −1.0。若正负号错，更新状态时可能越改越差。</p>
+<h2>先独立作答，再打开提示</h2><p>f(x)=x²，x=2，ε=0.01 时数值导数是多少？局部精确导数是多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>先算 2.01²=4.0401。</p></details><details><summary>核对解答与常见错因</summary><p>(4.0401−4)/0.01=4.01，精确导数 4。数值差分只是近似，不要求逐位等于精确导数。</p><p>若还无法解释，回到先修：<a href="0001-lesson.html">01 · 先认识问题：机器人到底不知道什么</a>；<a href="0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-5">f(x)=x² 在 x=2 的精确导数是多少？</label><input id="q-5" type="number" step="any" inputmode="decimal"><button type="button" data-check="4" data-explain="局部导数是2x。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>把残差约定改成 z−h(x)，雅可比会怎样？从 −1 变成 +1；残差和雅可比必须一起改符号。只改一个会导致错误更新。</p></details>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://ceres-solver.readthedocs.io/latest/nnls_tutorial.html">Ceres 官方：非线性最小二乘</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a></span><span>下一课<br><a href="0006-lesson.html">06 · 概率与方差：承认测量不是完全准确的</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

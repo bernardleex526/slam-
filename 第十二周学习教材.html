@@ -6,7 +6,7 @@
 <meta name="format-detection" content="telephone=no">
 <title>第十二周学习教材：回环检测 + 综合项目 + 三个月复盘</title>
 <style>
-:root {{
+:root {
   --bg: #f7f5f0;
   --card: #ffffff;
   --ink: #1f2430;
@@ -17,10 +17,10 @@
   --code-bg: #f4f1ea;
   --table-head: #f0ece2;
   --link: #92400e;
-}}
-* {{ box-sizing: border-box; }}
-html {{ -webkit-text-size-adjust: 100%; }}
-body {{
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
@@ -28,71 +28,71 @@ body {{
   font-size: 16px;
   line-height: 1.85;
   word-break: break-word;
-}}
-.wrap {{ max-width: 46rem; margin: 0 auto; padding: 1.2rem 1.1rem 4rem; }}
-header.hero {{
+}
+.wrap { max-width: 46rem; margin: 0 auto; padding: 1.2rem 1.1rem 4rem; }
+header.hero {
   background: linear-gradient(135deg, #7c2d12 0%, #b45309 100%);
   color: #fff;
   border-radius: 14px;
   padding: 1.6rem 1.4rem;
   margin-bottom: 1.4rem;
   box-shadow: 0 4px 14px rgba(124, 45, 18, .25);
-}}
-header.hero h1 {{ margin: 0 0 .4rem; font-size: 1.4rem; line-height: 1.4; }}
-header.hero p {{ margin: .2rem 0; font-size: .9rem; opacity: .92; }}
-.nav {{
+}
+header.hero h1 { margin: 0 0 .4rem; font-size: 1.4rem; line-height: 1.4; }
+header.hero p { margin: .2rem 0; font-size: .9rem; opacity: .92; }
+.nav {
   display: flex; flex-wrap: wrap; gap: .4rem;
   margin-bottom: 1.4rem;
-}}
-.nav a {{
+}
+.nav a {
   display: inline-block; padding: .3rem .7rem; border-radius: 999px;
   background: var(--card); border: 1px solid var(--line);
   color: var(--link); text-decoration: none; font-size: .82rem;
-}}
-.nav a.on {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
-.toc {{
+}
+.nav a.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.toc {
   background: var(--card); border: 1px solid var(--line); border-radius: 12px;
   padding: 1rem 1.2rem; margin-bottom: 1.6rem; font-size: .92rem;
-}}
-.toc summary {{ cursor: pointer; font-weight: 600; color: var(--accent); }}
-.toc a {{ color: var(--link); text-decoration: none; }}
-.toc a:hover {{ text-decoration: underline; }}
-h1 {{ font-size: 1.5rem; margin: 2.2rem 0 .8rem; padding-bottom: .4rem; border-bottom: 2px solid var(--accent); }}
-h2 {{ font-size: 1.22rem; margin: 1.8rem 0 .6rem; color: #7c2d12; }}
-h3 {{ font-size: 1.05rem; margin: 1.4rem 0 .5rem; }}
-h4 {{ font-size: .98rem; margin: 1.1rem 0 .4rem; color: #444; }}
-p {{ margin: .55rem 0; }}
-ul, ol {{ padding-left: 1.5rem; margin: .5rem 0; }}
-li {{ margin: .28rem 0; }}
-strong {{ color: #7c2d12; }}
-code {{
+}
+.toc summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+.toc a { color: var(--link); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+h1 { font-size: 1.5rem; margin: 2.2rem 0 .8rem; padding-bottom: .4rem; border-bottom: 2px solid var(--accent); }
+h2 { font-size: 1.22rem; margin: 1.8rem 0 .6rem; color: #7c2d12; }
+h3 { font-size: 1.05rem; margin: 1.4rem 0 .5rem; }
+h4 { font-size: .98rem; margin: 1.1rem 0 .4rem; color: #444; }
+p { margin: .55rem 0; }
+ul, ol { padding-left: 1.5rem; margin: .5rem 0; }
+li { margin: .28rem 0; }
+strong { color: #7c2d12; }
+code {
   background: var(--code-bg); border-radius: 4px; padding: .12em .35em;
   font-family: "SF Mono", Consolas, "Courier New", monospace; font-size: .88em; color: #8b4513;
-}}
-pre {{
+}
+pre {
   background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px;
   padding: .9rem 1rem; overflow-x: auto; -webkit-overflow-scrolling: touch;
   font-size: .84rem; line-height: 1.6;
-}}
-pre code {{ background: none; padding: 0; color: inherit; }}
-blockquote {{
+}
+pre code { background: none; padding: 0; color: inherit; }
+blockquote {
   margin: .8rem 0; padding: .6rem 1rem; background: var(--accent-soft);
   border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0;
-}}
-blockquote p {{ margin: .3rem 0; }}
-table {{
+}
+blockquote p { margin: .3rem 0; }
+table {
   width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .9rem;
   display: block; overflow-x: auto; -webkit-overflow-scrolling: touch;
-}}
-th, td {{ border: 1px solid var(--line); padding: .45rem .6rem; text-align: left; vertical-align: top; }}
-th {{ background: var(--table-head); font-weight: 600; white-space: nowrap; }}
-hr {{ border: none; border-top: 1px solid var(--line); margin: 2rem 0; }}
-input[type="checkbox"] {{ transform: scale(1.2); margin-right: .4em; }}
-footer {{
+}
+th, td { border: 1px solid var(--line); padding: .45rem .6rem; text-align: left; vertical-align: top; }
+th { background: var(--table-head); font-weight: 600; white-space: nowrap; }
+hr { border: none; border-top: 1px solid var(--line); margin: 2rem 0; }
+input[type="checkbox"] { transform: scale(1.2); margin-right: .4em; }
+footer {
   margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line);
   color: var(--muted); font-size: .82rem; text-align: center;
-}}
-</style>
+}
+</style><style>
 pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
 span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -168,8 +168,10 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 .codehilite .vi { color: #19177C } /* Name.Variable.Instance */
 .codehilite .vm { color: #19177C } /* Name.Variable.Magic */
 .codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+</style>
 </head>
 <body>
+<aside id="zero-foundation-entry" style="max-width:46rem;margin:20px auto;padding:18px;background:#e4efe8;border:1px solid #8ca99c;font:16px/1.8 system-ui"><b>这里是原版进阶资料。</b> <a href="index.html">返回新的零基础学习入口</a><br>建议先完成：<a href="lessons/0013-lesson.html">13 · 图优化与回环：把多次经历联合起来</a>；<a href="lessons/0014-lesson.html">14 · 项目一：真正同时估计位置和地标</a>；<a href="lessons/0018-lesson.html">18 · 评估与排错：从改参数转向验证原因</a>；<a href="lessons/0023-lesson.html">23 · 能力验收：用作品判断下一步该学什么</a>。<br>原周进度不再作为新课程期限；本页工程片段需按实际软件版本核对。</aside>
 <div class="wrap">
 <header class="hero">
 <h1>第十二周学习教材：回环检测 + 综合项目 + 三个月复盘</h1>
@@ -723,11 +725,11 @@ sudo<span style="color: #BBB"> </span>apt<span style="color: #BBB"> </span>insta
 </footer>
 </div>
 <script>
-(function(){{
+(function(){
   var toc = document.getElementById('toc-placeholder');
   var heads = document.querySelectorAll('h2');
   var list = document.createElement('ul');
-  heads.forEach(function(h){{
+  heads.forEach(function(h){
     var id = h.id || ('h-' + h.textContent.replace(/[^\w\u4e00-\u9fa5]/g, '-').slice(0, 30));
     h.id = id;
     var li = document.createElement('li');
@@ -736,9 +738,9 @@ sudo<span style="color: #BBB"> </span>apt<span style="color: #BBB"> </span>insta
     a.textContent = h.textContent;
     li.appendChild(a);
     list.appendChild(li);
-  }});
+  });
   toc.appendChild(list);
-}})();
+})();
 </script>
 </body>
 </html>

@@ -1,0 +1,24 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>三维位姿：旋转、平移和变换链 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0009"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">B · 从测量到估计 / LESSON 09</div><h1>三维位姿：旋转、平移和变换链</h1><p>读懂坐标变换的方向，理解 SO(3)、SE(3) 与小角度更新的用途。</p><p class="subtle">先修：<a href="0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a>；<a href="0005-lesson.html">05 · 变化率、导数与雅可比：改一点会怎样</a></p></header>
+<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p><b>位姿</b>是位置和朝向的组合。三维位置需要 3 个数，朝向有 3 个自由度，即局部需要 3 个独立变化量。旋转矩阵有 9 个元素，但受到列向量两两垂直、长度为 1 等约束，所以不是 9 个独立旋转自由度。</p>
+<div class="formula">pᴬ = R_AB pᴮ + t_AB；T_AB = [[R_AB,t_AB],[0,0,0,1]]</div>
+<p>下标 AB 在本教材固定表示“把 B 中坐标变到 A”；t_AB 是 B 原点在 A 中的位置。T 是 4×4 的<b>齐次变换矩阵</b>：给三维点补一个 1，写成 [x,y,z,1]ᵀ，就能把旋转和平移合并成一次矩阵乘法。方向向量补 0，因而不会被平移。</p>
+<p>激光点先到机身，再到地图：T_WL=T_WB T_BL。右边先作用，L 是激光坐标系，B 是机身，W 是地图。若把两个矩阵顺序反过来，含义通常不成立，即使维度能乘。逆变换 T_BW 的旋转是 R_WBᵀ，平移是 −R_WBᵀt_WB，而不是简单给所有元素加负号。</p>
+<p><b>SO(3)</b>是合法三维旋转矩阵的集合：RᵀR=I、det(R)=1。I 是什么都不改变的单位矩阵；det 是行列式，旋转保持有向体积，因此为 1。镜像也可满足 RᵀR=I，但行列式为 −1，不能当作刚体旋转。<b>SE(3)</b>是包含旋转和平移的刚体变换集合。</p>
+<p>用旋转矩阵时不能随意给 9 个元素各加一点，会破坏约束。<b>李代数</b>在这里提供局部的 3 维小旋转 δθ，把它映射为合法旋转后再组合。<code>Exp</code> 是这项映射的名字。R新=R Exp(δθ) 是右侧增量；左乘表达的增量参考系不同，雅可比也跟着变。</p>
+<p><b>四元数</b>用 4 个有约束的数表达旋转。单位长度是约束，q 和 −q 表示同一旋转。不同库可能用 wxyz 或 xyzw 顺序，不能凭记忆接线。当前关卡不要求背 Exp 展开式，但必须能判定变换方向和检查旋转约束；旧第二周的复杂运动学放在这之后。</p>
+<h2>把公式落实到每行代码</h2><pre><code># 无旋转的变换链：激光原点在机身前方 0.2 m
+laser_point = 1.0
+laser_in_body = 0.2
+body_in_world = 3.0
+point_in_body = laser_point + laser_in_body
+point_in_world = point_in_body + body_in_world
+print(point_in_world)</code></pre><p>输出 4.2。这是完整变换链的纯平移特例；第 4 课已包含二维旋转实现。三维不是抛弃前面的规则，而是多一个分量和合法旋转约束。</p>
+<h2>先独立作答，再打开提示</h2><p>机器人地图位置 (2,1)，朝向 90°；地图点 (2,3) 变回机器人坐标是多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>先减 (2,1)，再逆时针的反方向转 90°。</p></details><details><summary>核对解答与常见错因</summary><p>(2,3)−(2,1)=(0,2)，反转后为 (2,0)。若得到 (−2,0)，逆旋转方向弄反。</p><p>若还无法解释，回到先修：<a href="0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a>；<a href="0005-lesson.html">05 · 变化率、导数与雅可比：改一点会怎样</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-9">机器人(2,1)、θ=90°，地图点(2,3)变回后的 x 分量？</label><input id="q-9" type="number" step="any" inputmode="decimal"><button type="button" data-check="2" data-explain="先减平移，再反向旋转。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>只有一面无限平墙时，沿墙平移会改变点到墙的距离吗？不会。这是某些方向缺少约束的例子，叫退化；更多测量同一面墙不一定补上这个方向。</p></details>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://www.roboticsbook.org/S71_drone_state.html">机器人课程书：三维运动</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0008-lesson.html">08 · 卡尔曼滤波：把运动预测和测量合起来</a></span><span>下一课<br><a href="0010-lesson.html">10 · 相机：三维点为什么变成二维像素</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

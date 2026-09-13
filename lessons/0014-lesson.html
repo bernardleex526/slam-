@@ -1,0 +1,24 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>项目一：真正同时估计位置和地标 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0014"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">C · 组成 SLAM / LESSON 14</div><h1>项目一：真正同时估计位置和地标</h1><p>完成一个可以手算和运行的一维 SLAM，并理解它省略了什么。</p><p class="subtle">先修：<a href="0013-lesson.html">13 · 图优化与回环：把多次经历联合起来</a></p></header>
+<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>本项目不是已知地图定位。固定起点 x₀=0，未知 x₁、x₂ 和地标 m。两次里程计分别报告 u₀₁=1.2、u₁₂=0.9；在三个位置观测同一个地标，相对距离为 4、3、2 米。对应关系已知，所有因子权重暂取 1。</p>
+<div class="formula">E=(x₁−1.2)²+(x₂−x₁−0.9)²+(m−4)²+(m−x₁−3)²+(m−x₂−2)²</div>
+<p>未知向量 y=[x₁,x₂,m]ᵀ。把每个残差的未知系数放进矩阵 A 一行，常数放进 b：第一行 [1,0,0]，b₁=1.2；第二行 [−1,1,0]，b₂=0.9；第三行 [0,0,1]，b₃=4；第四行 [−1,0,1]，b₄=3；第五行 [0,−1,1]，b₅=2。于是残差整体就是 Ay−b。</p>
+<p>A 是 5×3，b 是 5×1。最小二乘方程为 AᵀAy=Aᵀb。展开得到三条：3x₁−x₂−m=−2.7；−x₁+2x₂−m=−1.1；−x₁−x₂+3m=9。解约为 x₁=1.1375、x₂=2.05、m=4.0625。地标也随着所有证据一起估计。</p>
+<p>这三条方程也可以手算：从第一条移项得到 x₂=3x₁−m+2.7；代入第二条，得 5x₁−3m=−6.5；代入第三条，得 −4x₁+4m=11.7，因此 m=x₁+2.925。再代回得 2x₁=2.275，所以 x₁=1.1375，m=4.0625，x₂=2.05。所谓消元，就是通过代入逐步减少未知量。</p>
+<p>只累积里程计的位置是 [0,1.2,2.1]；联合估计是 [0,1.1375,2.05]。相对于本项目已知但不交给优化器的合成真值 [0,1,2]，位置均方根误差从约 0.12910 降为 0.08447 米。真实实验不保证每次都改善；这里的数据是为讲解构造的。</p>
+<p>打开 labs/slam_1d.py 看 build_system：每个因子的系数与上文逐行对应。求解函数只负责解方程，不知道何谓机器人。小矩阵用带主元选择的消元便于阅读；大型稀疏系统应使用成熟求解器，正规方程还会放大条件数问题。</p>
+<p>项目边界：仅一维、静态地标、已知关联、线性观测、同等权重，没有旋转、遮挡、鲁棒核、回环检测。这些简化让你能检查每一步，但不能拿运行成功证明会做三维工程。</p>
+<h2>把公式落实到每行代码</h2><pre><code># 在仓库目录的终端运行，不是 Python 语句：
+# py labs/slam_1d.py
+from labs.slam_1d import estimate
+
+positions, landmark = estimate()
+print([round(v, 4) for v in positions], round(landmark, 4))</code></pre><p>从仓库目录调用会输出 [0.0,1.1375,2.05] 4.0625。独立运行脚本还显示前后轨迹误差。请从 A 的第四行反查 m−x₁−3，不要只看最终地图。</p>
+<h2>先独立作答，再打开提示</h2><p>把所有测距都加 2，运动数据不变，位置和地标应如何变？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>m 加 2 是否能够让所有残差与之前一致？</p></details><details><summary>核对解答与常见错因</summary><p>位置保持相同，地标由 4.0625 变成 6.0625。起点固定，所有相对距离共同变化对应地标移动。</p><p>若还无法解释，回到先修：<a href="0013-lesson.html">13 · 图优化与回环：把多次经历联合起来</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-14">第14课全部测距加2，新地标位置约多少米？</label><input id="q-14" type="number" step="any" inputmode="decimal"><button type="button" data-check="6.0625" data-explain="在原4.0625基础上加2，位置不变。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>把观测列表改为 [4,3,8]，运行并保存失败结果。它会产生矛盾约束并拉偏轨迹；列出“错误对应、测距跳点”两种可能，设计独立检查。不可仅凭残差断定是哪一种。</p></details>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://gtsam.org/tutorials/intro.html">GTSAM：Factor Graphs and GTSAM</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0013-lesson.html">13 · 图优化与回环：把多次经历联合起来</a></span><span>下一课<br><a href="0015-lesson.html">15 · C++ 与 Eigen：把已经理解的数学搬过去</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

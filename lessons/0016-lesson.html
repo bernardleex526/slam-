@@ -1,0 +1,21 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ROS 与 TF：数据流必须有时间和坐标 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0016"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">D · 进入工程 / LESSON 16</div><h1>ROS 与 TF：数据流必须有时间和坐标</h1><p>解释节点、话题、消息、TF 和录包，在运行算法前检查接口。</p><p class="subtle">先修：<a href="0009-lesson.html">09 · 三维位姿：旋转、平移和变换链</a>；<a href="0011-lesson.html">11 · IMU：从角速度、加速度到运动预测</a>；<a href="0015-lesson.html">15 · C++ 与 Eigen：把已经理解的数学搬过去</a></p></header>
+<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p><b>ROS</b> 提供机器人程序之间的通信与工具。一个执行特定任务的程序组件叫节点；持续发送传感器数据的通道叫话题；通道中每一份结构化数据叫消息。话题名相同并不保证消息类型、时间和坐标定义正确。</p>
+<p>典型数据流：激光驱动发布点云 → 估计器同时读 IMU → 输出位姿 → 建图和导航读取位姿。<b>回调函数</b>在数据到达时被调用，但到达顺序不一定等于采集时间顺序，缓存要按时间组织。<b>QoS</b> 是通信服务约定，例如可靠性和历史保留；不兼容时可能看见话题却收不到数据。</p>
+<p><b>TF</b> 管理不同坐标系随时间变化的变换。常见链是 map→odom→base_link→sensor。map 是全局参考；odom 通常连续但可漂移；base_link 附着机身；sensor 附着传感器。map→odom 可吸收全局校正，控制器因而可以使用连续的局部运动。名称语义应遵循项目约定与 REP-105。</p>
+<p>消息中的 frame_id 声明数据在哪个坐标系，stamp 声明采集时刻。要把 t 时刻点云转换到地图，需要 t 时刻可用的 TF。用“最新变换”替代正确时间，在运动中会把墙抹成双层。每条 TF 的父子关系和发布者也应唯一明确。</p>
+<p><b>录包</b>保存消息便于重复实验。ROS 2 的 rosbag2 与 ROS 1 的 rosbag、构建系统和命令不同。FAST_LIO 上游 README 的 ROS 1 构建说明不能直接改几个命令当作 ROS 2 移植。教程中的 ROS 2 排查示例仅在已安装、已加载环境且节点运行时使用。</p>
+<p>依次核对：消息类型 → 单位和坐标 → 时间单调与间隔 → TF 可用时间 → 通信兼容 → 才看算法输出。<b>外参</b>是传感器间刚体关系，时间偏差是另一个量；用错误外参去补偿时间差往往只在某种运动速度下看起来有效。</p>
+<h2>把公式落实到每行代码</h2><pre><code># ROS 2 终端命令；需先启动对应节点
+ros2 topic list
+ros2 topic info /imu
+ros2 topic hz /imu
+ros2 run tf2_ros tf2_echo odom base_link</code></pre><p>list 查看名字，info 看类型及连接，hz 估计接收频率，tf2_echo 查看两坐标系之间的变换。/imu 是示例名，应替换为 list 实际列出的名称。输出依赖你的系统，不能预先承诺某个频率。</p>
+<h2>先独立作答，再打开提示</h2><p>点云墙面只在转弯时重影，静止正常。先检查哪两类信息？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>转弯会放大时间不一致和旋转外参的问题。</p></details><details><summary>核对解答与常见错因</summary><p>检查点与 IMU 的时间戳、时间单位和去畸变；检查外参方向与旋转。用静止、直行、不同角速度录包作对照，不能仅凭症状确定唯一根因。</p><p>若还无法解释，回到先修：<a href="0009-lesson.html">09 · 三维位姿：旋转、平移和变换链</a>；<a href="0011-lesson.html">11 · IMU：从角速度、加速度到运动预测</a>；<a href="0015-lesson.html">15 · C++ 与 Eigen：把已经理解的数学搬过去</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-16">1米/秒直行，0.02秒时间差对应多少米？</label><input id="q-16" type="number" step="any" inputmode="decimal"><button type="button" data-check="0.02" data-explain="速度乘时间。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>回放数据时 TF 报未来外推，是否该直接增大队列？先核对消息时钟、仿真时间和 TF 时间范围；队列容量无法修正两个不同的时钟。</p></details>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://github.com/openrobotics/reps/blob/main/_posts/rep-0105.md">Open Robotics：REP-105</a>；<a href="https://github.com/ros2/ros2_documentation/blob/jazzy/source/Tutorials.rst">ROS 2 Jazzy 教程源码</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0015-lesson.html">15 · C++ 与 Eigen：把已经理解的数学搬过去</a></span><span>下一课<br><a href="0017-lesson.html">17 · 读 FAST-LIO2：沿一帧数据走完整个系统</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

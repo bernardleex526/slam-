@@ -1,0 +1,18 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>实验手册 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="home"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><h1>实验手册</h1><p>先看对应课的例子，再运行程序。全部 Python 实验只依赖标准库。命令在解压后的仓库目录执行；命令窗口叫终端，当前目录决定相对路径从哪里开始。</p>
+<h2>无需安装的起步</h2><p>直接双击 index.html，打开第01、04、08、10、22课的滑块实验。网页不是 Python 编辑器，页面代码展示与运行脚本分开。想修改算法时再进入下面的文件实验。</p>
+<h2>Python 环境与执行位置</h2><p>Windows 先在终端输入 <code>py --version</code>，Linux/macOS 输入 <code>python3 --version</code>。若显示 Python 3.x，解释器可用；若找不到命令，先用浏览器实验，或到 <a href="https://www.python.org/downloads/">Python 官方下载页</a> 安装。安装完成后重新打开终端。不要把代码贴进 PowerShell 当命令执行。</p>
+<p>在仓库文件夹里通过文件管理器“在终端打开”，确认能看到 labs 文件夹。Windows 以下用 py，Linux/macOS 替换为 python3。每次运行单独一条命令。若命令说找不到文件，先检查当前目录，不要重新装所有库。</p>
+<pre>py labs/core.py
+py labs/slam_1d.py
+py labs/navigation.py
+py labs/world_model.py</pre>
+<div class="table-wrap"><table><tr><th>程序与对应课</th><th>先预测什么</th><th>应看到什么</th><th>动手修改</th></tr>
+<tr><td>core.py / 04、08、10</td><td>旋转后的点、融合位置、像素</td><td>(2,2)；位置1.04，方差0.04，K=0.2；像素(520,340)</td><td>把旋转90改为0，先算再运行。</td></tr>
+<tr><td>slam_1d.py / 14</td><td>三条位置与未知地标</td><td>[0,1.1375,2.05]；地标4.0625；RMSE约0.12910→0.08447</td><td>将 estimate 的观测参数改为(6,5,4)，位置应不变，地标加2。</td></tr>
+<tr><td>navigation.py / 19、21</td><td>红门对应节点与路径</td><td>R；[S,A,R]；SPL 0.6667 与0</td><td>增加另一个red door标签，应报歧义错误。将A与R双向断开，应返回None不可达。</td></tr>
+<tr><td>world_model.py / 22</td><td>拟合系数与两步预测</td><td>θ=0.799；留出MSE约0.036667→0.000001；计划(1,1)，预测1.598，合成真实1.6；换摩擦后1.0</td><td>只用零动作训练应报不可辨识；把测试动力学改为0.5，旧模型误差增加。</td></tr></table></div>
+<h2>最小项目交付清单</h2><p>每个实验提交四项：运行前手算；修改过的代码；实际输出；一句能被实验否定的解释。不要只交截图。运行测试可以检查实现，但不能替你证明理解。</p><pre>py -m unittest discover -s tests -v</pre>
+<h2>让所有页面共用同一个学习记录来源</h2><p>可选：在仓库目录运行下列命令。http.server 是 Python 内置的静态网页服务，8765 是端口，127.0.0.1 只在本机监听。在浏览器打开 <a href="http://127.0.0.1:8765/">本机学习首页</a>。此终端保持运行，用 Ctrl+C 结束。若端口被占用，把命令和地址中的8765一起换成8766。</p><pre>py -m http.server 8765 --bind 127.0.0.1</pre>
+<h2>常见卡点</h2><p>文件末尾看起来是 .py 但仍不能运行：检查是不是 .py.txt。小数出现极小差别：先按合理容差比较。import labs 失败：从仓库目录运行，或直接运行脚本。C++ 示例需要编译器与 Eigen，本环境未执行 C++ 编译；不要把 Python 实验通过当成 C++ 已通过。</p>
+<h2>真实工程下一步</h2><p>第17、18、23课给出上游复现与实验协议。先确定传感器数据类型、代码提交和 ROS 版本，再按官方安装说明建立隔离环境。课程没有附带真实录包、VLN 图像数据或预训练模型；这些下载、授权、算力与运行条件应在选定项目时记录。</p><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

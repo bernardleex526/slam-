@@ -1,0 +1,23 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>点云配准：先找对应，再修正位姿 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0012"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">C · 组成 SLAM / LESSON 12</div><h1>点云配准：先找对应，再修正位姿</h1><p>手算一次点云平移配准，识别错误对应和几何退化。</p><p class="subtle">先修：<a href="0007-lesson.html">07 · 最小二乘：把好坏写成能计算的分数</a>；<a href="0009-lesson.html">09 · 三维位姿：旋转、平移和变换链</a>；<a href="0011-lesson.html">11 · IMU：从角速度、加速度到运动预测</a></p></header>
+<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p><b>点云</b>是大量三维采样点的集合。配准要找一个旋转和平移，让当前扫描与已有地图对齐。先做一维特例：当前点 [0,1,2]，地图对应点 [2,3,4]，显然向右平移 2 就对齐。</p>
+<div class="formula">rᵢ=Rpᵢ+t−qᵢ；E=Σ‖rᵢ‖²</div>
+<p>pᵢ 是扫描点，qᵢ 是与它对应的地图点，R、t 是待求变换。每个三维残差有 3 个数。已知 R=I 的一维情况，把 qᵢ−pᵢ 求平均就得到最优平移。本例差值全是 2。</p>
+<p>真实数据往往不知道谁对应谁。<b>ICP</b>（迭代最近点）交替做两件事：根据当前位姿找最近对应点，再固定对应关系求更好的变换，反复直到变化够小或达到次数限制。初值差可能找错对应，进入错误的局部解。低残差也可能来自匹配到了错误但相似的墙。</p>
+<p>点到面残差写成 rᵢ=nᵢᵀ(Rpᵢ+t−qᵢ)。n 是长度为 1 的平面法向量，即垂直平面的方向；点积留下垂直墙面的那一部分。若墙为 x=2，n=(1,0,0)，点 (3,4,0) 到墙的带符号距离就是 1 米，沿 y 改多少都不会改变它。</p>
+<p>这说明为什么长走廊会难：某些移动几乎不改变观测，叫<b>不可观或弱可观方向</b>。线性代数中的<b>秩</b>数出独立约束有多少；重复同一约束不增加秩。<b>特征值</b>很小可以提示某个方向约束弱，但阈值依赖缩放、单位和模型，不能跨系统照抄。</p>
+<p><b>SVD</b>把矩阵拆成两个正交变换与中间的非负缩放，常用于求刚体配准。允许包含反射的正交矩阵并不都是旋转，求解时还要保证 det(R)=+1。先掌握对应与目标函数，再回到旧第一周的 SVD 推导，避免把分解名字当成理解。</p>
+<h2>把公式落实到每行代码</h2><pre><code>scan = [0.0, 1.0, 2.0]
+target = [2.0, 3.0, 4.0]
+offsets = [q-p for p, q in zip(scan, target)]
+t = sum(offsets) / len(offsets)
+errors = [p+t-q for p, q in zip(scan, target)]
+print(t, errors)</code></pre><p>zip 按位置取一对 p、q，本代码假设对应已知，尚不是完整 ICP。输出 2.0 和三个 0.0。把 target 最后一点改为 10，会看到错误对应拉偏所有结果。</p>
+<h2>先独立作答，再打开提示</h2><p>target 改成 [2,3,10]，最小二乘平移变成多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>三个偏移变成 2、2、8。</p></details><details><summary>核对解答与常见错因</summary><p>平均为 4，残差为 2、2、−4。一个错误点改变了其他正确点的对齐结果。</p><p>若还无法解释，回到先修：<a href="0007-lesson.html">07 · 最小二乘：把好坏写成能计算的分数</a>；<a href="0009-lesson.html">09 · 三维位姿：旋转、平移和变换链</a>；<a href="0011-lesson.html">11 · IMU：从角速度、加速度到运动预测</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-12">对应点偏移2、2、8，最小二乘平移多少米？</label><input id="q-12" type="number" step="any" inputmode="decimal"><button type="button" data-check="4" data-explain="等权情况下取偏移均值。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>是否只删掉残差最大的点就总能修好？不能；错初值可能使大量对应都错。要结合距离门限、几何一致性、初值和失败检测验证。</p></details>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://pointclouds.org/documentation/tutorials/iterative_closest_point.html">PCL 官方：ICP 入门</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0011-lesson.html">11 · IMU：从角速度、加速度到运动预测</a></span><span>下一课<br><a href="0013-lesson.html">13 · 图优化与回环：把多次经历联合起来</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

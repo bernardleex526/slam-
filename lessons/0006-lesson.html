@@ -1,0 +1,20 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>概率与方差：承认测量不是完全准确的 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0006"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">A · 找回基础 / LESSON 06</div><h1>概率与方差：承认测量不是完全准确的</h1><p>区分随机抖动、固定偏差和不确定性，理解为什么不能总取平均。</p><p class="subtle">先修：<a href="0001-lesson.html">01 · 先认识问题：机器人到底不知道什么</a>；<a href="0002-lesson.html">02 · 读懂一段程序，而不是只会启动它</a></p></header>
+<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>在同一位置测墙距得到 2.9、3.0、3.1 米。真实距离没变，读数却在变。把测量写成 z=真实距离+误差。误差可包含随机抖动，也可包含始终多 0.2 米的固定偏差。多测几次取平均能减小独立随机噪声的影响，但不能自动消除固定偏差。</p>
+<div class="formula">均值 μ=(z₁+…+zₙ)/n；方差 σ²=平均[(z−μ)²]</div>
+<p>μ（mu）是平均值；n 是数量；省略号表示中间项继续相加；σ（sigma）是标准差，σ² 是方差。三个数平均为 3，偏差为 −0.1、0、0.1，平方后平均为 0.006667 米²，标准差约 0.08165 米。这里描述这三个数的整体分散程度，分母用 n；用样本估计总体方差时常见 n−1，不能混用两种目的。</p>
+<p><b>概率</b>描述某种结果有多可能，范围 0 到 1。两种互斥且包含全部情况的结果，概率相加为 1。连续位置的概率通常通过区间表达；某个精确点的概率和概率密度不是一回事。<b>高斯分布</b>是一种中间高、两侧低的误差模型，由均值和方差描述；它是建模选择，不能把所有跳点都当高斯噪声。</p>
+<p>二维位置的不确定性用<b>协方差矩阵</b>表示：对角线分别是 x、y 的方差，非对角项描述两者误差是否一起变化。非对角项为 0 不总意味着独立；在联合高斯假设下才有这样的推论。</p>
+<p><b>贝叶斯更新</b>就是把新证据加入原有判断。例：两个房间初始各 0.5 概率；在 A 看见红门概率 0.8，在 B 是 0.2。看见红门后，未归一化权重是 0.4 和 0.1，除以总和 0.5，得到 A 为 0.8、B 为 0.2。归一化只是让总概率回到 1；证据模型错了，答案也会错。</p>
+<h2>把公式落实到每行代码</h2><pre><code>values = [2.9, 3.0, 3.1]
+mean = sum(values) / len(values)
+variance = sum((z - mean)**2 for z in values) / len(values)
+print(round(mean, 4), round(variance, 6))</code></pre><p>sum 把数相加，len 计数；括号内 for 表示为每个 z 计算一个平方再求和。输出 3.0 0.006667。方差单位是米²，不能直接加在米上。</p>
+<h2>先独立作答，再打开提示</h2><p>所有读数都增加 0.2 米，均值和上述方差各如何变化？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>每个数到新均值的距离是否改变？</p></details><details><summary>核对解答与常见错因</summary><p>均值变成 3.2 米，方差不变。若认为方差变大，混淆了“整体偏移”和“分散程度”。</p><p>若还无法解释，回到先修：<a href="0001-lesson.html">01 · 先认识问题：机器人到底不知道什么</a>；<a href="0002-lesson.html">02 · 读懂一段程序，而不是只会启动它</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-6">2.9、3.0、3.1 都加0.2，新均值是多少？</label><input id="q-6" type="number" step="any" inputmode="decimal"><button type="button" data-check="3.2" data-explain="均值整体增加0.2。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>A、B 的先验改为 0.2、0.8，红门概率仍为 0.8、0.2，看见红门后的 A 概率？0.16/(0.16+0.16)=0.5。先验确实会影响结果。</p></details>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://www.roboticsbook.org/S44_logistics_perception.html">机器人课程书：Localization</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0005-lesson.html">05 · 变化率、导数与雅可比：改一点会怎样</a></span><span>下一课<br><a href="0007-lesson.html">07 · 最小二乘：把好坏写成能计算的分数</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

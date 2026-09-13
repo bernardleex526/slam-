@@ -1,0 +1,22 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>图优化与回环：把多次经历联合起来 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0013"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">C · 组成 SLAM / LESSON 13</div><h1>图优化与回环：把多次经历联合起来</h1><p>把运动和观测写成残差，解释为何必须固定参考系。</p><p class="subtle">先修：<a href="0007-lesson.html">07 · 最小二乘：把好坏写成能计算的分数</a>；<a href="0012-lesson.html">12 · 点云配准：先找对应，再修正位姿</a></p></header>
+<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>机器人走了一圈回到起点，累积里程计却说它在前方 0.3 米。可以把每次位置看作变量，把相邻运动看作约束，再加入“最后位置应接近起点”的证据，联合调整全部位置。</p>
+<div class="formula">r运动=(xⱼ−xᵢ)−uᵢⱼ；r观测=(mₖ−xᵢ)−zᵢₖ</div>
+<p>xᵢ 是第 i 时刻位置，mₖ 是第 k 个地标位置，uᵢⱼ 是从 i 到 j 的测得位移，zᵢₖ 是当时测到地标的相对位置。二维/三维会用位姿运算代替普通相减；我们先让每一项都是一维米数。</p>
+<p><b>因子图</b>把未知变量与约束分开画。变量节点存“要求什么”，因子节点表达“一条证据怎样限制这些变量”。例如 x₀—运动因子—x₁，x₁—观测因子—m₀。优化目标是加权残差平方和，概率模型解释权重从哪里来。</p>
+<p>若同时把所有 x 和 m 加上 100，各个差仍不变，总误差也不变。没有参考系，解不唯一。将 x₀ 固定为 0 叫固定规范自由度，也可以加入先验约束。这个“固定”是选择坐标，不是声称真实地球坐标为零。</p>
+<p><b>回环检测</b>先判断“可能来过这里”，再用几何验证确认对应关系，最后才把约束交给优化器。相似走廊可能造成错误回环，强行加入会把正确地图拉坏。图优化不会自己知道某条输入约束是假的。</p>
+<p>只有相邻运动约束的轨迹估计不等于完整的未知地标 SLAM。下一课会同时估计位置和地标，明确哪些量已知、哪些未知；回环工程仍需要另做数据关联和几何验证。</p>
+<h2>把公式落实到每行代码</h2><pre><code>x0, x1, landmark = 0.0, 1.1, 4.0
+odometry, measured_range = 1.0, 3.0
+motion_residual = (x1-x0) - odometry
+observation_residual = (landmark-x1) - measured_range
+print(round(motion_residual, 2), round(observation_residual, 2))</code></pre><p>输出 0.1 −0.1：运动希望 x1 小一点，地标观测希望 x1=1。每条因子都是明确的测量关系，而不是图上的装饰连线。</p>
+<h2>先独立作答，再打开提示</h2><p>将 x0、x1、landmark 都加 5，两个残差各变多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>展开每个括号，看加上的常数是否相消。</p></details><details><summary>核对解答与常见错因</summary><p>都不变。若优化器报告奇异矩阵，除了程序错误，也可能是没有固定参考系或约束不足。</p><p>若还无法解释，回到先修：<a href="0007-lesson.html">07 · 最小二乘：把好坏写成能计算的分数</a>；<a href="0012-lesson.html">12 · 点云配准：先找对应，再修正位姿</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-13">所有位置与地标都加5，运动残差改变量多少？</label><input id="q-13" type="number" step="any" inputmode="decimal"><button type="button" data-check="0" data-explain="相对差中的常数相消。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>回环残差很大，要直接提高其权重吗？不要；先验证它是否真是同一地点。高权重表示更相信这条证据，不表示自动修正错误证据。</p></details>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://gtsam.org/tutorials/intro.html">GTSAM：Factor Graphs and GTSAM</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0012-lesson.html">12 · 点云配准：先找对应，再修正位姿</a></span><span>下一课<br><a href="0014-lesson.html">14 · 项目一：真正同时估计位置和地标</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

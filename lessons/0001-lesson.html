@@ -1,0 +1,23 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>先认识问题：机器人到底不知道什么 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0001"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">A · 找回基础 / LESSON 01</div><h1>先认识问题：机器人到底不知道什么</h1><p>把位置、测量、预测和误差分开，读懂第一条定位公式。</p><p class="subtle">先修：无需先修；只从具体数字开始。</p></header>
+<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>你站在一条直走廊里，右端墙的位置已经知道，是从起点量起的 10 米。测距仪告诉你：到墙还有 3 米。你的位置就是 10−3=7 米。这里没有复杂算法，但已经包含定位的核心：根据测量反推看不见的状态。</p>
+<p><b>状态</b>是想知道的量，这里是你的位置。<b>观测</b>是传感器给出的数据，这里是 3 米。传感器通常不直接告诉你世界坐标。<b>模型</b>是连接两者的规则，这里是“距离=墙的位置−人的位置”。模型还隐含你在墙左边、面向墙且没有遮挡。</p>
+<div class="formula">z = m − x；预测测量 h(x) = m − x；残差 r(x) = h(x) − z</div>
+<p><code>x</code> 是人的位置，<code>m</code> 是墙的位置，<code>z</code> 是实测距离，都用米；<code>h</code> 是函数名，<code>h(x)</code> 表示把位置 x 代入规则得到的预测距离。<code>r</code> 是预测减实测的差，本课固定这个符号约定。字母只是数字的名字，不是额外的数学对象。</p>
+<p>先猜 x=6：预测距离 10−6=4，残差 4−3=1 米。含义是“预测距离多了 1 米”，不等于“位置多了 1 米”。把位置向右加 1，距离反而减少 1。你已经在根据误差修正状态。</p>
+<p>如果墙的位置也不知道，只知道距离 3，那么 x=7,m=10 和 x=17,m=20 都解释得通。这就是同时定位与建图（SLAM）的一个困难：必须选一个参考起点，才能给所有位置一个确定的坐标。</p>
+<p>单位也参与计算：厘米先除以 100 变成米。速度是“每秒走多少米”，速度乘秒才得到米。下标 <code>x₀,x₁</code> 是第 0、1 时刻，不是乘法；帽子 <code>x̂</code> 表示估计，不是真值。</p>
+<h2>改一个条件，观察因果</h2><p>先写下你的预测，再动滑块。图下会展开当前数字的计算过程。</p><section class="lab" data-lab="residual" aria-label="互动实验"><div class="lab-controls"><label>机器人位置 x（米）<input type="range" name="x" min="0" max="9" step="0.1" value="6"></label></div><svg viewBox="0 0 460 110" role="img" aria-label="一维走廊：圆点是机器人，右侧竖线是10米处的墙"><line x1="30" y1="55" x2="430" y2="55" stroke="#888"/><line x1="430" y1="15" x2="430" y2="80" stroke="#8a4b22" stroke-width="5"/><circle class="robot" cx="270" cy="55" r="10" fill="#17604d"/><text x="25" y="95">0米</text><text x="368" y="100">墙 10米</text></svg><output aria-live="polite"></output></section><h2>把公式落实到每行代码</h2><pre><code>wall = 10.0
+measured = 3.0
+position = 6.0
+predicted = wall - position
+residual = predicted - measured
+print(predicted, residual)</code></pre><p>第 1、2 行来自地图和传感器；第 3 行是当前猜测；第 4 行按模型算传感器应看到什么；第 5 行作比较。输出 4.0 1.0。程序中 = 是保存右侧计算结果；数学中的等号通常是在陈述相等关系。</p>
+<h2>先独立作答，再打开提示</h2><p>墙在 12 米，测得 4 米。当前猜测位置 7 米：预测距离、残差、正确位置分别是多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>先用墙的位置减猜测位置，不要直接拿位置减测距。</p></details><details><summary>核对解答与常见错因</summary><p>预测 5 米，残差 1 米，位置应为 8 米。若把残差写成 3 米，说明混淆了状态和观测；重新读 h(x) 的含义。</p><p>若还无法解释，回到先修：无需先修；只从具体数字开始。。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-1">墙在12米，测距4米，正确位置多少米？</label><input id="q-1" type="number" step="any" inputmode="decimal"><button type="button" data-check="8" data-explain="使用 x=m−z；回到本课墙距例子。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>若只知道墙距 4 米，墙的位置未知，能唯一求位置吗？不能；(x,m)=(0,4) 与 (10,14) 都成立。先记住“一个观测可能不足以确定所有未知量”。</p></details>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://www.roboticsbook.org/S12_reasoning.html">机器人推理：状态、观测与行动</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="../index.html">入口诊断</a></span><span>下一课<br><a href="0002-lesson.html">02 · 读懂一段程序，而不是只会启动它</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

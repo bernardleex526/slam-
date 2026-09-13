@@ -1,0 +1,21 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>评估与排错：从改参数转向验证原因 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0018"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">D · 进入工程 / LESSON 18</div><h1>评估与排错：从改参数转向验证原因</h1><p>建立可重复基线，解释轨迹误差、失败率和实验边界。</p><p class="subtle">先修：<a href="0014-lesson.html">14 · 项目一：真正同时估计位置和地标</a>；<a href="0017-lesson.html">17 · 读 FAST-LIO2：沿一帧数据走完整个系统</a></p></header>
+<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>地图看起来整齐，只能算观察，不能独立证明定位精度。<b>真值</b>是用于比较的参考轨迹；它本身也有精度限制。比较前先对齐时间戳和坐标系，说明是否允许旋转、平移或尺度对齐。给有米制尺度的系统额外拟合尺度会掩盖尺度错误。</p>
+<div class="formula">位置 RMSE=√[Σ‖p估计−p参考‖²/N]</div>
+<p>N 是配对时刻数。误差 [0,0.2,0.1] 米，平方和 0.05，除以 3 再开方，得到约 0.12910 米。这是本课程简化的位置误差；完整 ATE 通常涉及轨迹对齐与位姿误差定义，报告时说明具体计算方式。RPE 比较两个时刻之间的相对运动误差，用来观察局部漂移。</p>
+<p>同时记录跟踪失败次数、完成率、耗时分布和内存。平均耗时低但偶尔卡顿一秒，仍可能无法控制机器人。没有有效输出的区间不能静默删掉后只报漂亮 RMSE；缺失比例应单独报告。</p>
+<p><b>基线</b>是改动前可重复运行的结果；<b>对照实验</b>只改变要研究的因素；<b>消融</b>禁用某个模块判断它的作用。例如怀疑时间偏差：保留其他参数，在同一录包注入已知偏移，对比残差与轨迹随角速度的变化。再在另一录包检验解释，而不是继续调到它也好看。</p>
+<p>数据分成调试/调参集与最终测试集，不能看过测试结果又反复调参而仍称其独立测试。学习模型还要区分训练集和验证集。按完整场景或轨迹拆分，避免同一路径相邻帧泄漏到两边。</p>
+<p>一份报告至少包括：代码提交、数据来源和标识、环境与硬件、参数、对齐规则、基线、改动、失败案例、结论适用范围。多个随机种子用于随机算法稳定性评估；确定性算法重复相同输入不是增加独立证据。</p>
+<h2>把公式落实到每行代码</h2><pre><code>import math
+errors = [0.0, 0.2, 0.1]
+rmse = math.sqrt(sum(e*e for e in errors)/len(errors))
+print(round(rmse, 5))</code></pre><p>输出 0.1291。先平方再平均再开方；平均绝对误差则是先取绝对值再平均，两者不同，不要混用名字。</p>
+<h2>先独立作答，再打开提示</h2><p>A 系统完成 10/10 段，RMSE 0.15；B 完成 6/10 段，成功段 RMSE 0.08。能宣布 B 更好吗？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>精度条件和失败是否被隐藏？</p></details><details><summary>核对解答与常见错因</summary><p>不能只按成功段误差判断。必须报告完成率，并按实际任务权衡可用性与精度。B 可能只是只留下了简单片段。</p><p>若还无法解释，回到先修：<a href="0014-lesson.html">14 · 项目一：真正同时估计位置和地标</a>；<a href="0017-lesson.html">17 · 读 FAST-LIO2：沿一帧数据走完整个系统</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-18">误差0、0.2、0.1，RMSE约多少米？</label><input id="q-18" type="number" step="any" inputmode="decimal"><button type="button" data-check="0.1291" data-explain="先平方平均再开方，容差0.001。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>写一个可证伪假设：“若原因是时间偏差，转速加大时误差应更显著；纠正时间后该趋势应减弱”。如果无此趋势，应重新考虑外参、运动模型和对应错误。</p></details>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://cvg.cit.tum.de/data/datasets/rgbd-dataset">TUM RGB-D 数据集与基准</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0017-lesson.html">17 · 读 FAST-LIO2：沿一帧数据走完整个系统</a></span><span>下一课<br><a href="0019-lesson.html">19 · 导航：地图、路径和控制不是同一个问题</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

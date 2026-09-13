@@ -1,0 +1,24 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>最小二乘：把好坏写成能计算的分数 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0007"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">B · 从测量到估计 / LESSON 07</div><h1>最小二乘：把好坏写成能计算的分数</h1><p>从两个不一致的测量推导目标函数，手算一次优化。</p><p class="subtle">先修：<a href="0005-lesson.html">05 · 变化率、导数与雅可比：改一点会怎样</a>；<a href="0006-lesson.html">06 · 概率与方差：承认测量不是完全准确的</a></p></header>
+<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>墙在 10 米，两次测距是 3 和 5 米，分别推得位置 7 和 5 米。找不到一个位置同时让两次预测完全吻合。我们需要定义一个折中标准：让残差平方的总和最小，叫<b>最小二乘</b>。</p>
+<div class="formula">r₁=7−x，r₂=5−x；E(x)=r₁²+r₂²；x*=argmin E(x)</div>
+<p>E 是总分，越低越好；下标表示第几次观测；星号表示选中的最优值；argmin 的意思是“找使后面表达式最小的输入”。x=5 时 E=4，x=6 时 E=2，x=7 时 E=4。负残差也平方，所以不能靠正负抵消取得零分。</p>
+<p>展开得 E=2x²−24x+74，导数 E′=4x−24；导数为 0 时 x=6。这里是开口向上的二次函数，因此是最小值。一般非线性函数可能有多个局部最小，导数为 0 不保证找到全局最优。</p>
+<p><b>梯度下降</b>按导数反方向走一点：x新=x旧−αE′(x旧)。α 是步长。在 x=5，导数 −4，选 α=0.1，更新到 5.4，E 从 4 降到 3.28。步长太大可能跳过最低处，甚至越来越远。</p>
+<p><b>高斯—牛顿</b>先用雅可比近似残差，再解线性最小二乘。写成 (JᵀJ)δ=−Jᵀr。这里 J=[−1,−1]ᵀ 是 2×1，r 在 x=5 时为 [2,0]ᵀ，JᵀJ=2，−Jᵀr=2，所以 δ=1，x 变为 6。工程中解方程，不必显式求逆。信息不足时矩阵可能不可逆。</p>
+<p>测量可靠程度不同，可用 E=Σ rᵢ²/σᵢ²，Σ 是逐项求和。标准差大的测量权重小。特别大的错误对应称为<b>离群点</b>，应检查数据关联，或使用降低大残差影响的鲁棒损失；不能只靠给所有测量增大方差。</p>
+<h2>改一个条件，观察因果</h2><p>先写下你的预测，再动滑块。图下会展开当前数字的计算过程。</p><section class="lab" data-lab="residual" aria-label="互动实验"><div class="lab-controls"><label>机器人位置 x（米）<input type="range" name="x" min="0" max="9" step="0.1" value="6"></label></div><svg viewBox="0 0 460 110" role="img" aria-label="一维走廊：圆点是机器人，右侧竖线是10米处的墙"><line x1="30" y1="55" x2="430" y2="55" stroke="#888"/><line x1="430" y1="15" x2="430" y2="80" stroke="#8a4b22" stroke-width="5"/><circle class="robot" cx="270" cy="55" r="10" fill="#17604d"/><text x="25" y="95">0米</text><text x="368" y="100">墙 10米</text></svg><output aria-live="polite"></output></section><h2>把公式落实到每行代码</h2><pre><code>def cost(x):
+    return (7-x)**2 + (5-x)**2
+
+x = 5.0
+gradient = 4*x - 24
+updated = x - 0.1*gradient
+print(updated, round(cost(updated), 2))</code></pre><p>cost 就是目标函数；gradient 是当前位置的导数；updated 把导数转换为修正。输出 5.4 3.28。优化器只会优化你写下的分数，分数设计错误也可能稳定收敛。</p>
+<h2>先独立作答，再打开提示</h2><p>把步长改成 1，第一步会到哪里，目标值多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>仍从 x=5、导数 −4 开始。</p></details><details><summary>核对解答与常见错因</summary><p>x=9，E=(−2)²+(−4)²=20，比原来的 4 更差。这不是测量噪声突然变大，而是更新步长太大。</p><p>若还无法解释，回到先修：<a href="0005-lesson.html">05 · 变化率、导数与雅可比：改一点会怎样</a>；<a href="0006-lesson.html">06 · 概率与方差：承认测量不是完全准确的</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-7">第7课两观测例子，x=6 时总平方误差是多少？</label><input id="q-7" type="number" step="any" inputmode="decimal"><button type="button" data-check="2" data-explain="残差分别1与−1，平方相加。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>给位置 7 的观测权重 4，位置 5 权重 1，最优值是多少？(4×7+1×5)/5=6.6。更可靠的观测影响更大。</p></details>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://ceres-solver.readthedocs.io/latest/nnls_tutorial.html">Ceres 官方：非线性最小二乘</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0006-lesson.html">06 · 概率与方差：承认测量不是完全准确的</a></span><span>下一课<br><a href="0008-lesson.html">08 · 卡尔曼滤波：把运动预测和测量合起来</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
