@@ -254,7 +254,8 @@ def repair_legacy():
         if 'zero-foundation-entry' not in text:
             notice='<aside id="zero-foundation-entry" style="max-width:46rem;margin:20px auto;padding:18px;background:#e4efe8;border:1px solid #8ca99c;font:16px/1.8 system-ui"><b>这里是原版进阶资料。</b> <a href="index.html">返回新的零基础学习入口</a><br>建议先完成：'+ '；'.join(link(n,'lessons/') for n in ns)+'。<br>原周进度不再作为新课程期限；本页工程片段需按实际软件版本核对。</aside>'
             text=text.replace('<body>','<body>\n'+notice,1)
-        target.write_text(text,encoding='utf-8',newline='\n')
+        # 保留原周教材 CRLF，避免整页仅因换行改动进入差异。
+        target.write_text(text,encoding='utf-8',newline='\r\n')
 
 if __name__=='__main__':
     build_lessons(); build_home(); build_reference(); repair_legacy()
