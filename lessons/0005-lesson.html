@@ -1,23 +1,59 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>变化率、导数与雅可比：改一点会怎样 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
-<body data-lesson="0005"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">A · 找回基础 / LESSON 05</div><h1>变化率、导数与雅可比：改一点会怎样</h1><p>从差值理解导数，解释残差为什么会随状态改变。</p><p class="subtle">先修：<a href="0001-lesson.html">01 · 先认识问题：机器人到底不知道什么</a>；<a href="0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a></p></header>
-<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
-<h2>从实际问题走到公式</h2><p>把位置从 6 米改到 6.1 米，到墙的预测距离从 4 米变为 3.9 米。位置增加 0.1，距离减少 0.1。因此“输出变化/输入变化”是 −1。这就是变化率。导数描述改动非常小时的局部变化率。</p>
-<div class="formula">h′(x) ≈ [h(x+ε)−h(x)] / ε</div>
-<p>撇号 <code>′</code> 表示导数，ε（读 epsilon）是很小的改变量，分数线就是除法。对 h(x)=10−x，任何非零 ε 都给 −1。对 f(x)=x²，在 x=3、ε=0.01 时，(3.01²−3²)/0.01=6.01；改得更小会趋近 6，所以 f′(3)=6。</p>
-<p>为什么关心局部？把弯曲函数在当前位置附近当成直线，就容易计算修正量。写成 f(x+δ)≈f(x)+f′(x)δ。δ 是打算改多少，≈ 是近似相等。对 x² 在 3 附近，δ=0.1，线性预测 9+6×0.1=9.6，精确值 9.61。δ 太大，误差就不能忽略。</p>
-<p>有多个输入时，先固定其他量，只改变一个量，叫<b>偏导数</b>。把多个输出对多个输入的偏导排成表，就是<b>雅可比矩阵 J</b>。例如观测 h(x,m)=m−x 对 [x,m] 的雅可比是 [−1,1]：第一列回答改 x，第二列回答改 m。输出 1 个、输入 2 个，J 就是 1×2。</p>
-<p>这张表不是“高等数学装饰”：它把测量误差翻译成状态应该怎么改。米对米的导数无量纲；米对弧度的导数单位是米/弧度。数值验证时 ε 太小会受浮点误差影响，太大会偏离局部，应该比较几个量级。</p>
-<h2>把公式落实到每行代码</h2><pre><code>def h(x):
-    return 10.0 - x
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Python③：函数与调试：把重复写成规则，把报错变成线索 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0005"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">A · 找回基础（数学与编程） / LESSON 05</div><h1>Python③：函数与调试：把重复写成规则，把报错变成线索</h1><p>能定义和调用函数，区分 return 与 print，用“五步法”和 assert 定位错误，并让 AI 帮你翻译报错。</p><p class="subtle">先修：<a href="0004-lesson.html">04 · Python②：列表和循环：一次处理很多测量</a></p><p class="subtle">预计用时：2–3 次 × 30 分钟。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（3 个）：函数 function、报错 traceback、断言 assert。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>函数像一台榨汁机：放进水果（参数），按下开关（调用），出来果汁（return 的值）。print 只是让你“看一眼”机器内部，并不会把果汁递出来。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p><a href="0002-lesson.html">第 02 课</a>的残差公式 h(x)−z 要对每个测量用一次。把它写成函数，就只需要写一次规则。</p>
+<h3>函数的四个部分</h3>
+<p><code>def residual(position, measured, wall=10.0):</code> 中，<code>def</code> 表示“定义函数”，<code>residual</code> 是函数名，括号里是<b>参数</b>，<code>wall=10.0</code> 是<b>默认值</b>（不传就用 10.0）。缩进的部分是函数体，<code>return</code> 把结果交回调用的地方。<b>只定义不调用，什么都不会算</b>；写 <code>residual(7.0, 3.0)</code> 才是调用。</p>
+<h3>return 和 print 的区别</h3>
+<p>return 把值交给调用者，可以继续参与计算；print 只是显示在屏幕上，调用者拿到的是 <code>None</code>（“什么也没有”）。新手最常见的 bug：函数里用了 print 没用 return，后面一计算就报 <code>TypeError: unsupported operand type(s) for -: 'NoneType' and 'float'</code>。看到 NoneType，先查函数有没有 return。</p>
+<h3>读懂一段完整报错</h3>
+<pre><code>Traceback (most recent call last):
+  File "step3.py", line 9, in &lt;module&gt;
+    print(residual(7.0))
+TypeError: residual() missing 1 required positional argument: 'measured'</code></pre>
+<p>从下往上读：最后一行说调用 residual 时少给了一个参数 measured；上一行是出错的代码；再上一行告诉你在第 9 行。修复方法是补上测量值，而不是去改函数。</p>
+<h3>调试五步法（保留自旧教材，排查一切 bug 的骨架）</h3>
+<ol><li><b>复现</b>：找到能稳定触发问题的最短步骤，写下来。</li><li><b>定位</b>：读报错最后一行和行号；没有报错但结果不对，就在中间加 print 看哪一步的值开始偏离手算。</li><li><b>假设</b>：写一句能被验证的猜测，例如“residual 返回了 None”。</li><li><b>验证</b>：只改一处，重新运行，看猜测对不对。</li><li><b>记录</b>：把现象、原因、修复写进 Bug 案例库（模板见 AI 陪练手册）。</li></ol>
+<h3>assert：让程序自己检查</h3>
+<p><code>assert 条件, 说明</code> 在条件不成立时立刻停下并显示说明。用已知答案的小例子写几条 assert，以后改代码时一跑就知道有没有改坏。小数比较不要用 ==，要比较差值是否足够小，因为 0.1+0.2 在电脑里并不精确等于 0.3。</p>
+<h2>把公式落实到每行代码</h2><p class="subtle">Python：可直接运行。先写下预测，再运行核对。</p><pre><code>def residual(position, measured, wall=10.0):
+    predicted = wall - position
+    return predicted - measured
 
-x = 6.0
-eps = 0.001
-j = (h(x + eps) - h(x)) / eps
-print(round(j, 6))</code></pre><p>先算右移后的测量，再减原测量，最后除以移动量；输出 −1.0。若正负号错，更新状态时可能越改越差。</p>
-<h2>先独立作答，再打开提示</h2><p>f(x)=x²，x=2，ε=0.01 时数值导数是多少？局部精确导数是多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
-<details><summary>提示：只给下一步</summary><p>先算 2.01²=4.0401。</p></details><details><summary>核对解答与常见错因</summary><p>(4.0401−4)/0.01=4.01，精确导数 4。数值差分只是近似，不要求逐位等于精确导数。</p><p>若还无法解释，回到先修：<a href="0001-lesson.html">01 · 先认识问题：机器人到底不知道什么</a>；<a href="0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a>。闭上答案，换一组数字重算。</p></details>
-<div class="numeric panel"><label for="q-5">f(x)=x² 在 x=2 的精确导数是多少？</label><input id="q-5" type="number" step="any" inputmode="decimal"><button type="button" data-check="4" data-explain="局部导数是2x。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>把残差约定改成 z−h(x)，雅可比会怎样？从 −1 变成 +1；残差和雅可比必须一起改符号。只改一个会导致错误更新。</p></details>
-<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+def check(position, measured, expected):
+    got = residual(position, measured)
+    assert abs(got - expected) &lt; 1e-9, (position, measured, got)
+    print(&quot;通过&quot;, position, measured, round(got, 2))
+
+for z in [2.9, 3.0, 3.1]:
+    check(7.0, z, 3.0 - z)</code></pre><p>三次都显示“通过”，残差分别是 0.1、0.0、−0.1。check 用手算的期望值（3.0−z）核对函数结果；abs(got−expected) &lt; 1e-9 表示“差得足够小就算相等”。如果有一天你把 residual 改坏了，assert 会停下并显示是哪组输入出错。这就是测试的最小形态，仓库 tests 文件夹里的测试是同样的思路。</p>
+<h2>先独立作答，再打开提示</h2><p>把 residual 里的 <code>return predicted - measured</code> 改成 <code>print(predicted - measured)</code>，运行前先预测会发生什么，再运行验证。</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>函数没有 return 时，调用者拿到的是什么？None 能减去小数吗？</p></details><details><summary>核对解答与常见错因</summary><p>先显示一次 0.1（print 的效果），然后在 check 的 assert 行报 <code>TypeError: unsupported operand type(s) for -: 'NoneType' and 'float'</code>。原因是 got 是 None。修复是改回 return，不是在 check 里绕过错误。</p><p>若还无法解释，回到先修：<a href="0004-lesson.html">04 · Python②：列表和循环：一次处理很多测量</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-5">wall=10, position=6, measured=3，残差是多少？</label><input id="q-5" type="number" step="any" inputmode="decimal"><button type="button" data-check="1" data-explain="先预测 10−6，再减3。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>写一个函数 <code>residuals(position, measurements)</code>，返回一个列表，装着每个测量的残差。用 <code>residuals(7.0, [2.9, 3.0, 3.1])</code> 测试，四舍五入后应约为 [0.1, 0.0, −0.1]。提示：函数里放一个空列表，循环中 append，最后 return 这个列表。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《Python③：函数与调试：把重复写成规则，把报错变成线索》。本课目标：能定义和调用函数，区分 return 与 print，用“五步法”和 assert 定位错误，并让 AI 帮你翻译报错。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 换个数出题：先预测再运行</summary><pre><code>下面是课里的代码。请出 2 道“改一个数字，先预测输出”的练习，只给题目不给答案。等我写出预测，再告诉我怎样自己运行来核对。
+
+def residual(position, measured, wall=10.0):
+    predicted = wall - position
+    return predicted - measured
+
+def check(position, measured, expected):
+    got = residual(position, measured)
+    assert abs(got - expected) &lt; 1e-9, (position, measured, got)
+    print(&quot;通过&quot;, position, measured, round(got, 2))
+
+for z in [2.9, 3.0, 3.1]:
+    check(7.0, z, 3.0 - z)</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：把 residual 里的 return predicted - measured 改成 print(predicted - measured)，运行前先预测会发生什么，再运行验证。
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《Python③：函数与调试：把重复写成规则，把报错变成线索》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>⑤ 本课专用</summary><pre><code>【报错翻译】我运行 Python 出错了。
+系统：（Windows/Ubuntu）  Python 版本：（py --version 的输出）
+我运行的命令：（粘贴）
+完整报错：（从 Traceback 开始全部粘贴）
+我已经试过：（写下来）
+请先用一句话说是哪一行、什么类型的错误，再告诉我该先检查什么。不要直接给我改好的整段代码，我想自己改。</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>函数用 return 交出结果；报错从最后一行往上读；调试按复现→定位→假设→验证→记录，每次只改一处。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
 <label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
 <div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
-<details><summary>选读一手资料</summary><p><a href="https://ceres-solver.readthedocs.io/latest/nnls_tutorial.html">Ceres 官方：非线性最小二乘</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a></span><span>下一课<br><a href="0006-lesson.html">06 · 概率与方差：承认测量不是完全准确的</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
+<details><summary>选读一手资料</summary><p><a href="https://docs.python.org/3/tutorial/introduction.html">Python 官方：数字与程序基础</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0004-lesson.html">04 · Python②：列表和循环：一次处理很多测量</a></span><span>下一课<br><a href="0006-lesson.html">06 · 坐标和向量：数字必须带上参考系</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

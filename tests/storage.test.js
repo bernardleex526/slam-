@@ -10,6 +10,7 @@ const storage = {
   key: i => [...memory.keys()][i],
   getItem: k => memory.get(k) ?? null,
   setItem: (k,v) => memory.set(k,String(v)),
+  removeItem: k => memory.delete(k),
 };
 function element(field) {
   return {dataset:{save:field},value:'',events:{},addEventListener(type, fn){this.events[type]=fn;}};
@@ -28,7 +29,7 @@ function page(id) {
     answer,reason,
     write(field,value){this[field].value=value;this[field].events.input();},
     async export(){exp.events.click();return JSON.parse(await exported.text()).records;},
-    async import(records){await imp.events.change({target:{files:[{size:100,text:async()=>JSON.stringify({version:1,records})}]}});},
+    async import(records,version=2){await imp.events.change({target:{files:[{size:100,text:async()=>JSON.stringify({version,records})}]}});},
   };
 }
 (async()=>{
@@ -38,7 +39,9 @@ function page(id) {
   let records=await home.export();
   assert.equal(records['0001'].answer,'第一课');
   assert.equal(records['0002'].answer,'第二课');
-  assert.equal(records['0003'].answer,'旧版答案');
+  // 旧第 3 课（坐标和向量）在 33 课版是第 6 课。
+  assert.equal(records['0006'].answer,'旧版答案');
+  assert.equal(records['0003'],undefined);
   const duplicate=page('0001');
   first.write('answer','新的答案'); duplicate.write('reason','另一个字段');
   records=await home.export();
@@ -49,7 +52,11 @@ function page(id) {
   assert.equal(records['0001'].answer,'新的答案');
   assert.equal(records['0002'].answer,'第二课');
   assert.equal(records['0003'].answer,'导入答案');
+  await home.import({'0007':{answer:'旧导出第七课'}},1);
+  records=await home.export();
+  assert.equal(records['0010'].answer,'旧导出第七课');
+  assert.equal(page('0001').answer.value,'新的答案');
   duplicate.write('answer','最后一次保存');
   assert.equal(page('0001').answer.value,'最后一次保存');
-  console.log('Cross-page saves, field isolation, legacy records, import/export and reload passed.');
+  console.log('Cross-page saves, field isolation, legacy records, 23→33 migration, import/export and reload passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

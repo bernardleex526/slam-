@@ -1,18 +1,31 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>实验手册 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
-<body data-lesson="home"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><h1>实验手册</h1><p>先看对应课的例子，再运行程序。全部 Python 实验只依赖标准库。命令在解压后的仓库目录执行；命令窗口叫终端，当前目录决定相对路径从哪里开始。</p>
-<h2>无需安装的起步</h2><p>直接双击 index.html，打开第01、04、08、10、22课的滑块实验。网页不是 Python 编辑器，页面代码展示与运行脚本分开。想修改算法时再进入下面的文件实验。</p>
-<h2>Python 环境与执行位置</h2><p>Windows 先在终端输入 <code>py --version</code>，Linux/macOS 输入 <code>python3 --version</code>。若显示 Python 3.x，解释器可用；若找不到命令，先用浏览器实验，或到 <a href="https://www.python.org/downloads/">Python 官方下载页</a> 安装。安装完成后重新打开终端。不要把代码贴进 PowerShell 当命令执行。</p>
+<body data-lesson="home"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><h1>实验手册</h1><p>先看对应课的例子，再运行程序。命令在解压后的仓库目录执行；命令窗口叫终端，当前目录决定相对路径从哪里开始。实验分三层：浏览器、Python、Linux（C++ 与部署）。</p>
+<h2>第一层：无需安装</h2><p>直接双击 index.html，打开带滑块的课（墙距残差、二维变换、测量融合、相机投影、世界模型）。网页不是 Python 编辑器，页面代码展示与运行脚本分开。</p>
+<h2>第二层：Python 环境与执行位置</h2><p>Windows 先在终端输入 <code>py --version</code>，Linux/macOS 输入 <code>python3 --version</code>。若显示 Python 3.x，解释器可用；若找不到命令，先用浏览器实验，或到 <a href="https://www.python.org/downloads/">Python 官方下载页</a> 安装。详细步骤见 <a href="../lessons/0003-lesson.html">03 · Python①：变量、数字和第一次运行</a>。</p>
 <p>在仓库文件夹里通过文件管理器“在终端打开”，确认能看到 labs 文件夹。Windows 以下用 py，Linux/macOS 替换为 python3。每次运行单独一条命令。若命令说找不到文件，先检查当前目录，不要重新装所有库。</p>
 <pre>py labs/core.py
 py labs/slam_1d.py
 py labs/navigation.py
-py labs/world_model.py</pre>
+py labs/world_model.py
+py labs/deploy/check_bag.py</pre>
 <div class="table-wrap"><table><tr><th>程序与对应课</th><th>先预测什么</th><th>应看到什么</th><th>动手修改</th></tr>
-<tr><td>core.py / 04、08、10</td><td>旋转后的点、融合位置、像素</td><td>(2,2)；位置1.04，方差0.04，K=0.2；像素(520,340)</td><td>把旋转90改为0，先算再运行。</td></tr>
-<tr><td>slam_1d.py / 14</td><td>三条位置与未知地标</td><td>[0,1.1375,2.05]；地标4.0625；RMSE约0.12910→0.08447</td><td>将 estimate 的观测参数改为(6,5,4)，位置应不变，地标加2。</td></tr>
-<tr><td>navigation.py / 19、21</td><td>红门对应节点与路径</td><td>R；[S,A,R]；SPL 0.6667 与0</td><td>增加另一个red door标签，应报歧义错误。将A与R双向断开，应返回None不可达。</td></tr>
-<tr><td>world_model.py / 22</td><td>拟合系数与两步预测</td><td>θ=0.799；留出MSE约0.036667→0.000001；计划(1,1)，预测1.598，合成真实1.6；换摩擦后1.0</td><td>只用零动作训练应报不可辨识；把测试动力学改为0.5，旧模型误差增加。</td></tr></table></div>
-<h2>最小项目交付清单</h2><p>每个实验提交四项：运行前手算；修改过的代码；实际输出；一句能被实验否定的解释。不要只交截图。运行测试可以检查实现，但不能替你证明理解。</p><pre>py -m unittest discover -s tests -v</pre>
+<tr><td>core.py / <a href="../lessons/0007-lesson.html">07 · 矩阵与旋转：展开后就是乘法和加法</a>、<a href="../lessons/0012-lesson.html">12 · 卡尔曼滤波：把运动预测和测量合起来</a>、<a href="../lessons/0015-lesson.html">15 · 相机：三维点为什么变成二维像素</a></td><td>旋转后的点、融合位置、像素</td><td>(2,2)；位置1.04，方差0.04，K=0.2；像素(520,340)</td><td>把旋转90改为0，先算再运行。</td></tr>
+<tr><td>slam_1d.py / <a href="../lessons/0019-lesson.html">19 · 项目一：真正同时估计位置和地标</a></td><td>三条位置与未知地标</td><td>[0,1.1375,2.05]；地标4.0625；RMSE约0.12910→0.08447</td><td>将 estimate 的观测参数改为(6,5,4)，位置应不变，地标加2。</td></tr>
+<tr><td>navigation.py / <a href="../lessons/0029-lesson.html">29 · 导航：地图、路径和控制不是同一个问题</a>、<a href="../lessons/0031-lesson.html">31 · VLN：把一句话落到可到达的地方</a></td><td>红门对应节点与路径</td><td>R；[S,A,R]；SPL 0.6667 与0</td><td>增加另一个red door标签，应报歧义错误。将A与R双向断开，应返回None不可达。</td></tr>
+<tr><td>world_model.py / <a href="../lessons/0032-lesson.html">32 · 世界模型：学习行动后会发生什么</a></td><td>拟合系数与两步预测</td><td>θ=0.799；留出MSE约0.036667→0.000001；计划(1,1)，预测1.598，合成真实1.6；换摩擦后1.0</td><td>只用零动作训练应报不可辨识；把测试动力学改为0.5，旧模型误差增加。</td></tr>
+<tr><td>deploy/check_bag.py / <a href="../lessons/0026-lesson.html">26 · 部署③：跑不通时怎么查：话题、频率、TF、日志与 AI 求助</a></td><td>示例配置哪个话题对不上</td><td>lid_topic 约 10 Hz；imu_topic=/imu/data 不在录包里</td><td>把 sample_config.yaml 的 imu_topic 改成 /livox/imu，应显示“通过”。</td></tr></table></div>
+<h2>第三层 A：C++ 与 Eigen（Linux / WSL2 / 容器）</h2><p>需要 g++；Eigen 示例另需 cmake 与 libeigen3-dev（<code>sudo apt install build-essential cmake libeigen3-dev</code>）。</p>
+<pre>g++ -std=c++17 labs/cpp/01_basics.cpp -o basics &amp;&amp; ./basics
+g++ -std=c++17 labs/cpp/02_functions.cpp -o functions &amp;&amp; ./functions
+cd labs/cpp/eigen_demo &amp;&amp; mkdir -p build &amp;&amp; cd build &amp;&amp; cmake .. &amp;&amp; make &amp;&amp; ./eigen_demo</pre>
+<p>应分别看到 7.1/7/6.9 与“3 3.5”（<a href="../lessons/0020-lesson.html">20 · C++①：从 Python 到 C++：类型、分号和编译</a>）、−0.1 与 3.2（<a href="../lessons/0021-lesson.html">21 · C++②：函数、引用与 const：数据是复制还是共用</a>）、“2 2”与“1 0”（<a href="../lessons/0022-lesson.html">22 · C++③：Eigen 与 CMake：把矩阵搬进一个小工程</a>）。</p>
+<h2>第三层 B：部署 FAST-LIO2（Docker + ROS 1 Noetic）</h2><p>按 <a href="../lessons/0024-lesson.html">24 · 部署①：用 Docker 准备 ROS 1 Noetic 环境</a> → <a href="../lessons/0025-lesson.html">25 · 部署②：编译 FAST-LIO2 并回放公开录包</a> → <a href="../lessons/0026-lesson.html">26 · 部署③：跑不通时怎么查：话题、频率、TF、日志与 AI 求助</a> 的顺序做，每步都有检查点。文件都在 <code>labs/deploy/</code>：</p>
+<div class="table-wrap"><table><tr><th>文件</th><th>在哪里运行</th><th>作用</th></tr>
+<tr><td>Dockerfile</td><td>宿主机：<code>docker build -t slam-noetic labs/deploy</code></td><td>Ubuntu 20.04 + ROS 1 Noetic + Eigen/PCL + Livox-SDK</td></tr>
+<tr><td>run.sh</td><td>宿主机：<code>bash labs/deploy/run.sh</code></td><td>创建或进入容器；~/slam_ws 挂载到容器 /root/slam_ws，仓库只读挂载到 /root/course</td></tr>
+<tr><td>build_fastlio.sh</td><td>容器内</td><td>手动步骤的参考答案：编译 livox_ros_driver 与 FAST_LIO，记录提交号</td></tr>
+<tr><td>check_bag.py</td><td>宿主机或容器</td><td>对照 rosbag info 与 FAST_LIO 配置，检查话题名、类型、频率</td></tr></table></div>
+<p><b>本环境未运行 Docker、ROS 与真实录包</b>：脚本依据 FAST_LIO 官方 README、config/avia.yaml 与源码编写。上游更新后命令可能变化，以检查点为准，遇到不一致请按 <a href="../lessons/0026-lesson.html">26 · 部署③：跑不通时怎么查：话题、频率、TF、日志与 AI 求助</a> 排查并记录。录包需从 FAST_LIO README 的链接下载（Google Drive，国内网络可能需要代理）。</p>
+<h2>最小项目交付清单</h2><p>每个实验提交四项：运行前手算；修改过的代码；实际输出；一句能被实验否定的解释。部署实验另加：提交号、录包名、完整命令、截图与 Bug 记录。不要只交截图。运行测试可以检查实现，但不能替你证明理解。</p><pre>py -m unittest discover -s tests -v</pre>
 <h2>让所有页面共用同一个学习记录来源</h2><p>可选：在仓库目录运行下列命令。http.server 是 Python 内置的静态网页服务，8765 是端口，127.0.0.1 只在本机监听。在浏览器打开 <a href="http://127.0.0.1:8765/">本机学习首页</a>。此终端保持运行，用 Ctrl+C 结束。若端口被占用，把命令和地址中的8765一起换成8766。</p><pre>py -m http.server 8765 --bind 127.0.0.1</pre>
-<h2>常见卡点</h2><p>文件末尾看起来是 .py 但仍不能运行：检查是不是 .py.txt。小数出现极小差别：先按合理容差比较。import labs 失败：从仓库目录运行，或直接运行脚本。C++ 示例需要编译器与 Eigen，本环境未执行 C++ 编译；不要把 Python 实验通过当成 C++ 已通过。</p>
-<h2>真实工程下一步</h2><p>第17、18、23课给出上游复现与实验协议。先确定传感器数据类型、代码提交和 ROS 版本，再按官方安装说明建立隔离环境。课程没有附带真实录包、VLN 图像数据或预训练模型；这些下载、授权、算力与运行条件应在选定项目时记录。</p><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
+<h2>常见卡点</h2><p>文件末尾看起来是 .py 但仍不能运行：检查是不是 .py.txt。小数出现极小差别：先按合理容差比较。import labs 失败：从仓库目录运行，或直接运行脚本。改了 C++ 没效果：忘了重新编译。ros2 命令找不到：你在 ROS 1 环境里，见 <a href="../lessons/0023-lesson.html">23 · ROS 与 TF：数据流必须有时间和坐标</a> 的对照表。</p><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

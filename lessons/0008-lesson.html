@@ -1,25 +1,37 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>卡尔曼滤波：把运动预测和测量合起来 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
-<body data-lesson="0008"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">B · 从测量到估计 / LESSON 08</div><h1>卡尔曼滤波：把运动预测和测量合起来</h1><p>手算一次一维预测与更新，解释每个噪声参数改变什么。</p><p class="subtle">先修：<a href="0006-lesson.html">06 · 概率与方差：承认测量不是完全准确的</a>；<a href="0007-lesson.html">07 · 最小二乘：把好坏写成能计算的分数</a></p></header>
-<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
-<h2>从实际问题走到公式</h2><p>机器人原位置估计 0 米。轮子报告向前走 1 米，于是预测当前位置 1 米；独立定位传感器却给出 1.2 米。相信哪一个？先为两者的不确定性建模，再按可信程度融合。</p>
-<div class="formula">x⁻=x+u；P⁻=P+Q<br>K=P⁻/(P⁻+R)；x⁺=x⁻+K(z−x⁻)；P⁺=(1−K)P⁻</div>
-<p>x 是位置（米），u 是本步位移（米）；P 是原估计误差方差，Q 是本步运动噪声方差，R 是测量噪声方差（均为米²）。上标 − 表示测量更新前，+ 表示更新后，不是正负位置。K 是无量纲的<b>卡尔曼增益</b>。这里 z 直接测位置，观测函数是 h(x)=x；与第 1 课的墙距模型不同。</p>
-<p>取 P=0.04、Q=0.01、R=0.20，则 P⁻=0.05，K=0.05/0.25=0.2。测量比预测多 0.2 米，只采用其中 20%，结果 1+0.2×0.2=1.04 米。新的方差为 0.04。每步运动会增加不确定性，独立测量可以减小它。</p>
-<p>这组简单公式假设线性系统、独立零均值噪声及相应协方差模型；高斯假设下得到完整的高斯后验解释。非线性时使用雅可比作局部近似就是扩展卡尔曼滤波（EKF）。多次围绕新估计线性化观测就是迭代 EKF 的思路，但不能把同一次观测当成多份独立证据反复累计置信度。</p>
-<p>Q 大表示不信任运动预测，R 大表示不信任观测。滤波输出平滑不等于准确：很大的 R 可能让错误预测长期得不到纠正。若传感器一直偏 0.2 米，独立零均值假设不成立，应处理偏置。重复融合同一信息也会造成虚假的高置信度。</p>
-<h2>改一个条件，观察因果</h2><p>先写下你的预测，再动滑块。图下会展开当前数字的计算过程。</p><section class="lab" data-lab="fusion" aria-label="互动实验"><div class="lab-controls"><label>测量方差 R（米²）<input type="range" name="r" min="0.005" max="1" step="0.005" value="0.2"></label></div><svg viewBox="0 0 440 120" role="img" aria-label="融合位置位于1米预测与1.2米测量之间"><line x1="60" y1="50" x2="360" y2="50" stroke="#aaa"/><circle cx="60" cy="50" r="5" fill="#666"/><circle cx="360" cy="50" r="5" fill="#666"/><circle class="estimate" cx="120" cy="50" r="10" fill="#17604d"/><text x="20" y="100">预测 1米</text><text x="290" y="100">测量 1.2米</text></svg><output aria-live="polite"></output></section><h2>把公式落实到每行代码</h2><pre><code>x, p = 0.0, 0.04
-u, q = 1.0, 0.01
-z, r = 1.2, 0.20
-predicted_x = x + u
-predicted_p = p + q
-k = predicted_p / (predicted_p + r)
-x = predicted_x + k * (z - predicted_x)
-p = (1-k) * predicted_p
-print(round(k, 4), round(x, 4), round(p, 4))</code></pre><p>代码变量 p、q、r 分别对应大写 P、Q、R，r 在这里是方差而非残差；命名随程序而变，必须看定义。输出 0.2 1.04 0.04。</p>
-<h2>先独立作答，再打开提示</h2><p>只把 R 改为 0.05，其余相同，K 和新位置是多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
-<details><summary>提示：只给下一步</summary><p>分母为 0.05+0.05，两个来源一样不确定。</p></details><details><summary>核对解答与常见错因</summary><p>K=0.5，新位置 1.1 米，方差 0.025 米²。不要把标准差 0.05 与方差 0.05 混为一谈。</p><p>若还无法解释，回到先修：<a href="0006-lesson.html">06 · 概率与方差：承认测量不是完全准确的</a>；<a href="0007-lesson.html">07 · 最小二乘：把好坏写成能计算的分数</a>。闭上答案，换一组数字重算。</p></details>
-<div class="numeric panel"><label for="q-8">P⁻=0.05，R=0.05，K是多少？</label><input id="q-8" type="number" step="any" inputmode="decimal"><button type="button" data-check="0.5" data-explain="K=P⁻/(P⁻+R)。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>R 趋于很大时会怎样？K 趋于 0，新位置靠近预测 1 米；测量几乎不改变结果。R 趋近 0 则反过来靠近测量，但真实测量很少完全无误差。</p></details>
-<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>变化率、导数与雅可比：改一点会怎样 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0008"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">A · 找回基础（数学与编程） / LESSON 08</div><h1>变化率、导数与雅可比：改一点会怎样</h1><p>从差值理解导数，解释残差为什么会随状态改变。</p><p class="subtle">先修：<a href="0002-lesson.html">02 · 先认识问题：机器人到底不知道什么</a>；<a href="0007-lesson.html">07 · 矩阵与旋转：展开后就是乘法和加法</a></p><p class="subtle">预计用时：2 次 × 40 分钟。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（4 个）：导数 derivative、偏导 partial derivative、雅可比 Jacobian、线性化 linearization。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>开车时把油门踩下一点点，车速变化多少？这个“改一点点输入，输出跟着变多少”的比例就是导数。雅可比只是把很多个油门、很多个仪表盘的比例排成一张表。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>把位置从 6 米改到 6.1 米，到墙的预测距离从 4 米变为 3.9 米。位置增加 0.1，距离减少 0.1。因此“输出变化/输入变化”是 −1。这就是变化率。导数描述改动非常小时的局部变化率。</p>
+<div class="formula">h′(x) ≈ [h(x+ε)−h(x)] / ε</div>
+<p>撇号 <code>′</code> 表示导数，ε（读 epsilon）是很小的改变量，分数线就是除法。对 h(x)=10−x，任何非零 ε 都给 −1。对 f(x)=x²，在 x=3、ε=0.01 时，(3.01²−3²)/0.01=6.01；改得更小会趋近 6，所以 f′(3)=6。</p>
+<p>为什么关心局部？把弯曲函数在当前位置附近当成直线，就容易计算修正量。写成 f(x+δ)≈f(x)+f′(x)δ。δ 是打算改多少，≈ 是近似相等。对 x² 在 3 附近，δ=0.1，线性预测 9+6×0.1=9.6，精确值 9.61。δ 太大，误差就不能忽略。</p>
+<p>有多个输入时，先固定其他量，只改变一个量，叫<b>偏导数</b>。把多个输出对多个输入的偏导排成表，就是<b>雅可比矩阵 J</b>。例如观测 h(x,m)=m−x 对 [x,m] 的雅可比是 [−1,1]：第一列回答改 x，第二列回答改 m。输出 1 个、输入 2 个，J 就是 1×2。</p>
+<p>这张表不是“高等数学装饰”：它把测量误差翻译成状态应该怎么改。米对米的导数无量纲；米对弧度的导数单位是米/弧度。数值验证时 ε 太小会受浮点误差影响，太大会偏离局部，应该比较几个量级。</p>
+<h2>把公式落实到每行代码</h2><p class="subtle">Python：可直接运行。先写下预测，再运行核对。</p><pre><code>def h(x):
+    return 10.0 - x
+
+x = 6.0
+eps = 0.001
+j = (h(x + eps) - h(x)) / eps
+print(round(j, 6))</code></pre><p>先算右移后的测量，再减原测量，最后除以移动量；输出 −1.0。若正负号错，更新状态时可能越改越差。</p>
+<h2>先独立作答，再打开提示</h2><p>f(x)=x²，x=2，ε=0.01 时数值导数是多少？局部精确导数是多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>先算 2.01²=4.0401。</p></details><details><summary>核对解答与常见错因</summary><p>(4.0401−4)/0.01=4.01，精确导数 4。数值差分只是近似，不要求逐位等于精确导数。</p><p>若还无法解释，回到先修：<a href="0002-lesson.html">02 · 先认识问题：机器人到底不知道什么</a>；<a href="0007-lesson.html">07 · 矩阵与旋转：展开后就是乘法和加法</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-8">f(x)=x² 在 x=2 的精确导数是多少？</label><input id="q-8" type="number" step="any" inputmode="decimal"><button type="button" data-check="4" data-explain="局部导数是2x。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>把残差约定改成 z−h(x)，雅可比会怎样？从 −1 变成 +1；残差和雅可比必须一起改符号。只改一个会导致错误更新。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《变化率、导数与雅可比：改一点会怎样》。本课目标：从差值理解导数，解释残差为什么会随状态改变。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 换个数出题：先预测再运行</summary><pre><code>下面是课里的代码。请出 2 道“改一个数字，先预测输出”的练习，只给题目不给答案。等我写出预测，再告诉我怎样自己运行来核对。
+
+def h(x):
+    return 10.0 - x
+
+x = 6.0
+eps = 0.001
+j = (h(x + eps) - h(x)) / eps
+print(round(j, 6))</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：f(x)=x²，x=2，ε=0.01 时数值导数是多少？局部精确导数是多少？
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《变化率、导数与雅可比：改一点会怎样》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>导数 = 输入改一点点时输出变化的比例；多输入多输出时排成表，就是雅可比；数值差分可以验证手推的导数。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
 <label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
 <div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
-<details><summary>选读一手资料</summary><p><a href="https://www.roboticsbook.org/S44_logistics_perception.html">机器人课程书：Localization</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0007-lesson.html">07 · 最小二乘：把好坏写成能计算的分数</a></span><span>下一课<br><a href="0009-lesson.html">09 · 三维位姿：旋转、平移和变换链</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
+<details><summary>选读一手资料</summary><p><a href="https://ceres-solver.readthedocs.io/latest/nnls_tutorial.html">Ceres 官方：非线性最小二乘</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0007-lesson.html">07 · 矩阵与旋转：展开后就是乘法和加法</a></span><span>下一课<br><a href="0009-lesson.html">09 · 概率与方差：承认测量不是完全准确的</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

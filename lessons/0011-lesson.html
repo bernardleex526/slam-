@@ -1,22 +1,52 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>IMU：从角速度、加速度到运动预测 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
-<body data-lesson="0011"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">B · 从测量到估计 / LESSON 11</div><h1>IMU：从角速度、加速度到运动预测</h1><p>理解积分、偏置、重力与时间误差，知道去畸变为何依赖时间。</p><p class="subtle">先修：<a href="0008-lesson.html">08 · 卡尔曼滤波：把运动预测和测量合起来</a>；<a href="0009-lesson.html">09 · 三维位姿：旋转、平移和变换链</a></p></header>
-<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
-<h2>从实际问题走到公式</h2><p>IMU 是惯性测量单元，常包含陀螺仪和加速度计。陀螺仪测角速度，即每秒转多少弧度；加速度计测<b>比力</b>，不是可直接拿来积分的地图加速度。静止放在桌上也会测到支撑引起的比力。</p>
-<div class="formula">ω=ω测−b_g；a_W=R_WB(f测−b_a)+g_W<br>v新=v+a_WΔt；p新=p+vΔt+½a_WΔt²</div>
-<p>b_g、b_a 是陀螺仪和加速度计偏置；f测 是机身坐标下的比力；g_W 是地图中的重力向量；Δt 是经过的秒数；v、p 为地图速度和位置。这里位置公式使用更新前的 v，假设本小段加速度不变。单位检查：米/秒² × 秒² = 米。</p>
-<p>约定地图 z 轴向上，重力是 (0,0,−9.81) 米/秒²。理想静止且坐标对齐时，比力为 (0,0,+9.81)，相加后加速度为零。若直接把 +9.81 积分，会算出机器人凭空起飞。旋转矩阵的方向或重力符号写错，也会产生类似错误。</p>
-<p>一维加速度 2 米/秒²，初速度 0，持续 0.5 秒：新速度 1 米/秒，位置增加 0.25 米。把许多小时间段的贡献累加叫<b>积分</b>。恒定加速度偏差 b 累积成速度误差 bt、位置误差约 ½bt²；姿态误差还会把重力错误投影到水平方向。</p>
-<p>激光雷达一圈里的点往往在不同时间采集。机器人扫描中移动时，不能假设它们都来自同一位置。<b>去畸变</b>利用每个点的采集时间和估计运动，把点变到同一个参考时刻。这处理扫描运动；第 10 课的镜头畸变是另一个问题。</p>
-<p>以 1 米/秒前进，时间差 0.02 秒对应约 0.02 米位移；转弯时还会出现与距离相关的角度误差。记录时间单位和时钟来源，再调整滤波器噪声；时间戳错了不是把 R 调大就解决了。</p>
-<h2>把公式落实到每行代码</h2><pre><code>p, v = 0.0, 0.0
-a, dt = 2.0, 0.5
-new_p = p + v*dt + 0.5*a*dt**2
-new_v = v + a*dt
-print(new_p, new_v)</code></pre><p>输出 0.25 1.0。new_p 使用旧速度。如果先 v=v+a*dt 再把 v 代入这条位置公式，会重复计入部分加速度贡献。</p>
-<h2>先独立作答，再打开提示</h2><p>加速度偏差 0.1 米/秒²，真实静止，忽略其他误差，10 秒后位置误差是多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
-<details><summary>提示：只给下一步</summary><p>用 ½bt²，时间也要平方。</p></details><details><summary>核对解答与常见错因</summary><p>5 米。偏差很小却能积累出大漂移，因此 IMU 通常要与外部观测配合。</p><p>若还无法解释，回到先修：<a href="0008-lesson.html">08 · 卡尔曼滤波：把运动预测和测量合起来</a>；<a href="0009-lesson.html">09 · 三维位姿：旋转、平移和变换链</a>。闭上答案，换一组数字重算。</p></details>
-<div class="numeric panel"><label for="q-11">b=0.1米/秒²，10秒位置偏差多少米？</label><input id="q-11" type="number" step="any" inputmode="decimal"><button type="button" data-check="5" data-explain="使用0.5×b×t²。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>机器人静止时陀螺仪理想值近零，加速度计也应该三轴全零吗？不应该；在上述对齐约定下 z 轴约 +9.81。先区分比力和世界加速度。</p></details>
-<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>最小二乘②：不能一步算出时，怎样一步步逼近 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0011"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">B · 从测量到估计 / LESSON 11</div><h1>最小二乘②：不能一步算出时，怎样一步步逼近</h1><p>能手算一次梯度下降更新，理解步长的影响，知道高斯—牛顿在做什么，以及离群点为什么危险。</p><p class="subtle">先修：<a href="0010-lesson.html">10 · 最小二乘①：把“哪个位置最好”写成一个分数</a></p><p class="subtle">预计用时：2–3 次 × 30 分钟。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（4 个）：梯度 gradient、优化 optimization、鲁棒损失 robust loss、步长 step size。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>蒙着眼下山：你感觉脚下哪边往下倾（导数），就往那边迈一步（步长）。步子太小，天黑都到不了山脚；步子太大，可能一步跨到对面山坡上。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>上一课能直接解出 x=6，是因为问题简单。真实 SLAM 里有成千上万个变量，残差里还有 sin、cos，无法一步写出答案。办法是：<b>从一个猜测出发，按导数指示的方向一小步一小步地改</b>。</p>
+<h3>梯度下降：沿下坡方向走一步</h3>
+<div class="formula">x新 = x旧 − α · E′(x旧)</div>
+<p>E′ 是导数（多个变量时叫<b>梯度</b>），它指向“分数变大”的方向，所以要<b>减</b>去它。α（读 alpha）是<b>步长</b>，由人选定。</p>
+<p>手算：从 x=5 出发，E′(5)=4×5−24=−4。取 α=0.1，x新=5−0.1×(−4)=5.4。代回去：E(5.4)=(1.6)²+(−0.4)²=2.56+0.16=2.72，比原来的 4 小了。重复几次就会越来越接近 6。</p>
+<h3>步长：太小太慢，太大发散</h3>
+<p>同样从 x=5 出发，若 α=1：x新=5+4=9，E(9)=4+16=20，比原来还差。α=0.5 时会在 5 和 7 之间来回跳；α=0.25 时恰好一步到 6（这个问题刚好是二次函数，下面的高斯—牛顿会解释为什么）。步长不是越大越好，也不是越小越好，这也是“调参”的来源之一。</p>
+<h3>高斯—牛顿：用残差的斜率直接算出这一步该走多远</h3>
+<p>梯度下降只知道方向，步长靠人猜。高斯—牛顿利用残差对状态的导数（<a href="0008-lesson.html">第 08 课</a>的雅可比 J）算出步长：</p>
+<div class="formula">(JᵀJ) δ = −Jᵀ r</div>
+<p>本例中 r₁=7−x、r₂=5−x 对 x 的导数都是 −1，所以 J=[−1,−1]ᵀ。在 x=5：r=[2,0]ᵀ，JᵀJ=1+1=2，−Jᵀr=−(−2−0)=2，于是 δ=2/2=1，x 变为 6，一步到位。残差本身是直线（线性）时总能一步到位；有 sin、cos 时要重复几轮，这就是“迭代”。FAST-LIO2 里的“迭代更新”也是这个思路。</p>
+<h3>离群点：一个坏测量能拉偏所有结果</h3>
+<p>如果第三次测量出错，推算位置是 30 米，等权平均变成 (7+5+30)/3=14 米，完全错了。平方让大残差的影响更大，这时应该：先检查数据关联（是不是测到了别的墙），再考虑<b>鲁棒损失</b>，它在残差很大时降低惩罚的增长速度。只靠调大所有测量的方差不能解决问题。</p>
+<h2>把公式落实到每行代码</h2><p class="subtle">Python：可直接运行。先写下预测，再运行核对。</p><pre><code>def cost(x):
+    return (7 - x)**2 + (5 - x)**2
+
+def gradient(x):
+    return 4*x - 24
+
+x = 5.0
+step = 0.1
+for i in range(5):
+    x = x - step * gradient(x)
+    print(i + 1, round(x, 4), round(cost(x), 4))</code></pre><p>每行显示“第几步、新的 x、新的分数”，依次约为 <code>1 5.4 2.72</code>、<code>2 5.64 2.2592</code>、<code>3 5.784 2.0933</code>、<code>4 5.8704 2.0336</code>、<code>5 5.9222 2.0121</code>。x 一步步靠近 6，分数靠近最低值 2。range(5) 表示循环 5 次，i 依次为 0–4，所以打印时写 i+1。</p>
+<h2>先独立作答，再打开提示</h2><p>把 step 改成 1，第一步之后 x 和 cost 分别是多少？再改成 0.5 呢？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>都从 x=5、导数 −4 开始。</p></details><details><summary>核对解答与常见错因</summary><p>step=1：x=9，E=20，比原来的 4 更差，继续迭代会来回跳且越跳越远。step=0.5：x=5−0.5×(−4)=7，E(7)=0+4=4，没有变好；第二步 7−0.5×4=5，在 5 和 7 之间来回跳，永远到不了 6。真正一步到位的步长是 0.25：5−0.25×(−4)=6。说明步长凭感觉改很容易出错，要手算或运行核对。</p><p>若还无法解释，回到先修：<a href="0010-lesson.html">10 · 最小二乘①：把“哪个位置最好”写成一个分数</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-11">从 x=5 出发，导数 E′=−4，步长 α=0.1，更新后 x 是多少？</label><input id="q-11" type="number" step="any" inputmode="decimal"><button type="button" data-check="5.4" data-explain="x新=x旧−α×E′=5−0.1×(−4)。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>测量位置为 7、5、30 米。等权最小二乘的最优位置是多少？14 米。若改用中位数，得到 7 米。中位数受离群点影响小得多，鲁棒损失就是在最小二乘框架里实现类似效果的办法。但首先要问：30 米这个测量是怎么来的？</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《最小二乘②：不能一步算出时，怎样一步步逼近》。本课目标：能手算一次梯度下降更新，理解步长的影响，知道高斯—牛顿在做什么，以及离群点为什么危险。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 换个数出题：先预测再运行</summary><pre><code>下面是课里的代码。请出 2 道“改一个数字，先预测输出”的练习，只给题目不给答案。等我写出预测，再告诉我怎样自己运行来核对。
+
+def cost(x):
+    return (7 - x)**2 + (5 - x)**2
+
+def gradient(x):
+    return 4*x - 24
+
+x = 5.0
+step = 0.1
+for i in range(5):
+    x = x - step * gradient(x)
+    print(i + 1, round(x, 4), round(cost(x), 4))</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：把 step 改成 1，第一步之后 x 和 cost 分别是多少？再改成 0.5 呢？
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《最小二乘②：不能一步算出时，怎样一步步逼近》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>解不出来就迭代：沿导数反方向走一步，步长决定快慢和是否发散；高斯—牛顿用雅可比算出步长；离群点要先查来源。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
 <label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
 <div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
-<details><summary>选读一手资料</summary><p><a href="https://github.com/hku-mars/FAST_LIO">HKU-MARS：FAST_LIO 上游仓库</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0010-lesson.html">10 · 相机：三维点为什么变成二维像素</a></span><span>下一课<br><a href="0012-lesson.html">12 · 点云配准：先找对应，再修正位姿</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
+<details><summary>选读一手资料</summary><p><a href="https://ceres-solver.readthedocs.io/latest/nnls_tutorial.html">Ceres 官方：非线性最小二乘</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0010-lesson.html">10 · 最小二乘①：把“哪个位置最好”写成一个分数</a></span><span>下一课<br><a href="0012-lesson.html">12 · 卡尔曼滤波：把运动预测和测量合起来</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

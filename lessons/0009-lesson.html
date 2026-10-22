@@ -1,24 +1,31 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>三维位姿：旋转、平移和变换链 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
-<body data-lesson="0009"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">B · 从测量到估计 / LESSON 09</div><h1>三维位姿：旋转、平移和变换链</h1><p>读懂坐标变换的方向，理解 SO(3)、SE(3) 与小角度更新的用途。</p><p class="subtle">先修：<a href="0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a>；<a href="0005-lesson.html">05 · 变化率、导数与雅可比：改一点会怎样</a></p></header>
-<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
-<h2>从实际问题走到公式</h2><p><b>位姿</b>是位置和朝向的组合。三维位置需要 3 个数，朝向有 3 个自由度，即局部需要 3 个独立变化量。旋转矩阵有 9 个元素，但受到列向量两两垂直、长度为 1 等约束，所以不是 9 个独立旋转自由度。</p>
-<div class="formula">pᴬ = R_AB pᴮ + t_AB；T_AB = [[R_AB,t_AB],[0,0,0,1]]</div>
-<p>下标 AB 在本教材固定表示“把 B 中坐标变到 A”；t_AB 是 B 原点在 A 中的位置。T 是 4×4 的<b>齐次变换矩阵</b>：给三维点补一个 1，写成 [x,y,z,1]ᵀ，就能把旋转和平移合并成一次矩阵乘法。方向向量补 0，因而不会被平移。</p>
-<p>激光点先到机身，再到地图：T_WL=T_WB T_BL。右边先作用，L 是激光坐标系，B 是机身，W 是地图。若把两个矩阵顺序反过来，含义通常不成立，即使维度能乘。逆变换 T_BW 的旋转是 R_WBᵀ，平移是 −R_WBᵀt_WB，而不是简单给所有元素加负号。</p>
-<p><b>SO(3)</b>是合法三维旋转矩阵的集合：RᵀR=I、det(R)=1。I 是什么都不改变的单位矩阵；det 是行列式，旋转保持有向体积，因此为 1。镜像也可满足 RᵀR=I，但行列式为 −1，不能当作刚体旋转。<b>SE(3)</b>是包含旋转和平移的刚体变换集合。</p>
-<p>用旋转矩阵时不能随意给 9 个元素各加一点，会破坏约束。<b>李代数</b>在这里提供局部的 3 维小旋转 δθ，把它映射为合法旋转后再组合。<code>Exp</code> 是这项映射的名字。R新=R Exp(δθ) 是右侧增量；左乘表达的增量参考系不同，雅可比也跟着变。</p>
-<p><b>四元数</b>用 4 个有约束的数表达旋转。单位长度是约束，q 和 −q 表示同一旋转。不同库可能用 wxyz 或 xyzw 顺序，不能凭记忆接线。当前关卡不要求背 Exp 展开式，但必须能判定变换方向和检查旋转约束；旧第二周的复杂运动学放在这之后。</p>
-<h2>把公式落实到每行代码</h2><pre><code># 无旋转的变换链：激光原点在机身前方 0.2 m
-laser_point = 1.0
-laser_in_body = 0.2
-body_in_world = 3.0
-point_in_body = laser_point + laser_in_body
-point_in_world = point_in_body + body_in_world
-print(point_in_world)</code></pre><p>输出 4.2。这是完整变换链的纯平移特例；第 4 课已包含二维旋转实现。三维不是抛弃前面的规则，而是多一个分量和合法旋转约束。</p>
-<h2>先独立作答，再打开提示</h2><p>机器人地图位置 (2,1)，朝向 90°；地图点 (2,3) 变回机器人坐标是多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
-<details><summary>提示：只给下一步</summary><p>先减 (2,1)，再逆时针的反方向转 90°。</p></details><details><summary>核对解答与常见错因</summary><p>(2,3)−(2,1)=(0,2)，反转后为 (2,0)。若得到 (−2,0)，逆旋转方向弄反。</p><p>若还无法解释，回到先修：<a href="0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a>；<a href="0005-lesson.html">05 · 变化率、导数与雅可比：改一点会怎样</a>。闭上答案，换一组数字重算。</p></details>
-<div class="numeric panel"><label for="q-9">机器人(2,1)、θ=90°，地图点(2,3)变回后的 x 分量？</label><input id="q-9" type="number" step="any" inputmode="decimal"><button type="button" data-check="2" data-explain="先减平移，再反向旋转。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>只有一面无限平墙时，沿墙平移会改变点到墙的距离吗？不会。这是某些方向缺少约束的例子，叫退化；更多测量同一面墙不一定补上这个方向。</p></details>
-<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>概率与方差：承认测量不是完全准确的 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0009"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">A · 找回基础（数学与编程） / LESSON 09</div><h1>概率与方差：承认测量不是完全准确的</h1><p>区分随机抖动、固定偏差和不确定性，理解为什么不能总取平均。</p><p class="subtle">先修：<a href="0002-lesson.html">02 · 先认识问题：机器人到底不知道什么</a>；<a href="0004-lesson.html">04 · Python②：列表和循环：一次处理很多测量</a></p><p class="subtle">预计用时：2–3 次 × 30 分钟。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（6 个）：均值 mean、方差 variance、标准差 standard deviation、协方差 covariance、高斯 Gaussian、先验 prior / 后验 posterior。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>同一把尺子量同一张桌子量十次，读数会在真值附近抖动，这是随机误差；如果尺子本身少了 1 厘米，每次都会偏同样的量，这是偏差。多量几次取平均能压住抖动，却去不掉偏差。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>在同一位置测墙距得到 2.9、3.0、3.1 米。真实距离没变，读数却在变。把测量写成 z=真实距离+误差。误差可包含随机抖动，也可包含始终多 0.2 米的固定偏差。多测几次取平均能减小独立随机噪声的影响，但不能自动消除固定偏差。</p>
+<div class="formula">均值 μ=(z₁+…+zₙ)/n；方差 σ²=平均[(z−μ)²]</div>
+<p>μ（mu）是平均值；n 是数量；省略号表示中间项继续相加；σ（sigma）是标准差，σ² 是方差。三个数平均为 3，偏差为 −0.1、0、0.1，平方后平均为 0.006667 米²，标准差约 0.08165 米。这里描述这三个数的整体分散程度，分母用 n；用样本估计总体方差时常见 n−1，不能混用两种目的。</p>
+<p><b>概率</b>描述某种结果有多可能，范围 0 到 1。两种互斥且包含全部情况的结果，概率相加为 1。连续位置的概率通常通过区间表达；某个精确点的概率和概率密度不是一回事。<b>高斯分布</b>是一种中间高、两侧低的误差模型，由均值和方差描述；它是建模选择，不能把所有跳点都当高斯噪声。</p>
+<p>二维位置的不确定性用<b>协方差矩阵</b>表示：对角线分别是 x、y 的方差，非对角项描述两者误差是否一起变化。非对角项为 0 不总意味着独立；在联合高斯假设下才有这样的推论。</p>
+<p><b>贝叶斯更新</b>就是把新证据加入原有判断。例：两个房间初始各 0.5 概率；在 A 看见红门概率 0.8，在 B 是 0.2。看见红门后，未归一化权重是 0.4 和 0.1，除以总和 0.5，得到 A 为 0.8、B 为 0.2。归一化只是让总概率回到 1；证据模型错了，答案也会错。</p>
+<h2>把公式落实到每行代码</h2><p class="subtle">Python：可直接运行。先写下预测，再运行核对。</p><pre><code>values = [2.9, 3.0, 3.1]
+mean = sum(values) / len(values)
+variance = sum((z - mean)**2 for z in values) / len(values)
+print(round(mean, 4), round(variance, 6))</code></pre><p>sum 把数相加，len 计数；括号内 for 表示为每个 z 计算一个平方再求和。输出 3.0 0.006667。方差单位是米²，不能直接加在米上。</p>
+<h2>先独立作答，再打开提示</h2><p>所有读数都增加 0.2 米，均值和上述方差各如何变化？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>每个数到新均值的距离是否改变？</p></details><details><summary>核对解答与常见错因</summary><p>均值变成 3.2 米，方差不变。若认为方差变大，混淆了“整体偏移”和“分散程度”。</p><p>若还无法解释，回到先修：<a href="0002-lesson.html">02 · 先认识问题：机器人到底不知道什么</a>；<a href="0004-lesson.html">04 · Python②：列表和循环：一次处理很多测量</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-9">2.9、3.0、3.1 都加0.2，新均值是多少？</label><input id="q-9" type="number" step="any" inputmode="decimal"><button type="button" data-check="3.2" data-explain="均值整体增加0.2。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>A、B 的先验改为 0.2、0.8，红门概率仍为 0.8、0.2，看见红门后的 A 概率？0.16/(0.16+0.16)=0.5。先验确实会影响结果。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《概率与方差：承认测量不是完全准确的》。本课目标：区分随机抖动、固定偏差和不确定性，理解为什么不能总取平均。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 换个数出题：先预测再运行</summary><pre><code>下面是课里的代码。请出 2 道“改一个数字，先预测输出”的练习，只给题目不给答案。等我写出预测，再告诉我怎样自己运行来核对。
+
+values = [2.9, 3.0, 3.1]
+mean = sum(values) / len(values)
+variance = sum((z - mean)**2 for z in values) / len(values)
+print(round(mean, 4), round(variance, 6))</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：所有读数都增加 0.2 米，均值和上述方差各如何变化？
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《概率与方差：承认测量不是完全准确的》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>均值描述中心，方差和标准差描述抖动大小；随机抖动可以平均掉，固定偏差不行；方差的单位是原单位的平方。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
 <label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
 <div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
-<details><summary>选读一手资料</summary><p><a href="https://www.roboticsbook.org/S71_drone_state.html">机器人课程书：三维运动</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0008-lesson.html">08 · 卡尔曼滤波：把运动预测和测量合起来</a></span><span>下一课<br><a href="0010-lesson.html">10 · 相机：三维点为什么变成二维像素</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
+<details><summary>选读一手资料</summary><p><a href="https://www.roboticsbook.org/S44_logistics_perception.html">机器人课程书：Localization</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0008-lesson.html">08 · 变化率、导数与雅可比：改一点会怎样</a></span><span>下一课<br><a href="0010-lesson.html">10 · 最小二乘①：把“哪个位置最好”写成一个分数</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

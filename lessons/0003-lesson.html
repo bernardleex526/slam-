@@ -1,23 +1,47 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>坐标和向量：数字必须带上参考系 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
-<body data-lesson="0003"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">A · 找回基础 / LESSON 03</div><h1>坐标和向量：数字必须带上参考系</h1><p>解释一个二维向量，并判断两个数能否直接相加。</p><p class="subtle">先修：<a href="0001-lesson.html">01 · 先认识问题：机器人到底不知道什么</a>；<a href="0002-lesson.html">02 · 读懂一段程序，而不是只会启动它</a></p></header>
-<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
-<h2>从实际问题走到公式</h2><p>在地板上选一点作为原点，再规定右方为 x 正方向、上方为 y 正方向。点 (3,2) 表示从原点向右 3 米、向上 2 米。这里“上”是纸面方向，三维机器人里的高度要另外定义。</p>
-<p><b>向量</b>可以表示位移：从 (1,1) 走到 (4,3)，位移是 (4−1,3−1)=(3,2)。位置坐标依赖原点，位移的方向和大小不依赖原点平移；它们都可以用两个数表示，但不能因此混为一谈。</p>
-<div class="formula">a+b=(aₓ+bₓ,aᵧ+bᵧ)；‖a‖=√(aₓ²+aᵧ²)</div>
-<p><code>aₓ</code> 指 a 在 x 方向的分量；竖线 <code>‖a‖</code> 表示长度；<code>√</code> 表示找一个非负数，其平方等于里面的数。向量 (3,4) 长度是 5，因为 3²+4²=25，而 5²=25。这是直角三角形的勾股关系。</p>
-<p>你朝北时，“向前 1 米”对应地图的北方；朝东时，同一句话对应东方。机器人坐标中的 (1,0) 不能与地图坐标中的 (1,0) 不加说明地相加。每个空间变量都应注明：哪个坐标系、什么单位、哪个时刻。</p>
-<p><b>点积</b> a·b=aₓbₓ+aᵧbᵧ。如果 b 长度为 1，点积是 a 在 b 方向的带符号投影长度；若 b 不是单位向量，还要除以 ‖b‖ 才得到投影长度。例如 (3,4)·(1,0)=3，说明向右部分是 3。它将在计算“离墙多远”时出现。</p>
-<h2>把公式落实到每行代码</h2><pre><code>import math
-start = (1.0, 1.0)
-end = (4.0, 5.0)
-dx = end[0] - start[0]
-dy = end[1] - start[1]
-distance = math.sqrt(dx**2 + dy**2)
-print(dx, dy, distance)</code></pre><p>(1.0,1.0) 是包含两个数的元组；[0] 取第一个数，[1] 取第二个数，Python 从 0 编号。import math 引入数学函数；sqrt 求平方根。输出 3.0 4.0 5.0，单位都是米。</p>
-<h2>先独立作答，再打开提示</h2><p>位移 a=(−3,4)，长度是多少？在向右的单位方向 (1,0) 上投影是多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
-<details><summary>提示：只给下一步</summary><p>负数平方为正，但点积保留方向符号。</p></details><details><summary>核对解答与常见错因</summary><p>长度 5 米，投影 −3 米。长度没有负号，投影的负号表示向左。</p><p>若还无法解释，回到先修：<a href="0001-lesson.html">01 · 先认识问题：机器人到底不知道什么</a>；<a href="0002-lesson.html">02 · 读懂一段程序，而不是只会启动它</a>。闭上答案，换一组数字重算。</p></details>
-<div class="numeric panel"><label for="q-3">向量(−3,4)的长度是多少？</label><input id="q-3" type="number" step="any" inputmode="decimal"><button type="button" data-check="5" data-explain="平方相加再开方；负数平方为正。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>(3,4)·(2,0)=6，能说向右走了 6 米吗？不能；第二个向量长度为 2，投影长度为 6/2=3 米。</p></details>
-<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Python①：变量、数字和第一次运行 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0003"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">A · 找回基础（数学与编程） / LESSON 03</div><h1>Python①：变量、数字和第一次运行</h1><p>能自己新建一个 .py 文件并运行，读懂赋值、数字类型和最常见的三种报错。</p><p class="subtle">先修：<a href="0002-lesson.html">02 · 先认识问题：机器人到底不知道什么</a></p><p class="subtle">预计用时：2 次 × 30 分钟。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（3 个）：终端 terminal、变量 variable / 赋值、类型 type。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>变量像贴了标签的储物盒：<code>wall_m = 10.0</code> 就是把 10.0 放进写着“wall_m”的盒子。之后写 wall_m，程序就去盒子里取值。重新赋值，就是把盒子里的东西换掉。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>一步步讲清楚</h2><p>上一课用 10−3=7 算出了位置。这一课只做一件事：让电脑替你算这一步，并且你能看懂每一行。</p>
+<h3>第一步：确认 Python 能用</h3>
+<p>打开<b>终端</b>（Windows 叫“终端”或 PowerShell，Ubuntu 按 Ctrl+Alt+T）。输入 <code>py --version</code>（Windows）或 <code>python3 --version</code>（Linux/macOS）。看到 <code>Python 3.x.x</code> 就可以继续；提示找不到命令，就到 Python 官网安装，安装时勾选“Add Python to PATH”，然后<b>重新打开终端</b>。</p>
+<h3>第二步：新建并运行文件</h3>
+<p>用任意编辑器（推荐 VS Code）新建 <code>step1.py</code>，粘贴下方代码并保存。在<b>文件所在文件夹</b>打开终端，运行 <code>py step1.py</code>。如果提示找不到文件，是终端所在目录不对，用 <code>cd 文件夹路径</code> 进去即可，不需要重装任何东西。</p>
+<h3>第三步：读懂这几种写法</h3>
+<p><code>=</code> 是<b>赋值</b>：先算右边，再把结果放进左边的名字里。它不是数学里的“相等”；判断相等用 <code>==</code>。变量名里写上单位（<code>_m</code> 表示米）是工程好习惯，能少犯一半单位错误。</p>
+<p>数字有两种：<code>int</code> 整数（如 7），<code>float</code> 小数（如 7.0）。文字叫 <code>str</code>，用引号包住：<code>"3"</code> 是文字“3”，不是数字 3。传感器文件里读出来的往往是文字，要先用 <code>float("3")</code> 转成数字。</p>
+<p>运算符：<code>+ - * /</code> 是加减乘除；<code>//</code> 是整除（只留整数部分）；<code>**</code> 是乘方，<code>3**2</code> 是 9。注意 <code>^</code> 在 Python 里<b>不是</b>乘方。</p>
+<h3>第四步：看懂报错</h3>
+<p>报错不可怕，它在告诉你哪一行出了什么事。<b>先读最后一行</b>，冒号前是错误类型，冒号后是原因；再往上找 <code>line 数字</code>，回到那一行。</p>
+<div class="table-wrap"><table><tr><th>最后一行写着</th><th>意思</th><th>先查什么</th></tr>
+<tr><td><code>NameError: name 'wal' is not defined</code></td><td>用了一个从没赋值过的名字</td><td>拼写，或者赋值写在了使用之后</td></tr>
+<tr><td><code>TypeError: can only concatenate str (not "int") to str</code></td><td>文字和数字直接相加</td><td>用 float() 或 int() 转换</td></tr>
+<tr><td><code>SyntaxError: invalid syntax</code></td><td>写法不合规则</td><td>括号、引号是否成对，是否用了中文标点</td></tr></table></div>
+<p>中文标点是新手最常见的 SyntaxError 来源：<code>print（x）</code> 用了中文括号，Python 认不出来。</p>
+<h2>把公式落实到每行代码</h2><p class="subtle">Python：可直接运行。先写下预测，再运行核对。</p><pre><code>wall_m = 10.0        # 墙的位置，单位米
+measured_m = 3.0     # 测距读数，单位米
+position_m = wall_m - measured_m
+print(&quot;位置（米）:&quot;, position_m)
+print(type(position_m))
+text = &quot;3&quot;
+print(float(text) + 1)</code></pre><p>第 1–2 行把两个已知数放进变量；第 3 行先算右边 10.0−3.0，再把 7.0 存进 position_m；第 4 行显示 <code>位置（米）: 7.0</code>；第 5 行显示 <code>&lt;class 'float'&gt;</code>，说明它是小数；第 7 行把文字 "3" 转成 3.0 再加 1，显示 4.0。<b>追踪表</b>是读程序最好用的工具：每执行一行，就在纸上更新一次每个变量当前的值。</p>
+<h2>先独立作答，再打开提示</h2><p>运行前先写出预测：<code>a = 7</code>、<code>b = 2</code>，然后 <code>print(a / b, a // b, a ** b)</code> 会显示什么？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>/ 是普通除法，// 只保留整数部分，** 是乘方。</p></details><details><summary>核对解答与常见错因</summary><p>显示 <code>3.5 3 49</code>。如果把 a ** b 写成 14，是把乘方当成了乘法；如果把 a // b 写成 3.5，是没有区分两种除法。</p><p>若还无法解释，回到先修：<a href="0002-lesson.html">02 · 先认识问题：机器人到底不知道什么</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-3">position = 6.0，执行 position = position + 1.5 后，position 是多少？</label><input id="q-3" type="number" step="any" inputmode="decimal"><button type="button" data-check="7.5" data-explain="先算右边 6.0+1.5，再放回 position。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p><code>print("3" + 4)</code> 会报什么错？怎样改？会报 TypeError，因为文字和数字不能直接相加。改成 <code>print(float("3") + 4)</code> 得到 7.0；改成 <code>print("3" + str(4))</code> 则得到文字 "34"。两种都“不报错”，但含义完全不同，所以要先想清楚你要的是数字还是文字。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《Python①：变量、数字和第一次运行》。本课目标：能自己新建一个 .py 文件并运行，读懂赋值、数字类型和最常见的三种报错。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 换个数出题：先预测再运行</summary><pre><code>下面是课里的代码。请出 2 道“改一个数字，先预测输出”的练习，只给题目不给答案。等我写出预测，再告诉我怎样自己运行来核对。
+
+wall_m = 10.0        # 墙的位置，单位米
+measured_m = 3.0     # 测距读数，单位米
+position_m = wall_m - measured_m
+print(&quot;位置（米）:&quot;, position_m)
+print(type(position_m))
+text = &quot;3&quot;
+print(float(text) + 1)</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：运行前先写出预测：a = 7、b = 2，然后 print(a / b, a // b, a ** b) 会显示什么？
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《Python①：变量、数字和第一次运行》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>⑤ 本课专用</summary><pre><code>我刚学 Python 变量和类型。请给我 5 行很短的代码，其中藏 1 个错误（NameError、TypeError 或 SyntaxError 之一）。先不要告诉我错在哪，等我说出错误类型和行号后再核对。</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>= 是“算右边再存进左边”；数字和文字是不同类型；报错先读最后一行，再回到它给的行号。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
 <label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
 <div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
-<details><summary>选读一手资料</summary><p><a href="https://www.roboticsbook.org/S12_reasoning.html">机器人推理：状态、观测与行动</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0002-lesson.html">02 · 读懂一段程序，而不是只会启动它</a></span><span>下一课<br><a href="0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
+<details><summary>选读一手资料</summary><p><a href="https://docs.python.org/3/tutorial/introduction.html">Python 官方：数字与程序基础</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0002-lesson.html">02 · 先认识问题：机器人到底不知道什么</a></span><span>下一课<br><a href="0004-lesson.html">04 · Python②：列表和循环：一次处理很多测量</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

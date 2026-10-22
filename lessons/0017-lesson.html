@@ -1,23 +1,36 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>读 FAST-LIO2：沿一帧数据走完整个系统 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
-<body data-lesson="0017"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">D · 进入工程 / LESSON 17</div><h1>读 FAST-LIO2：沿一帧数据走完整个系统</h1><p>能说清每个模块的输入、输出和失败征兆，再回读原周教材。</p><p class="subtle">先修：<a href="0008-lesson.html">08 · 卡尔曼滤波：把运动预测和测量合起来</a>；<a href="0011-lesson.html">11 · IMU：从角速度、加速度到运动预测</a>；<a href="0012-lesson.html">12 · 点云配准：先找对应，再修正位姿</a>；<a href="0016-lesson.html">16 · ROS 与 TF：数据流必须有时间和坐标</a></p></header>
-<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
-<h2>从实际问题走到公式</h2><p>FAST-LIO2 属于激光惯性里程计：把激光点云和 IMU 结合，连续估计运动并维护地图。上游介绍直接扫描到地图匹配和增量地图结构。不要因为它有地图就默认包含全局回环优化；系统扩展需要单独核对。</p>
-<p>先画六个框：①接收并同步点云与 IMU；②初始化重力、偏置等状态；③按 IMU 传播状态并为点云去畸变；④将点放入地图坐标，搜索附近地图点建立平面约束；⑤利用点到面残差做迭代状态更新；⑥更新地图并发布位姿。每个框都能回到前面的具体课程。</p>
-<p>第 ④ 步中的邻域搜索并不求位姿，它只是找候选几何；第 ⑤ 步才利用误差修正状态。第 ⑥ 步若把错误位姿下的点写入地图，下次配准又可能被坏地图误导。因此要区分“本帧测量错误”和“历史地图已受污染”。</p>
-<p>读源码时先记录上游 commit，再搜索同步、IMU 处理、残差构造、状态更新、地图插入和发布的函数。不要依赖教程给出的永久行号。对每个函数填四格：输入值及单位、坐标及时间、修改的状态、返回或发布的结果。</p>
-<p>例：看到 nᵀ(Rp+t−q)，先找到 p 属于哪个坐标系，t 是否还包含雷达到 IMU 的外参，n 是否归一化。只把它翻译成“计算残差”仍不够；代入第 12 课墙面例子，检查符号和尺度。</p>
-<p>本课源码阅读练习不要求马上上硬件。选一份固定公开录包，先按该提交的 README 在隔离环境复现，再保存参数、日志和数据标识。移植到 ROS 2、换雷达驱动和改时间字段都是工程改动，要各自验证，不能在同一次实验中混做并声称定位了原因。</p>
-<h2>把公式落实到每行代码</h2><pre><code># 这是项目无关的伪代码，说明数据顺序，不可直接运行
-batch = synchronize(lidar_buffer, imu_buffer)
-predicted_state, scan = propagate_and_deskew(batch)
-constraints = match_to_map(scan, predicted_state, map)
-updated_state = iterated_update(predicted_state, constraints)
-insert_valid_points(map, scan, updated_state)
-publish(updated_state)</code></pre><p>六行依次对应六类职责。synchronize 解决时间配对；propagate 预测；deskew 对齐点的采集时刻；match 建立对应；update 估计；insert 维护地图。实际实现可组合函数，必须按选定版本核对。</p>
-<h2>先独立作答，再打开提示</h2><p>减小地图体素（空间分桶）的边长，定位一定更准吗？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
-<details><summary>提示：只给下一步</summary><p>同时考虑点数、几何信息、噪声和运行时间。</p></details><details><summary>核对解答与常见错因</summary><p>不一定；点会更多、计算更重，噪声和重复信息也可能增加。应固定数据，比较精度、失败率和耗时，而不是只看地图更密。</p><p>若还无法解释，回到先修：<a href="0008-lesson.html">08 · 卡尔曼滤波：把运动预测和测量合起来</a>；<a href="0011-lesson.html">11 · IMU：从角速度、加速度到运动预测</a>；<a href="0012-lesson.html">12 · 点云配准：先找对应，再修正位姿</a>；<a href="0016-lesson.html">16 · ROS 与 TF：数据流必须有时间和坐标</a>。闭上答案，换一组数字重算。</p></details>
-<div class="numeric panel"><label for="q-17">边长为1的体素均分到边长0.5，三维有多少子体素？</label><input id="q-17" type="number" step="any" inputmode="decimal"><button type="button" data-check="8" data-explain="每轴2份，2×2×2；点数未必也恰好增加8倍。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>为一帧写数据合同：点单位米、点内时间单位按驱动确认、IMU 秒制采样时刻、变换方向、输出坐标系。任何一项未知都先追到数据生产者，不猜。</p></details>
-<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>点云配准：先找对应，再修正位姿 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0017"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">C · 组成 SLAM / LESSON 17</div><h1>点云配准：先找对应，再修正位姿</h1><p>手算一次点云平移配准，识别错误对应和几何退化。</p><p class="subtle">先修：<a href="0011-lesson.html">11 · 最小二乘②：不能一步算出时，怎样一步步逼近</a>；<a href="0014-lesson.html">14 · 位姿与变换链：先看清是“谁到谁”</a>；<a href="0016-lesson.html">16 · IMU：从角速度、加速度到运动预测</a></p><p class="subtle">预计用时：2–3 次 × 40 分钟。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（6 个）：点云 point cloud、配准 registration / ICP、法向量 normal、退化 degeneracy / 可观性 observability、秩 rank、SVD 奇异值分解。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>把两张有重叠部分的透明描图纸叠在一起，来回挪动，直到墙角和柱子都对齐。ICP 就是让电脑自动做这件事：先猜哪些点对应，再挪一挪，反复几轮。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p><b>点云</b>是大量三维采样点的集合。配准要找一个旋转和平移，让当前扫描与已有地图对齐。先做一维特例：当前点 [0,1,2]，地图对应点 [2,3,4]，显然向右平移 2 就对齐。</p>
+<div class="formula">rᵢ=Rpᵢ+t−qᵢ；E=Σ‖rᵢ‖²</div>
+<p>pᵢ 是扫描点，qᵢ 是与它对应的地图点，R、t 是待求变换。每个三维残差有 3 个数。已知 R=I 的一维情况，把 qᵢ−pᵢ 求平均就得到最优平移。本例差值全是 2。</p>
+<p>真实数据往往不知道谁对应谁。<b>ICP</b>（迭代最近点）交替做两件事：根据当前位姿找最近对应点，再固定对应关系求更好的变换，反复直到变化够小或达到次数限制。初值差可能找错对应，进入错误的局部解。低残差也可能来自匹配到了错误但相似的墙。</p>
+<p>点到面残差写成 rᵢ=nᵢᵀ(Rpᵢ+t−qᵢ)。n 是长度为 1 的平面法向量，即垂直平面的方向；点积留下垂直墙面的那一部分。若墙为 x=2，n=(1,0,0)，点 (3,4,0) 到墙的带符号距离就是 1 米，沿 y 改多少都不会改变它。</p>
+<p>这说明为什么长走廊会难：某些移动几乎不改变观测，叫<b>不可观或弱可观方向</b>。线性代数中的<b>秩</b>数出独立约束有多少；重复同一约束不增加秩。<b>特征值</b>很小可以提示某个方向约束弱，但阈值依赖缩放、单位和模型，不能跨系统照抄。</p>
+<p><b>SVD</b>把矩阵拆成两个正交变换与中间的非负缩放，常用于求刚体配准。允许包含反射的正交矩阵并不都是旋转，求解时还要保证 det(R)=+1。先掌握对应与目标函数，再回到旧第一周的 SVD 推导，避免把分解名字当成理解。</p>
+<h2>把公式落实到每行代码</h2><p class="subtle">Python：可直接运行。先写下预测，再运行核对。</p><pre><code>scan = [0.0, 1.0, 2.0]
+target = [2.0, 3.0, 4.0]
+offsets = [q-p for p, q in zip(scan, target)]
+t = sum(offsets) / len(offsets)
+errors = [p+t-q for p, q in zip(scan, target)]
+print(t, errors)</code></pre><p>zip 按位置取一对 p、q，本代码假设对应已知，尚不是完整 ICP。输出 2.0 和三个 0.0。把 target 最后一点改为 10，会看到错误对应拉偏所有结果。</p>
+<h2>先独立作答，再打开提示</h2><p>target 改成 [2,3,10]，最小二乘平移变成多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>三个偏移变成 2、2、8。</p></details><details><summary>核对解答与常见错因</summary><p>平均为 4，残差为 2、2、−4。一个错误点改变了其他正确点的对齐结果。</p><p>若还无法解释，回到先修：<a href="0011-lesson.html">11 · 最小二乘②：不能一步算出时，怎样一步步逼近</a>；<a href="0014-lesson.html">14 · 位姿与变换链：先看清是“谁到谁”</a>；<a href="0016-lesson.html">16 · IMU：从角速度、加速度到运动预测</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-17">对应点偏移2、2、8，最小二乘平移多少米？</label><input id="q-17" type="number" step="any" inputmode="decimal"><button type="button" data-check="4" data-explain="等权情况下取偏移均值。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>是否只删掉残差最大的点就总能修好？不能；错初值可能使大量对应都错。要结合距离门限、几何一致性、初值和失败检测验证。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《点云配准：先找对应，再修正位姿》。本课目标：手算一次点云平移配准，识别错误对应和几何退化。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 换个数出题：先预测再运行</summary><pre><code>下面是课里的代码。请出 2 道“改一个数字，先预测输出”的练习，只给题目不给答案。等我写出预测，再告诉我怎样自己运行来核对。
+
+scan = [0.0, 1.0, 2.0]
+target = [2.0, 3.0, 4.0]
+offsets = [q-p for p, q in zip(scan, target)]
+t = sum(offsets) / len(offsets)
+errors = [p+t-q for p, q in zip(scan, target)]
+print(t, errors)</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：target 改成 [2,3,10]，最小二乘平移变成多少？
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《点云配准：先找对应，再修正位姿》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>配准 = 先找对应，再求让对应点距离最小的变换，反复迭代；对应找错或场景缺少几何特征（长走廊）都会让结果出错。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
 <label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
 <div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
-<details><summary>选读一手资料</summary><p><a href="https://github.com/hku-mars/FAST_LIO">HKU-MARS：FAST_LIO 上游仓库</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0016-lesson.html">16 · ROS 与 TF：数据流必须有时间和坐标</a></span><span>下一课<br><a href="0018-lesson.html">18 · 评估与排错：从改参数转向验证原因</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
+<details><summary>选读一手资料</summary><p><a href="https://pointclouds.org/documentation/tutorials/iterative_closest_point.html">PCL 官方：ICP 入门</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0016-lesson.html">16 · IMU：从角速度、加速度到运动预测</a></span><span>下一课<br><a href="0018-lesson.html">18 · 图优化与回环：把多次经历联合起来</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

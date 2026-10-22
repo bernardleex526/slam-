@@ -1,21 +1,34 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>评估与排错：从改参数转向验证原因 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
-<body data-lesson="0018"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">D · 进入工程 / LESSON 18</div><h1>评估与排错：从改参数转向验证原因</h1><p>建立可重复基线，解释轨迹误差、失败率和实验边界。</p><p class="subtle">先修：<a href="0014-lesson.html">14 · 项目一：真正同时估计位置和地标</a>；<a href="0017-lesson.html">17 · 读 FAST-LIO2：沿一帧数据走完整个系统</a></p></header>
-<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
-<h2>从实际问题走到公式</h2><p>地图看起来整齐，只能算观察，不能独立证明定位精度。<b>真值</b>是用于比较的参考轨迹；它本身也有精度限制。比较前先对齐时间戳和坐标系，说明是否允许旋转、平移或尺度对齐。给有米制尺度的系统额外拟合尺度会掩盖尺度错误。</p>
-<div class="formula">位置 RMSE=√[Σ‖p估计−p参考‖²/N]</div>
-<p>N 是配对时刻数。误差 [0,0.2,0.1] 米，平方和 0.05，除以 3 再开方，得到约 0.12910 米。这是本课程简化的位置误差；完整 ATE 通常涉及轨迹对齐与位姿误差定义，报告时说明具体计算方式。RPE 比较两个时刻之间的相对运动误差，用来观察局部漂移。</p>
-<p>同时记录跟踪失败次数、完成率、耗时分布和内存。平均耗时低但偶尔卡顿一秒，仍可能无法控制机器人。没有有效输出的区间不能静默删掉后只报漂亮 RMSE；缺失比例应单独报告。</p>
-<p><b>基线</b>是改动前可重复运行的结果；<b>对照实验</b>只改变要研究的因素；<b>消融</b>禁用某个模块判断它的作用。例如怀疑时间偏差：保留其他参数，在同一录包注入已知偏移，对比残差与轨迹随角速度的变化。再在另一录包检验解释，而不是继续调到它也好看。</p>
-<p>数据分成调试/调参集与最终测试集，不能看过测试结果又反复调参而仍称其独立测试。学习模型还要区分训练集和验证集。按完整场景或轨迹拆分，避免同一路径相邻帧泄漏到两边。</p>
-<p>一份报告至少包括：代码提交、数据来源和标识、环境与硬件、参数、对齐规则、基线、改动、失败案例、结论适用范围。多个随机种子用于随机算法稳定性评估；确定性算法重复相同输入不是增加独立证据。</p>
-<h2>把公式落实到每行代码</h2><pre><code>import math
-errors = [0.0, 0.2, 0.1]
-rmse = math.sqrt(sum(e*e for e in errors)/len(errors))
-print(round(rmse, 5))</code></pre><p>输出 0.1291。先平方再平均再开方；平均绝对误差则是先取绝对值再平均，两者不同，不要混用名字。</p>
-<h2>先独立作答，再打开提示</h2><p>A 系统完成 10/10 段，RMSE 0.15；B 完成 6/10 段，成功段 RMSE 0.08。能宣布 B 更好吗？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
-<details><summary>提示：只给下一步</summary><p>精度条件和失败是否被隐藏？</p></details><details><summary>核对解答与常见错因</summary><p>不能只按成功段误差判断。必须报告完成率，并按实际任务权衡可用性与精度。B 可能只是只留下了简单片段。</p><p>若还无法解释，回到先修：<a href="0014-lesson.html">14 · 项目一：真正同时估计位置和地标</a>；<a href="0017-lesson.html">17 · 读 FAST-LIO2：沿一帧数据走完整个系统</a>。闭上答案，换一组数字重算。</p></details>
-<div class="numeric panel"><label for="q-18">误差0、0.2、0.1，RMSE约多少米？</label><input id="q-18" type="number" step="any" inputmode="decimal"><button type="button" data-check="0.1291" data-explain="先平方平均再开方，容差0.001。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>写一个可证伪假设：“若原因是时间偏差，转速加大时误差应更显著；纠正时间后该趋势应减弱”。如果无此趋势，应重新考虑外参、运动模型和对应错误。</p></details>
-<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>图优化与回环：把多次经历联合起来 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0018"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">C · 组成 SLAM / LESSON 18</div><h1>图优化与回环：把多次经历联合起来</h1><p>把运动和观测写成残差，解释为何必须固定参考系。</p><p class="subtle">先修：<a href="0011-lesson.html">11 · 最小二乘②：不能一步算出时，怎样一步步逼近</a>；<a href="0017-lesson.html">17 · 点云配准：先找对应，再修正位姿</a></p><p class="subtle">预计用时：2–3 次 × 40 分钟。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（3 个）：因子 factor、回环 loop closure、规范自由度 gauge。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>把每个时刻的位置想成钉在板上的图钉，相邻两次运动的测量像橡皮筋把图钉连起来。回到起点时发现对不上，就再加一根“首尾应该重合”的橡皮筋，所有图钉一起被拉到最协调的位置。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>机器人走了一圈回到起点，累积里程计却说它在前方 0.3 米。可以把每次位置看作变量，把相邻运动看作约束，再加入“最后位置应接近起点”的证据，联合调整全部位置。</p>
+<div class="formula">r运动=(xⱼ−xᵢ)−uᵢⱼ；r观测=(mₖ−xᵢ)−zᵢₖ</div>
+<p>xᵢ 是第 i 时刻位置，mₖ 是第 k 个地标位置，uᵢⱼ 是从 i 到 j 的测得位移，zᵢₖ 是当时测到地标的相对位置。二维/三维会用位姿运算代替普通相减；我们先让每一项都是一维米数。</p>
+<p><b>因子图</b>把未知变量与约束分开画。变量节点存“要求什么”，因子节点表达“一条证据怎样限制这些变量”。例如 x₀—运动因子—x₁，x₁—观测因子—m₀。优化目标是加权残差平方和，概率模型解释权重从哪里来。</p>
+<p>若同时把所有 x 和 m 加上 100，各个差仍不变，总误差也不变。没有参考系，解不唯一。将 x₀ 固定为 0 叫固定规范自由度，也可以加入先验约束。这个“固定”是选择坐标，不是声称真实地球坐标为零。</p>
+<p><b>回环检测</b>先判断“可能来过这里”，再用几何验证确认对应关系，最后才把约束交给优化器。相似走廊可能造成错误回环，强行加入会把正确地图拉坏。图优化不会自己知道某条输入约束是假的。</p>
+<p>只有相邻运动约束的轨迹估计不等于完整的未知地标 SLAM。下一课会同时估计位置和地标，明确哪些量已知、哪些未知；回环工程仍需要另做数据关联和几何验证。</p>
+<h2>把公式落实到每行代码</h2><p class="subtle">Python：可直接运行。先写下预测，再运行核对。</p><pre><code>x0, x1, landmark = 0.0, 1.1, 4.0
+odometry, measured_range = 1.0, 3.0
+motion_residual = (x1-x0) - odometry
+observation_residual = (landmark-x1) - measured_range
+print(round(motion_residual, 2), round(observation_residual, 2))</code></pre><p>输出 0.1 −0.1：运动希望 x1 小一点，地标观测希望 x1=1。每条因子都是明确的测量关系，而不是图上的装饰连线。</p>
+<h2>先独立作答，再打开提示</h2><p>将 x0、x1、landmark 都加 5，两个残差各变多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>展开每个括号，看加上的常数是否相消。</p></details><details><summary>核对解答与常见错因</summary><p>都不变。若优化器报告奇异矩阵，除了程序错误，也可能是没有固定参考系或约束不足。</p><p>若还无法解释，回到先修：<a href="0011-lesson.html">11 · 最小二乘②：不能一步算出时，怎样一步步逼近</a>；<a href="0017-lesson.html">17 · 点云配准：先找对应，再修正位姿</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-18">所有位置与地标都加5，运动残差改变量多少？</label><input id="q-18" type="number" step="any" inputmode="decimal"><button type="button" data-check="0" data-explain="相对差中的常数相消。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>回环残差很大，要直接提高其权重吗？不要；先验证它是否真是同一地点。高权重表示更相信这条证据，不表示自动修正错误证据。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《图优化与回环：把多次经历联合起来》。本课目标：把运动和观测写成残差，解释为何必须固定参考系。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 换个数出题：先预测再运行</summary><pre><code>下面是课里的代码。请出 2 道“改一个数字，先预测输出”的练习，只给题目不给答案。等我写出预测，再告诉我怎样自己运行来核对。
+
+x0, x1, landmark = 0.0, 1.1, 4.0
+odometry, measured_range = 1.0, 3.0
+motion_residual = (x1-x0) - odometry
+observation_residual = (landmark-x1) - measured_range
+print(round(motion_residual, 2), round(observation_residual, 2))</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：将 x0、x1、landmark 都加 5，两个残差各变多少？
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《图优化与回环：把多次经历联合起来》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>把位置当变量、把测量当约束（因子），联合做最小二乘；必须固定一个参考点；错误的回环约束会把整张图拉坏。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
 <label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
 <div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
-<details><summary>选读一手资料</summary><p><a href="https://cvg.cit.tum.de/data/datasets/rgbd-dataset">TUM RGB-D 数据集与基准</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0017-lesson.html">17 · 读 FAST-LIO2：沿一帧数据走完整个系统</a></span><span>下一课<br><a href="0019-lesson.html">19 · 导航：地图、路径和控制不是同一个问题</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
+<details><summary>选读一手资料</summary><p><a href="https://gtsam.org/tutorials/intro.html">GTSAM：Factor Graphs and GTSAM</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0017-lesson.html">17 · 点云配准：先找对应，再修正位姿</a></span><span>下一课<br><a href="0019-lesson.html">19 · 项目一：真正同时估计位置和地标</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

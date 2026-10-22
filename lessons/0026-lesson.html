@@ -1,0 +1,75 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>部署③：跑不通时怎么查：话题、频率、TF、日志与 AI 求助 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0026"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">D · 部署、系统与评估 / LESSON 26</div><h1>部署③：跑不通时怎么查：话题、频率、TF、日志与 AI 求助</h1><p>能按“从环境到数据再到算法”的顺序排查部署问题，用命令收集证据，写出一份 AI 和同事都能看懂的求助，并建立自己的 Bug 案例库。</p><p class="subtle">先修：<a href="0025-lesson.html">25 · 部署②：编译 FAST-LIO2 并回放公开录包</a></p><p class="subtle">预计用时：2 次 × 40 分钟，之后每遇到问题回来查。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（2 个）：重映射 remap、Bug 案例库。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>排查像医生看病：先量体温、血压（环境、话题、频率），再拍片子（TF、时间戳），最后才考虑动手术（改算法参数）。一上来就改参数，像没做检查就开刀。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>一步步讲清楚</h2><p>部署失败时，最常见的错误做法是“看到报错就搜，搜到一条命令就跑”。这一课给你一个固定顺序，按顺序排查，大部分问题能在前三层解决。</p>
+<h3>分层排查顺序（越靠前越常见）</h3>
+<ol><li><b>环境层</b>：当前终端是否 source 了正确的工作空间？<code>rosversion -d</code>、<code>rospack find fast_lio</code>。</li>
+<li><b>数据层</b>：数据有没有来、名字对不对、频率是否正常？<code>rostopic list</code>、<code>rostopic hz /livox/imu</code>、<code>rosbag info</code>、体检脚本。</li>
+<li><b>接口层</b>：类型、字段、单位、坐标系是否和配置一致？<code>rostopic info</code>、<code>rostopic echo -n 1 话题 --noarr</code>。</li>
+<li><b>时间与坐标层</b>：时间戳是否单调、IMU 与雷达是否同步、TF 是否存在？<code>rosrun tf tf_echo camera_init body</code>、<code>rqt_graph</code>。</li>
+<li><b>算法层</b>：前四层都正常，才看参数和算法本身（<a href="0028-lesson.html">第 28 课</a>）。</li></ol>
+<h3>常见故障对照表</h3>
+<div class="table-wrap"><table><tr><th>#</th><th>现象（原文关键词）</th><th>最可能原因</th><th>验证与处理</th></tr>
+<tr><td>1</td><td>catkin_make：<code>Could not find a package configuration file provided by "livox_ros_driver"</code></td><td>编译 FAST_LIO 前没有 source ws_livox</td><td><code>source /root/slam_ws/ws_livox/devel/setup.bash</code> 后重新 catkin_make</td></tr>
+<tr><td>2</td><td><code>fatal error: ikd-Tree/ikd_Tree.h: No such file or directory</code> 一类找不到头文件</td><td>没有下载子模块</td><td>在 FAST_LIO 目录执行 <code>git submodule update --init</code></td></tr>
+<tr><td>3</td><td><code>[rospack] Error: package 'fast_lio' not found</code></td><td>当前终端没有 source 工作空间</td><td><code>source /root/slam_ws/catkin_ws/devel/setup.bash</code></td></tr>
+<tr><td>4</td><td>录包在放，rviz 一片空白，终端没有报错</td><td>话题名不一致，FAST_LIO 没收到数据</td><td><code>rostopic hz /livox/lidar</code>；用体检脚本对照 yaml；用重映射或改 yaml</td></tr>
+<tr><td>5</td><td><code>Failed to find match for field 'time'</code></td><td>点云缺少逐点时间</td><td>检查录包来源和驱动；Livox 用 CustomMsg</td></tr>
+<tr><td>6</td><td>rviz：<code>could not connect to display</code></td><td>容器拿不到宿主机图形界面</td><td>宿主机执行 <code>xhost +local:docker</code>，确认容器里 <code>echo $DISPLAY</code> 有值；WSL2 需要 WSLg</td></tr>
+<tr><td>7</td><td>一开始就飘走或地图炸开</td><td>IMU 初始化期间在剧烈运动、IMU 与雷达不同步、外参错误</td><td>先换一个官方录包对比；确认 time_sync 设置；不要同时改多个参数</td></tr>
+<tr><td>8</td><td>别人给的 <code>ros2 ...</code> 或 <code>colcon build</code> 命令报 command not found</td><td>那是 ROS 2 的命令</td><td>换成 ROS 1 对应命令（<a href="0023-lesson.html">第 23 课</a>的对照表）</td></tr></table></div>
+<h3>日志在哪里</h3>
+<p>roslaunch 加了 <code>output="screen"</code> 的节点会直接打印到终端；完整日志在 <code>~/.ros/log/latest/</code>。求助时把<b>从命令开始到报错结束</b>的输出全部贴出来，只贴最后一行，别人（包括 AI）只能猜。</p>
+<h3>和 AI 一起排错的规则</h3>
+<p>①先说明环境：ROS 1 Noetic、Docker、提交号，否则 AI 很可能给出 ROS 2 命令。②一次只验证一个假设，把结果告诉 AI 再继续。③AI 让你 <code>sudo</code>、删文件、改系统配置时，先问清楚影响范围。④解决后写进 Bug 案例库：现象、原因、验证方法、修复、以后怎么预防。攒到 10 条，你就有了自己的排错手册。</p>
+<h2>把排查变成代码：自动对照录包和配置</h2><p class="subtle">Python：可直接运行。先写下预测，再运行核对。</p><pre><code># 体检脚本的核心逻辑（完整版见 labs/deploy/check_bag.py）
+bag_info = &quot;&quot;&quot;topics:  /livox/imu     24000 msgs    : sensor_msgs/Imu
+         /livox/lidar    1200 msgs    : livox_ros_driver/CustomMsg&quot;&quot;&quot;
+duration_s = 120.0
+config = {&quot;lid_topic&quot;: &quot;/livox/lidar&quot;, &quot;imu_topic&quot;: &quot;/imu/data&quot;}
+
+topics = {}
+for line in bag_info.splitlines():
+    parts = line.replace(&quot;topics:&quot;, &quot;&quot;).split()
+    name, count, kind = parts[0], int(parts[1]), parts[-1]
+    topics[name] = (count / duration_s, kind)
+
+for key, name in config.items():
+    if name in topics:
+        hz, kind = topics[name]
+        print(key, name, &quot;约&quot;, round(hz), &quot;Hz&quot;, kind)
+    else:
+        print(key, name, &quot;不在录包里 → 改配置，或回放时重映射&quot;)</code></pre><p>输出两行：<code>lid_topic /livox/lidar 约 10 Hz livox_ros_driver/CustomMsg</code> 和 <code>imu_topic /imu/data 不在录包里 → 改配置，或回放时重映射</code>。这里故意把 imu_topic 写错，模拟“rviz 空白但不报错”（故障 4）。频率 = 消息数 ÷ 时长：1200 帧 ÷ 120 秒 = 10 Hz。代码里用到的全是<a href="0004-lesson.html">第 04 课</a>和<a href="0005-lesson.html">第 05 课</a>学过的写法：split 切分、字典、for、if。在仓库目录运行 <code>py labs/deploy/check_bag.py</code> 可以看到完整版的输出。</p>
+<h2>先独立作答，再打开提示</h2><p>FAST_LIO 启动正常，录包也在放，但 rviz 里什么都没有，终端也没有报错。按分层顺序写出你会依次运行的三条命令，以及每条命令想确认什么。</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>没有报错往往说明程序在等数据。</p></details><details><summary>核对解答与常见错因</summary><p>①<code>rostopic list</code>：确认录包话题确实发布出来了，名字是什么；②<code>rostopic hz /livox/lidar</code>（以及 imu）：确认有数据在流动、频率正常；③对照 <code>avia.yaml</code> 的 lid_topic 和 imu_topic（或运行体检脚本）：确认名字一致。三步通常就能发现是话题名不匹配。还可以用 <code>rostopic info /livox/lidar</code> 看订阅者里有没有 laserMapping。</p><p>若还无法解释，回到先修：<a href="0025-lesson.html">25 · 部署②：编译 FAST-LIO2 并回放公开录包</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-26">录包时长 120 秒，IMU 话题有 24000 条消息，IMU 频率约多少 Hz？</label><input id="q-26" type="number" step="any" inputmode="decimal"><button type="button" data-check="200" data-explain="频率=消息数÷时长。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>rosbag info 显示时长 120 秒，<code>/livox/imu</code> 有 24000 条消息。IMU 频率约多少？200 Hz。如果另一个录包只有约 10 Hz 的 IMU，FAST_LIO 能正常工作吗？很难：两帧雷达之间几乎没有 IMU 数据可用于传播和去畸变。这时问题在数据，不在参数。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《部署③：跑不通时怎么查：话题、频率、TF、日志与 AI 求助》。本课目标：能按“从环境到数据再到算法”的顺序排查部署问题，用命令收集证据，写出一份 AI 和同事都能看懂的求助，并建立自己的 Bug 案例库。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 换个数出题：先预测再运行</summary><pre><code>下面是课里的代码。请出 2 道“改一个数字，先预测输出”的练习，只给题目不给答案。等我写出预测，再告诉我怎样自己运行来核对。
+
+# 体检脚本的核心逻辑（完整版见 labs/deploy/check_bag.py）
+bag_info = &quot;&quot;&quot;topics:  /livox/imu     24000 msgs    : sensor_msgs/Imu
+         /livox/lidar    1200 msgs    : livox_ros_driver/CustomMsg&quot;&quot;&quot;
+duration_s = 120.0
+config = {&quot;lid_topic&quot;: &quot;/livox/lidar&quot;, &quot;imu_topic&quot;: &quot;/imu/data&quot;}
+
+topics = {}
+for line in bag_info.splitlines():
+    parts = line.replace(&quot;topics:&quot;, &quot;&quot;).split()
+    name, count, kind = parts[0], int(parts[1]), parts[-1]
+    topics[name] = (count / duration_s, kind)
+
+for key, name in config.items():
+    if name in topics:
+        hz, kind = topics[name]
+        print(key, name, &quot;约&quot;, round(hz), &quot;Hz&quot;, kind)
+    else:
+        print(key, name, &quot;不在录包里 → 改配置，或回放时重映射&quot;)</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：FAST_LIO 启动正常，录包也在放，但 rviz 里什么都没有，终端也没有报错。按分层顺序写出你会依次运行的三条命令，以及每条命令想确认什么。
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《部署③：跑不通时怎么查：话题、频率、TF、日志与 AI 求助》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>⑤ 本课专用</summary><pre><code>【Bug 复盘】下面是我刚解决的一个部署问题。请帮我整理成 Bug 案例库的一条记录，字段为：现象（原文报错）、根因、我是怎么验证的、修复步骤、以后怎么预防。只整理我提供的信息，不要补充你猜测的内容，缺的字段标“待补充”。
+（粘贴你的排查过程）</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>按“环境→数据→接口→时间与坐标→算法”的顺序查；求助时给出环境、命令和完整日志；每解决一个问题就记进 Bug 案例库。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://github.com/hku-mars/FAST_LIO">HKU-MARS：FAST_LIO 上游仓库</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0025-lesson.html">25 · 部署②：编译 FAST-LIO2 并回放公开录包</a></span><span>下一课<br><a href="0027-lesson.html">27 · 读 FAST-LIO2：沿一帧数据走完整个系统</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

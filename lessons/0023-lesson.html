@@ -1,25 +1,46 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>能力验收：用作品判断下一步该学什么 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
-<body data-lesson="0023"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">F · 初级到中级 / LESSON 23</div><h1>能力验收：用作品判断下一步该学什么</h1><p>把学习目标变成可观察证据，知道当前作品能证明什么、不能证明什么。</p><p class="subtle">先修：<a href="0014-lesson.html">14 · 项目一：真正同时估计位置和地标</a>；<a href="0018-lesson.html">18 · 评估与排错：从改参数转向验证原因</a>；<a href="0019-lesson.html">19 · 导航：地图、路径和控制不是同一个问题</a>；<a href="0021-lesson.html">21 · VLN：把一句话落到可到达的地方</a>；<a href="0022-lesson.html">22 · 世界模型：学习行动后会发生什么</a></p></header>
-<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
-<h2>从实际问题走到公式</h2><p>课程完成度和工程能力不是同一个量。这里用三层项目证明能力：先在简单模型里独立解释，再在真实数据里复现与诊断，最后在跨场景实验中设计和验证模块改动。时间由实际困难决定，不承诺第几周获得某个职级。</p>
-<p><b>关卡 A：理解与最小实现。</b>不看答案重新完成坐标变换、数值雅可比、一次滤波更新和一维 SLAM。提交代码，给每个变量写单位、维度、坐标系与时间；改动一个输入前先写预测。四项都能解释且隔天仍能重做，才进入真实系统。</p>
-<p><b>关卡 B：初级 SLAM 工程证据。</b>选择一套公开可重复数据和一个明确提交的上游系统，按匹配的环境复现。保存启动方式、依赖版本、参数、输出、误差与失败片段。完成一次已知时间偏移或外参扰动实验，从日志定位并恢复；让另一人在干净环境按报告复现。能独立完成这些任务比“跑过很多仓库”更有说服力。</p>
-<p><b>关卡 C：向中级发展的证据。</b>选择一个具体问题，例如动态物体导致关联失败。先证明问题在多段数据上存在；提出一个有范围的模块改动；加边界检查和针对性回归测试；固定调参集后在留出的场景评价精度、失败率、耗时和内存。写出收益、代价和仍失败的情况，能够解释为何选此方案而非另一个。职级仍取决于实际工作范围与团队标准。</p>
-<p><b>VLN 延伸项目。</b>先复现人工标签基线，再引入真实图像/深度与语言解析；保持相同场景和任务协议，分开统计识别错、落地错、不可达、控制错和停止错。按场景留出测试，不能把标签基线的成绩当成模型成绩。</p>
-<p><b>世界模型延伸项目。</b>先保留无学习动力学基线，再拟合动作条件模型，分别测试一步、多步、闭环到达与碰撞。加入未见过的摩擦或动作幅度；报告预测误差和任务成功是否一致。只有预测误差降低而任务不改善，也应如实记录。</p>
-<p>每课可安排 30–60 分钟理解与手算，另留练习和隔天复做；复杂项目按多个学习时段拆开。这只是安排单位，不是完成时间保证。若一道题反复卡住，回到它的先修课，而不是继续堆新术语。</p>
-<h2>把公式落实到每行代码</h2><pre><code># 实验记录不是待执行代码
-problem: 转弯时地图重影
-hypothesis: 点云与 IMU 相差固定时间
-baseline: 固定提交 + 参数 + 数据标识
-change: 只校正时间偏差
-measure: 残差、轨迹误差、失败率、耗时
-holdout: 未参与调参的另一段转弯轨迹
-conclusion: 哪些证据支持，哪些仍不能解释</code></pre><p>记录必须填写实际值，不用“效果明显提升”代替指标。无真值时可报告一致性、重复性和任务成功，但不能称为已证明绝对精度。</p>
-<h2>先独立作答，再打开提示</h2><p>你把某参数改后一个录包更好，下一步怎样判断是否值得保留？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
-<details><summary>提示：只给下一步</summary><p>思考控制变量、数据独立性和代价。</p></details><details><summary>核对解答与常见错因</summary><p>复核唯一改动，在调参集验证稳定性，冻结方案后测试留出场景，同时记录失败与资源开销。结果不确定就限定结论，不能只截最好的一帧。</p><p>若还无法解释，回到先修：<a href="0014-lesson.html">14 · 项目一：真正同时估计位置和地标</a>；<a href="0018-lesson.html">18 · 评估与排错：从改参数转向验证原因</a>；<a href="0019-lesson.html">19 · 导航：地图、路径和控制不是同一个问题</a>；<a href="0021-lesson.html">21 · VLN：把一句话落到可到达的地方</a>；<a href="0022-lesson.html">22 · 世界模型：学习行动后会发生什么</a>。闭上答案，换一组数字重算。</p></details>
-<div class="numeric panel"><label for="q-23">调参后仅测试1个场景，能证明适用于所有场景吗？能填1，不能填0。</label><input id="q-23" type="number" step="any" inputmode="decimal"><button type="button" data-check="0" data-explain="结论必须受数据覆盖和实验条件限制。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>为自己的实际工作选一个关卡 B 或 C 项目，写清输入数据、成功条件和失败条件。此题没有统一数字答案；能由别人按同一标准判定才算完整。</p></details>
-<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ROS 与 TF：数据流必须有时间和坐标 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0023"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">D · 部署、系统与评估 / LESSON 23</div><h1>ROS 与 TF：数据流必须有时间和坐标</h1><p>解释节点、话题、消息、TF 和录包，在运行算法前检查接口。</p><p class="subtle">先修：<a href="0014-lesson.html">14 · 位姿与变换链：先看清是“谁到谁”</a>；<a href="0016-lesson.html">16 · IMU：从角速度、加速度到运动预测</a></p><p class="subtle">预计用时：2 次 × 40 分钟。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（4 个）：节点 node / 话题 topic、TF、QoS、ROS 1 / ROS 2。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>ROS 像一栋办公楼里的广播系统：每个程序（节点）在自己的频道（话题）上广播或收听消息。TF 是贴在楼里的一张不断更新的“各部门相对位置图”，而且每张图都标了时间。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>一步步讲清楚</h2><p><b>ROS</b> 提供机器人程序之间的通信与工具。一个执行特定任务的程序组件叫节点；持续发送传感器数据的通道叫话题；通道中每一份结构化数据叫消息。话题名相同并不保证消息类型、时间和坐标定义正确。</p>
+<p>典型数据流：激光驱动发布点云 → 估计器同时读 IMU → 输出位姿 → 建图和导航读取位姿。<b>回调函数</b>在数据到达时被调用，但到达顺序不一定等于采集时间顺序，缓存要按时间组织。<b>QoS</b> 是通信服务约定，例如可靠性和历史保留；不兼容时可能看见话题却收不到数据。</p>
+<p><b>TF</b> 管理不同坐标系随时间变化的变换。常见链是 map→odom→base_link→sensor。map 是全局参考；odom 通常连续但可漂移；base_link 附着机身；sensor 附着传感器。map→odom 可吸收全局校正，控制器因而可以使用连续的局部运动。名称语义应遵循项目约定与 REP-105。</p>
+<p>消息中的 frame_id 声明数据在哪个坐标系，stamp 声明采集时刻。要把 t 时刻点云转换到地图，需要 t 时刻可用的 TF。用“最新变换”替代正确时间，在运动中会把墙抹成双层。每条 TF 的父子关系和发布者也应唯一明确。</p>
+<p><b>录包</b>（rosbag）把话题消息原样存下来，之后可以反复回放，做到“同一份数据、多次实验”。</p>
+<h3>ROS 1 和 ROS 2：两套命令，不能混用</h3>
+<p>ROS 有两代。本课程部署的 FAST-LIO2 官方 main 分支是 <b>ROS 1</b>（Noetic）；旧周教材的 ROS 示例多是 <b>ROS 2</b>（Jazzy）。两者的通信机制、构建工具和命令都不同，在 ROS 1 的终端里输入 ros2 命令只会报 command not found。AI 和网上教程经常把两者混在一起，看到命令先认清是哪一代。</p>
+<div class="table-wrap"><table><tr><th>要做的事</th><th>ROS 1（本课程部署用）</th><th>ROS 2（旧周教材）</th></tr>
+<tr><td>加载环境</td><td><code>source /opt/ros/noetic/setup.bash</code></td><td><code>source /opt/ros/jazzy/setup.bash</code></td></tr>
+<tr><td>编译工作空间</td><td><code>catkin_make</code>，然后 <code>source devel/setup.bash</code></td><td><code>colcon build</code>，然后 <code>source install/setup.bash</code></td></tr>
+<tr><td>总机</td><td><code>roscore</code>（roslaunch 会自动启动）</td><td>没有，节点自动发现</td></tr>
+<tr><td>启动</td><td><code>roslaunch 包 文件.launch</code></td><td><code>ros2 launch 包 文件.launch.py</code></td></tr>
+<tr><td>看话题</td><td><code>rostopic list / info / hz / echo</code></td><td><code>ros2 topic list / info / hz / echo</code></td></tr>
+<tr><td>录包</td><td><code>rosbag record / play / info</code>，文件是 .bag</td><td><code>ros2 bag record / play / info</code>，文件夹格式</td></tr>
+<tr><td>看 TF</td><td><code>rosrun tf tf_echo A B</code></td><td><code>ros2 run tf2_ros tf2_echo A B</code></td></tr></table></div>
+<p>FAST_LIO 上游另有 ROS2 分支，它是另一套工程。把 main 分支的 README 改几个命令，并不能变成 ROS 2 移植。</p>
+<p>依次核对：消息类型 → 单位和坐标 → 时间单调与间隔 → TF 可用时间 → 通信兼容 → 才看算法输出。<b>外参</b>是传感器间刚体关系，时间偏差是另一个量；用错误外参去补偿时间差往往只在某种运动速度下看起来有效。</p>
+<h2>照着做：查看话题与 TF（ROS 1）</h2><p class="subtle">Python：可直接运行。先写下预测，再运行核对。</p><pre><code># ROS 1 终端命令（部署课使用 Noetic）；需先 source 环境，并有节点在运行或录包在回放
+rostopic list
+rostopic info /livox/imu
+rostopic hz /livox/imu
+rosrun tf tf_echo camera_init body
+# ROS 2 对应写法：ros2 topic list / ros2 topic info / ros2 topic hz / ros2 run tf2_ros tf2_echo</code></pre><p>list 列出当前所有话题名；info 显示消息类型、谁在发布、谁在订阅；hz 估计接收频率；tf_echo 打印两个坐标系之间的变换。/livox/imu、camera_init、body 是 FAST-LIO2 用 Avia 录包时的实际名字，你会在<a href="0025-lesson.html">第 25 课</a>亲眼看到。换成别的系统时，先用 list 查出实际名字再替换。输出取决于正在运行的系统，不能预先承诺某个频率。</p>
+<h2>先独立作答，再打开提示</h2><p>点云墙面只在转弯时重影，静止正常。先检查哪两类信息？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>转弯会放大时间不一致和旋转外参的问题。</p></details><details><summary>核对解答与常见错因</summary><p>检查点与 IMU 的时间戳、时间单位和去畸变；检查外参方向与旋转。用静止、直行、不同角速度录包作对照，不能仅凭症状确定唯一根因。</p><p>若还无法解释，回到先修：<a href="0014-lesson.html">14 · 位姿与变换链：先看清是“谁到谁”</a>；<a href="0016-lesson.html">16 · IMU：从角速度、加速度到运动预测</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-23">1米/秒直行，0.02秒时间差对应多少米？</label><input id="q-23" type="number" step="any" inputmode="decimal"><button type="button" data-check="0.02" data-explain="速度乘时间。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>回放数据时 TF 报未来外推，是否该直接增大队列？先核对消息时钟、仿真时间和 TF 时间范围；队列容量无法修正两个不同的时钟。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《ROS 与 TF：数据流必须有时间和坐标》。本课目标：解释节点、话题、消息、TF 和录包，在运行算法前检查接口。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 换个数出题：先预测再运行</summary><pre><code>下面是课里的代码。请出 2 道“改一个数字，先预测输出”的练习，只给题目不给答案。等我写出预测，再告诉我怎样自己运行来核对。
+
+# ROS 1 终端命令（部署课使用 Noetic）；需先 source 环境，并有节点在运行或录包在回放
+rostopic list
+rostopic info /livox/imu
+rostopic hz /livox/imu
+rosrun tf tf_echo camera_init body
+# ROS 2 对应写法：ros2 topic list / ros2 topic info / ros2 topic hz / ros2 run tf2_ros tf2_echo</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：点云墙面只在转弯时重影，静止正常。先检查哪两类信息？
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《ROS 与 TF：数据流必须有时间和坐标》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>节点通过话题收发消息，消息要带坐标系和时间戳；TF 管理随时间变化的坐标变换；ROS 1 与 ROS 2 命令不能混用。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
 <label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
 <div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
-<details><summary>选读一手资料</summary><p><a href="https://github.com/hku-mars/FAST_LIO">HKU-MARS：FAST_LIO 上游仓库</a>；<a href="https://cvg.cit.tum.de/data/datasets/rgbd-dataset">TUM RGB-D 数据集与基准</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0022-lesson.html">22 · 世界模型：学习行动后会发生什么</a></span><span>下一课<br><a href="../index.html#legacy">按能力回到原教材</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
+<details><summary>选读一手资料</summary><p><a href="https://github.com/openrobotics/reps/blob/main/_posts/rep-0105.md">Open Robotics：REP-105</a>；<a href="https://github.com/ros2/ros2_documentation/blob/jazzy/source/Tutorials.rst">ROS 2 Jazzy 教程源码</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0022-lesson.html">22 · C++③：Eigen 与 CMake：把矩阵搬进一个小工程</a></span><span>下一课<br><a href="0024-lesson.html">24 · 部署①：用 Docker 准备 ROS 1 Noetic 环境</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.10)
+project(eigen_demo)
+set(CMAKE_CXX_STANDARD 17)
+find_package(Eigen3 REQUIRED)
+add_executable(eigen_demo main.cpp)
+target_link_libraries(eigen_demo Eigen3::Eigen)

@@ -1,22 +1,37 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>导航：地图、路径和控制不是同一个问题 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
-<body data-lesson="0019"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">D · 进入工程 / LESSON 19</div><h1>导航：地图、路径和控制不是同一个问题</h1><p>手工执行图搜索，并区分定位错误、规划错误和控制错误。</p><p class="subtle">先修：<a href="0016-lesson.html">16 · ROS 与 TF：数据流必须有时间和坐标</a>；<a href="0018-lesson.html">18 · 评估与排错：从改参数转向验证原因</a></p></header>
-<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
-<h2>从实际问题走到公式</h2><p>SLAM 回答“我在哪、环境是什么样”，规划回答“走哪条路”，控制回答“现在发什么动作”。位置正确并不保证路径能走，路径能走也不保证跟踪动作稳定。</p>
-<p><b>占据栅格</b>把地面分为小格，记录哪些格可能被障碍占据；<b>代价地图</b>进一步给靠近障碍、难走地形等位置更高代价。机器人有宽度，因此要考虑足迹或将障碍膨胀。未知空间不等于已知空地；按任务明确是否允许探索。</p>
-<div class="formula">A* 的分数 f(n)=g(n)+h(n)</div>
-<p>n 是候选节点；g 是从起点到该节点已走路径的代价；h 是到目标的估计剩余代价。每次扩展分数较小的节点，记录父节点以便最终还原路径。在非负边权与合适搜索实现下，不高估的启发式可支持最优性；不要随意把 h 放大却仍宣称最短路。</p>
-<p>四邻接、每步代价 1 的网格，从 (0,0) 到 (2,1) 的曼哈顿距离是 |2−0|+|1−0|=3，即横纵距离之和。允许对角移动时需要重新匹配启发式与边代价。Dijkstra 相当于 h=0，广度优先搜索适用于所有边代价相等的情况。</p>
-<p>局部控制不断结合新观测跟踪路径；车不能瞬间横移，四足也有转弯、速度、落脚与稳定性限制。代价低的二维路线仍可能经过无法通过的台阶。世界坐标的路径需要通过正确 TF 与当前位姿对齐。</p>
-<p>项目二运行 labs/navigation.py：等权图上的广度优先搜索，以及一个按颜色标签选择目标的规则系统。它教接口与评估，不处理真实图片或自然语言，不能称为完整 VLN。第 21 课再补视觉与语言落地。</p>
-<h2>把公式落实到每行代码</h2><pre><code># 四邻接网格的启发式示例
-current = (0, 0)
-goal = (2, 1)
-h = abs(goal[0]-current[0]) + abs(goal[1]-current[1])
-print(h)</code></pre><p>abs 是绝对值；输出 3。它忽略障碍，所以是本条件下的距离下界。规划器仍需检查具体边是否可通行。</p>
-<h2>先独立作答，再打开提示</h2><p>最短通道宽 0.4 米，机器人宽 0.5 米，栅格中心线畅通，能通过吗？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
-<details><summary>提示：只给下一步</summary><p>中心点不是机器人完整形状。</p></details><details><summary>核对解答与常见错因</summary><p>不能。需要考虑足迹与安全余量；中心点路径成功不等于物理可通行。</p><p>若还无法解释，回到先修：<a href="0016-lesson.html">16 · ROS 与 TF：数据流必须有时间和坐标</a>；<a href="0018-lesson.html">18 · 评估与排错：从改参数转向验证原因</a>。闭上答案，换一组数字重算。</p></details>
-<div class="numeric panel"><label for="q-19">(0,0)到(2,1)，四邻接单位步长距离下界？</label><input id="q-19" type="number" step="any" inputmode="decimal"><button type="button" data-check="3" data-explain="横纵距离相加。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>机器人沿整条路径都偏左，先改控制增益吗？先检查坐标系、定位偏差和足迹，再检查控制器。用静止定位与简单直线任务将原因拆开。</p></details>
-<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>项目一：真正同时估计位置和地标 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0019"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">C · 组成 SLAM / LESSON 19</div><h1>项目一：真正同时估计位置和地标</h1><p>完成一个可以手算和运行的一维 SLAM，并理解它省略了什么。</p><p class="subtle">先修：<a href="0018-lesson.html">18 · 图优化与回环：把多次经历联合起来</a></p><p class="subtle">预计用时：2–3 次 × 40 分钟。一次学不完就分开，第二天先闭卷重做上一段。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>在没有门牌号的走廊里，你一边走一边估计自己走了几步，同时记下“那盏灯离我还有几米”。走到后面，你会发现几次对灯的观测互相印证，可以反过来修正自己走过的每一步。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>本项目不是已知地图定位。固定起点 x₀=0，未知 x₁、x₂ 和地标 m。两次里程计分别报告 u₀₁=1.2、u₁₂=0.9；在三个位置观测同一个地标，相对距离为 4、3、2 米。对应关系已知，所有因子权重暂取 1。</p>
+<div class="formula">E=(x₁−1.2)²+(x₂−x₁−0.9)²+(m−4)²+(m−x₁−3)²+(m−x₂−2)²</div>
+<p>未知向量 y=[x₁,x₂,m]ᵀ。把每个残差的未知系数放进矩阵 A 一行，常数放进 b：第一行 [1,0,0]，b₁=1.2；第二行 [−1,1,0]，b₂=0.9；第三行 [0,0,1]，b₃=4；第四行 [−1,0,1]，b₄=3；第五行 [0,−1,1]，b₅=2。于是残差整体就是 Ay−b。</p>
+<p>A 是 5×3，b 是 5×1。最小二乘方程为 AᵀAy=Aᵀb。展开得到三条：3x₁−x₂−m=−2.7；−x₁+2x₂−m=−1.1；−x₁−x₂+3m=9。解约为 x₁=1.1375、x₂=2.05、m=4.0625。地标也随着所有证据一起估计。</p>
+<p>这三条方程也可以手算：从第一条移项得到 x₂=3x₁−m+2.7；代入第二条，得 5x₁−3m=−6.5；代入第三条，得 −4x₁+4m=11.7，因此 m=x₁+2.925。再代回得 2x₁=2.275，所以 x₁=1.1375，m=4.0625，x₂=2.05。所谓消元，就是通过代入逐步减少未知量。</p>
+<p>只累积里程计的位置是 [0,1.2,2.1]；联合估计是 [0,1.1375,2.05]。相对于本项目已知但不交给优化器的合成真值 [0,1,2]，位置均方根误差从约 0.12910 降为 0.08447 米。真实实验不保证每次都改善；这里的数据是为讲解构造的。</p>
+<p>打开 labs/slam_1d.py 看 build_system：每个因子的系数与上文逐行对应。求解函数只负责解方程，不知道何谓机器人。小矩阵用带主元选择的消元便于阅读；大型稀疏系统应使用成熟求解器，正规方程还会放大条件数问题。</p>
+<p>项目边界：仅一维、静态地标、已知关联、线性观测、同等权重，没有旋转、遮挡、鲁棒核、回环检测。这些简化让你能检查每一步，但不能拿运行成功证明会做三维工程。</p>
+<h2>把公式落实到每行代码</h2><p class="subtle">Python：可直接运行。先写下预测，再运行核对。</p><pre><code># 在仓库目录的终端运行，不是 Python 语句：
+# py labs/slam_1d.py
+from labs.slam_1d import estimate
+
+positions, landmark = estimate()
+print([round(v, 4) for v in positions], round(landmark, 4))</code></pre><p>从仓库目录调用会输出 [0.0,1.1375,2.05] 4.0625。独立运行脚本还显示前后轨迹误差。请从 A 的第四行反查 m−x₁−3，不要只看最终地图。</p>
+<h2>先独立作答，再打开提示</h2><p>把所有测距都加 2，运动数据不变，位置和地标应如何变？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>m 加 2 是否能够让所有残差与之前一致？</p></details><details><summary>核对解答与常见错因</summary><p>位置保持相同，地标由 4.0625 变成 6.0625。起点固定，所有相对距离共同变化对应地标移动。</p><p>若还无法解释，回到先修：<a href="0018-lesson.html">18 · 图优化与回环：把多次经历联合起来</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-19">第14课全部测距加2，新地标位置约多少米？</label><input id="q-19" type="number" step="any" inputmode="decimal"><button type="button" data-check="6.0625" data-explain="在原4.0625基础上加2，位置不变。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>把观测列表改为 [4,3,8]，运行并保存失败结果。它会产生矛盾约束并拉偏轨迹；列出“错误对应、测距跳点”两种可能，设计独立检查。不可仅凭残差断定是哪一种。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《项目一：真正同时估计位置和地标》。本课目标：完成一个可以手算和运行的一维 SLAM，并理解它省略了什么。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 换个数出题：先预测再运行</summary><pre><code>下面是课里的代码。请出 2 道“改一个数字，先预测输出”的练习，只给题目不给答案。等我写出预测，再告诉我怎样自己运行来核对。
+
+# 在仓库目录的终端运行，不是 Python 语句：
+# py labs/slam_1d.py
+from labs.slam_1d import estimate
+
+positions, landmark = estimate()
+print([round(v, 4) for v in positions], round(landmark, 4))</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：把所有测距都加 2，运动数据不变，位置和地标应如何变？
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《项目一：真正同时估计位置和地标》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>SLAM = 位置和地标一起当未知量，用全部测量联合求最小二乘；固定起点；这个一维项目能手算，但省略了旋转、关联和回环。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
 <label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
 <div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
-<details><summary>选读一手资料</summary><p><a href="https://docs.nav2.org/jazzy/getting_started/navigation_concepts/environmental_representation/">Nav2 Jazzy：环境表达</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0018-lesson.html">18 · 评估与排错：从改参数转向验证原因</a></span><span>下一课<br><a href="0020-lesson.html">20 · 机器学习：把写规则变成用数据拟合规则</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
+<details><summary>选读一手资料</summary><p><a href="https://gtsam.org/tutorials/intro.html">GTSAM：Factor Graphs and GTSAM</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0018-lesson.html">18 · 图优化与回环：把多次经历联合起来</a></span><span>下一课<br><a href="0020-lesson.html">20 · C++①：从 Python 到 C++：类型、分号和编译</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

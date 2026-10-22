@@ -1,0 +1,97 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>部署②：编译 FAST-LIO2 并回放公开录包 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0025"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">D · 部署、系统与评估 / LESSON 25</div><h1>部署②：编译 FAST-LIO2 并回放公开录包</h1><p>能亲手编译 livox_ros_driver 和 FAST_LIO，记录版本，回放官方 Avia 录包，在 rviz 里看到轨迹和地图，并保存点云。</p><p class="subtle">先修：<a href="0024-lesson.html">24 · 部署①：用 Docker 准备 ROS 1 Noetic 环境</a></p><p class="subtle">预计用时：半天（含下载录包）。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（4 个）：工作空间 workspace、source 环境、录包 rosbag、提交号 commit。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>编译像按菜谱备菜：先备好调料（livox_ros_driver 的消息类型），才能做主菜（FAST_LIO）；source 像把调料摆上灶台，没摆上去，厨师就说“找不到盐”。回放录包像放一段录像给机器人看，它会以为自己正在现场。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>一步步讲清楚</h2><p>本课每一步都有<b>检查点</b>。没通过就停下，到部署③按现象查，不要带着错误往下做。下方代码框是全部命令；正文解释每一段在做什么。</p>
+<h3>第一段：编译 livox_ros_driver</h3>
+<p>FAST_LIO 的代码里用到了 Livox 雷达的消息类型 <code>livox_ros_driver/CustomMsg</code>，所以即使你用别的雷达，也要先编译它。<b>工作空间</b>（workspace）是一个固定结构的文件夹：源码放在 <code>src</code>，<code>catkin_make</code> 编译后生成 <code>build</code> 和 <code>devel</code>。编译完必须 <code>source devel/setup.bash</code>，当前终端才“认识”这个包。</p>
+<p><b>检查点 1</b>：catkin_make 最后显示 <code>[100%] Built target ...</code>，没有红色 error。</p>
+<h3>第二段：编译 FAST_LIO，并记录版本</h3>
+<p>在<b>已经 source 了 ws_livox 的同一个终端</b>里编译 FAST_LIO。<code>git submodule update --init</code> 会下载它依赖的 ikd-Tree 等子模块，漏掉这一步会出现找不到头文件的错误。<code>git rev-parse HEAD</code> 打印当前提交号，把它记下来：以后别人复现、你读源码对照行号，都以这个提交为准。</p>
+<p><b>检查点 2</b>：<code>rospack find fast_lio</code> 输出一个路径，而不是 <code>Error: package 'fast_lio' not found</code>。</p>
+<h3>第三段：准备录包，先体检再运行</h3>
+<p>从 FAST_LIO 官方 README 第 4.1 节（Livox Avia Rosbag）的链接下载任意一个录包，放到宿主机 <code>~/slam_ws/data/</code>。先 <code>rosbag info</code> 看看里面有什么，再用课程的体检脚本对照 FAST_LIO 的配置文件 <code>config/avia.yaml</code>。</p>
+<p><b>检查点 3</b>：录包里有 <code>/livox/lidar</code>（类型 livox_ros_driver/CustomMsg）和 <code>/livox/imu</code>（sensor_msgs/Imu），体检脚本显示“通过”。</p>
+<h3>第四段：运行，两个终端</h3>
+<p>终端 A 启动 FAST_LIO（会自动启动 roscore 和 rviz）；等它显示等待数据后，终端 B 回放录包。<b>检查点 4</b>：rviz 中出现彩色点云并不断增长，坐标系显示 camera_init 与 body。终端 C（可选）运行 <code>rostopic hz /Odometry</code>，应有约 10 Hz 的输出（与雷达帧率一致）。</p>
+<p>avia.yaml 默认 <code>path_en: false</code>，所以 <code>/path</code> 话题没有数据，这不是故障；想看轨迹线，可把它改成 true 后重新启动（修改 yaml 不需要重新编译）。</p>
+<h3>第五段：保存结果，留下证据</h3>
+<p>avia.yaml 默认 <code>pcd_save_en: true</code>。录包放完后在终端 A 按 Ctrl+C，FAST_LIO 会把整张地图存到 <code>FAST_LIO/PCD/scans.pcd</code>，可用 <code>pcl_viewer</code> 查看。<b>检查点 5</b>：文件存在且能打开。</p>
+<p>最后在学习记录里写下：FAST_LIO 提交号、录包文件名、运行命令、一张 rviz 截图、遇到的问题和解决方法。这就是第 33 课“关卡 B”要求的复现证据的第一份草稿。</p>
+<h2>照着做：完整命令（每段做完先过检查点）</h2><p class="subtle">终端命令：在对应环境（本课为 Docker 容器内的 ROS 1 Noetic）逐条执行，每条都对照检查点。</p><pre><code># ── 第一段：livox_ros_driver（容器内）
+cd /root/slam_ws/ws_livox/src
+git clone https://github.com/Livox-SDK/livox_ros_driver.git
+cd /root/slam_ws/ws_livox &amp;&amp; catkin_make
+source devel/setup.bash
+
+# ── 第二段：FAST_LIO（同一个终端）
+cd /root/slam_ws/catkin_ws/src
+git clone https://github.com/hku-mars/FAST_LIO.git
+cd FAST_LIO &amp;&amp; git submodule update --init
+git rev-parse HEAD | tee -a /root/slam_ws/data/versions.txt
+cd /root/slam_ws/catkin_ws &amp;&amp; catkin_make
+source devel/setup.bash
+rospack find fast_lio
+
+# ── 第三段：体检录包（把文件名换成你下载的）
+cd /root/slam_ws/data
+rosbag info 你的录包.bag | tee info.txt
+python3 /root/course/labs/deploy/check_bag.py info.txt \
+    /root/slam_ws/catkin_ws/src/FAST_LIO/config/avia.yaml
+
+# ── 第四段：终端 A
+roslaunch fast_lio mapping_avia.launch
+# ── 终端 B（docker exec -it slam-noetic bash 进入，再 source 工作空间）
+source /root/slam_ws/catkin_ws/devel/setup.bash
+rosbag play /root/slam_ws/data/你的录包.bag
+
+# ── 第五段：终端 A 按 Ctrl+C 之后
+pcl_viewer /root/slam_ws/catkin_ws/src/FAST_LIO/PCD/scans.pcd</code></pre><p>如果你只想先看到结果，可以运行 <code>bash /root/course/labs/deploy/build_fastlio.sh</code>，它自动完成第一、二段并写入版本记录。建议至少手动做一遍：自己敲过的命令出错时，你才知道是哪一步。每个新终端都要 source 工作空间；FAST_LIO 的 devel 已经叠加了 ws_livox，所以只 source 它就够了。脚本会把这一行写进 .bashrc，之后新开的终端会自动加载。</p>
+<h2>先独立作答，再打开提示</h2><p>官方 README 说 Livox 雷达只支持 <code>livox_lidar_msg.launch</code> 录出的 CustomMsg，不支持 <code>livox_lidar.launch</code> 发布的 PointCloud2。结合<a href="0016-lesson.html">第 16 课</a>的去畸变，解释为什么。</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>去畸变需要知道每个点是在扫描中的哪个时刻测到的。</p></details><details><summary>核对解答与常见错因</summary><p>CustomMsg 为每个点保存了相对时间，FAST_LIO 用它和 IMU 把每个点补偿到同一时刻；PointCloud2 版本缺少逐点时间，运动中扫描的点无法正确去畸变。表现是快速转弯时地图重影或漂移。这也是为什么部署前要先体检“话题类型”，而不只看话题名。</p><p>若还无法解释，回到先修：<a href="0024-lesson.html">24 · 部署①：用 Docker 准备 ROS 1 Noetic 环境</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-25">用 livox_lidar.launch（PointCloud2）录的 Livox 数据跑 mapping_avia，能正确去畸变吗？能填1，不能填0。</label><input id="q-25" type="number" step="any" inputmode="decimal"><button type="button" data-check="0" data-explain="该格式缺少逐点时间，README 明确只支持 CustomMsg。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>你换成 Velodyne 录包，运行 mapping_velodyne.launch 后终端出现 <code>Failed to find match for field 'time'</code>。按 README 的说明，这表示什么？下一步查什么？表示点云里没有逐点时间戳字段。先用 <code>rostopic echo -n 1 话题 --noarr</code> 看点云有哪些字段，再查 velodyne.yaml 里的 timestamp_unit 和驱动设置，不要先去改算法参数。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《部署②：编译 FAST-LIO2 并回放公开录包》。本课目标：能亲手编译 livox_ros_driver 和 FAST_LIO，记录版本，回放官方 Avia 录包，在 rviz 里看到轨迹和地图，并保存点云。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 逐条考我命令：做什么、成功看什么、失败查什么</summary><pre><code>下面是课里的终端命令（ROS 1 Noetic 环境，不要引入 ROS 2 命令）。请一次问我一条：这条命令做什么、成功时应看到什么、失败时先查什么。等我回答再继续。
+
+# ── 第一段：livox_ros_driver（容器内）
+cd /root/slam_ws/ws_livox/src
+git clone https://github.com/Livox-SDK/livox_ros_driver.git
+cd /root/slam_ws/ws_livox &amp;&amp; catkin_make
+source devel/setup.bash
+
+# ── 第二段：FAST_LIO（同一个终端）
+cd /root/slam_ws/catkin_ws/src
+git clone https://github.com/hku-mars/FAST_LIO.git
+cd FAST_LIO &amp;&amp; git submodule update --init
+git rev-parse HEAD | tee -a /root/slam_ws/data/versions.txt
+cd /root/slam_ws/catkin_ws &amp;&amp; catkin_make
+source devel/setup.bash
+rospack find fast_lio
+
+# ── 第三段：体检录包（把文件名换成你下载的）
+cd /root/slam_ws/data
+rosbag info 你的录包.bag | tee info.txt
+python3 /root/course/labs/deploy/check_bag.py info.txt \
+    /root/slam_ws/catkin_ws/src/FAST_LIO/config/avia.yaml
+
+# ── 第四段：终端 A
+roslaunch fast_lio mapping_avia.launch
+# ── 终端 B（docker exec -it slam-noetic bash 进入，再 source 工作空间）
+source /root/slam_ws/catkin_ws/devel/setup.bash
+rosbag play /root/slam_ws/data/你的录包.bag
+
+# ── 第五段：终端 A 按 Ctrl+C 之后
+pcl_viewer /root/slam_ws/catkin_ws/src/FAST_LIO/PCD/scans.pcd</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：官方 README 说 Livox 雷达只支持 livox_lidar_msg.launch 录出的 CustomMsg，不支持 livox_lidar.launch 发布的 PointCloud2。结合第 16 课的去畸变，解释为什么。
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《部署②：编译 FAST-LIO2 并回放公开录包》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>⑤ 本课专用</summary><pre><code>【部署求助模板】
+环境：Docker 容器 osrf/ros:noetic-desktop-full（Ubuntu 20.04，ROS 1 Noetic），FAST_LIO 提交号：（粘贴 versions.txt）
+我在做：部署②第（几）段
+运行的命令：（原样粘贴）
+完整输出：（从命令开始到报错结束，全部粘贴，不要截断）
+已经确认：rosversion -d 输出（ ）；rospack find fast_lio 输出（ ）
+请注意这是 ROS 1，不要给我 ros2 或 colcon 命令。先告诉我最可能的 1 个原因和验证方法，等我验证后再说下一步。</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>先编依赖再编主程序，每个终端都要 source；运行前用 rosbag info 和体检脚本核对话题与类型；记录提交号、录包和命令，结果才可复现。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://github.com/hku-mars/FAST_LIO">HKU-MARS：FAST_LIO 上游仓库</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0024-lesson.html">24 · 部署①：用 Docker 准备 ROS 1 Noetic 环境</a></span><span>下一课<br><a href="0026-lesson.html">26 · 部署③：跑不通时怎么查：话题、频率、TF、日志与 AI 求助</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

@@ -1,25 +1,34 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>C++ 与 Eigen：把已经理解的数学搬过去 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
-<body data-lesson="0015"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">D · 进入工程 / LESSON 15</div><h1>C++ 与 Eigen：把已经理解的数学搬过去</h1><p>读懂类型、引用、维度和编译，把 Eigen 表达式展开验证。</p><p class="subtle">先修：<a href="0002-lesson.html">02 · 读懂一段程序，而不是只会启动它</a>；<a href="0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a>；<a href="0014-lesson.html">14 · 项目一：真正同时估计位置和地标</a></p></header>
-<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
-<h2>从实际问题走到公式</h2><p>Python 常用于快速试验，C++ 常用于运行效率和系统集成。这不是重新学一套数学。先把第 4 课的二维旋转搬到 C++，再进入大型项目。</p>
-<p><code>double</code> 是双精度浮点类型；<code>int</code> 是整数类型；分号结束语句；花括号围起函数体。<code>const</code> 表示不能通过该名字修改对象；<code>&amp;</code> 在参数类型中表示引用，即用原对象而不是复制一份。<code>const Vector2d&amp;</code> 适合只读传入向量。</p>
-<p><b>Eigen</b> 是 C++ 线性代数库。<code>Matrix2d</code> 是 2×2 double 矩阵，<code>Vector2d</code> 是两个 double 的列向量，<code>*</code> 执行矩阵乘法。<code>R &lt;&lt; 0,-1,1,0</code> 按行填入数值；这里 &lt;&lt; 是 Eigen 定义的填充操作，不是数学里的小于。</p>
-<p><code>#include</code> 让编译器看到库声明；<code>main</code> 是程序入口；<code>std::cout</code> 将数据打印到终端。<b>编译</b>把源代码变为机器可运行形式，<b>链接</b>把需要的实现组合起来。头文件找不到先查 include 路径，undefined reference 通常查链接，结果不对则查算法与输入。</p>
-<p>完整示例放在 labs/eigen_example.cpp。若 Ubuntu 已有 g++ 和 Eigen 头文件，可运行 <code>g++ -std=c++17 -I/usr/include/eigen3 labs/eigen_example.cpp -o eigen_example</code>，再运行 <code>./eigen_example</code>。-I 告诉编译器去哪里找头文件，-o 指定输出文件名。这个命令针对 Linux 环境，不是 PowerShell 的安装步骤；本课程没有代你安装编译器。</p>
-<p>读取复杂表达式时先写维度。例如 H 是 N×6、δ 是 6×1，则 Hδ 是 N×1，代表每个观测的预测变化。若结果是 6×1，可能把雅可比方向看反。<b>lambda</b> 是就地定义的函数，模板是按类型生成代码的机制；初读时先辨输入输出，再追踪语法细节。</p>
-<h2>把公式落实到每行代码</h2><pre><code>#include &lt;Eigen/Dense&gt;
-#include &lt;iostream&gt;
-int main() {
-    Eigen::Matrix2d R;
-    R &lt;&lt; 0, -1, 1, 0;
-    Eigen::Vector2d p(1, 0), t(2, 1);
-    Eigen::Vector2d world = R*p + t;
-    std::cout &lt;&lt; world.transpose() &lt;&lt; &quot;\n&quot;;
-}</code></pre><p>输出 2 2。transpose 只为把结果横着打印；world 本身仍是列向量。与第 4 课 wx、wy 两行逐项展开后的结果一致。</p>
-<h2>先独立作答，再打开提示</h2><p>3×2 矩阵可以乘 2×1 向量吗？结果几维？2×3 乘 2×1 呢？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
-<details><summary>提示：只给下一步</summary><p>检查相邻的两个维度。</p></details><details><summary>核对解答与常见错因</summary><p>前者可以，结果 3×1；后者不能。不要把“数组元素个数差不多”当作合法矩阵运算。</p><p>若还无法解释，回到先修：<a href="0002-lesson.html">02 · 读懂一段程序，而不是只会启动它</a>；<a href="0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a>；<a href="0014-lesson.html">14 · 项目一：真正同时估计位置和地标</a>。闭上答案，换一组数字重算。</p></details>
-<div class="numeric panel"><label for="q-15">3×2 乘 2×1，结果有多少行？</label><input id="q-15" type="number" step="any" inputmode="decimal"><button type="button" data-check="3" data-explain="结果是3×1。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>把 p 改为 (0,2)，应该输出 0 1。若编译成功但输出不同，应优先检查矩阵填充顺序、变换方向和旧可执行文件是否重新编译。</p></details>
-<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>相机：三维点为什么变成二维像素 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0015"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">B · 从测量到估计 / LESSON 15</div><h1>相机：三维点为什么变成二维像素</h1><p>手算投影与重投影残差，解释单目深度和尺度歧义。</p><p class="subtle">先修：<a href="0007-lesson.html">07 · 矩阵与旋转：展开后就是乘法和加法</a>；<a href="0014-lesson.html">14 · 位姿与变换链：先看清是“谁到谁”</a></p><p class="subtle">预计用时：2 次 × 40 分钟。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（3 个）：内参 intrinsics / 外参 extrinsics、投影 projection、BA 束调整。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>相机像一个小孔：远处的大树和近处的小树苗，可能在照片上一样高。照片丢掉了“有多远”这一维，所以只靠一张照片无法知道真实大小。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>相机把光线落在成像平面上的位置记录为像素。用不含畸变的<b>针孔模型</b>近似：离相机越远，同样大小的物体投影越小。这来自相似三角形，横向距离与深度之比决定像素偏移。</p>
+<div class="formula">u=fₓX/Z+cₓ；v=fᵧY/Z+cᵧ</div>
+<p>(X,Y,Z) 是相机坐标中的点，单位米，本课约定 Z 向前、X 向右、Y 向下；(u,v) 是像素坐标；fₓ、fᵧ 是以像素为单位的焦距；(cₓ,cᵧ) 是主点。它们叫<b>内参</b>。将地图点变到相机所需的旋转和平移叫<b>外参</b>。一定先变换坐标系，再投影。</p>
+<p>取 fₓ=fᵧ=400，cₓ=320，cᵧ=240，点 (1,0.5,2) 投到 (520,340)。将三个空间数都乘 2，像素仍一样。因此一个像素只能告诉你一条视线，不能唯一给深度。Z=0 不能除，Z&lt;0 的点在本约定下位于相机后方，不能当作正常可见点。</p>
+<p>从图像找到同一物理点在两张图上的对应叫<b>特征匹配</b>。有已知相机间移动时，可以用两条视线恢复深度，叫三角化；移动太小或视线接近平行时，深度对误差很敏感。单目系统只靠图像几何一般缺少绝对尺度，要借助已知长度、双目基线、IMU 等额外信息。</p>
+<p>预测像素是 (520,340)，实际匹配像素是 (518,343)，<b>重投影残差</b>为 (2,−3) 像素，平方和 13 像素²。联合调整相机位姿和三维点，让这些残差减小，叫束调整（BA）。它与<a href="0010-lesson.html">第 10 课</a>最小二乘是同一套思路，只是未知量更多。</p>
+<p>真实镜头还会发生径向或切向畸变，直线可能弯曲。实际应用用标定后的投影模型；不能把简单针孔模型的误差都归咎于位姿。相机时间戳、曝光运动模糊和滚动快门也会破坏“同一帧同一时刻”的近似。</p>
+<h2>改一个条件，观察因果</h2><p>先写下你的预测，再动滑块。图下会展开当前数字的计算过程。</p><section class="lab" data-lab="camera" aria-label="互动实验"><div class="lab-controls"><label>深度 Z（米）<input type="range" name="z" min="1" max="8" step="0.1" value="2"></label></div><svg viewBox="0 0 640 480" role="img" aria-label="640乘480像素画幅；十字为主点，圆点为投影"><path d="M0 240H640 M320 0V480" stroke="#ccc"/><circle class="pixel" cx="520" cy="340" r="9" fill="#17604d"/><text x="330" y="225">主点 (320,240)</text><text x="15" y="25">像素 x 向右，y 向下</text></svg><output aria-live="polite"></output></section><h2>把公式落实到每行代码</h2><p class="subtle">Python：可直接运行。先写下预测，再运行核对。</p><pre><code>fx, fy, cx, cy = 400.0, 400.0, 320.0, 240.0
+X, Y, Z = 1.0, 0.5, 2.0
+u = fx*X/Z + cx
+v = fy*Y/Z + cy
+print(u, v, u-518, v-343)</code></pre><p>输出 520.0 340.0 2.0 −3.0。前两个是预测像素，后两个是残差，不能拿像素残差直接加到米制位置上；雅可比负责连接两者。</p>
+<h2>先独立作答，再打开提示</h2><p>仅将 Z 改为 4，投影像素是多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>X、Y 保持不变，先算相对于主点的偏移。</p></details><details><summary>核对解答与常见错因</summary><p>(420,290)。深度加倍，偏移减半，不是整个像素坐标减半。</p><p>若还无法解释，回到先修：<a href="0007-lesson.html">07 · 矩阵与旋转：展开后就是乘法和加法</a>；<a href="0014-lesson.html">14 · 位姿与变换链：先看清是“谁到谁”</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-15">X=1,Z=4,fx=400,cx=320，u是多少像素？</label><input id="q-15" type="number" step="any" inputmode="decimal"><button type="button" data-check="420" data-explain="先求400×1/4，再加320。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>把 (X,Y,Z) 同时翻倍为何像素不变？X/Z、Y/Z 不变。仅凭这一次投影不能区分原点和沿同一射线更远的点。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《相机：三维点为什么变成二维像素》。本课目标：手算投影与重投影残差，解释单目深度和尺度歧义。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 换个数出题：先预测再运行</summary><pre><code>下面是课里的代码。请出 2 道“改一个数字，先预测输出”的练习，只给题目不给答案。等我写出预测，再告诉我怎样自己运行来核对。
+
+fx, fy, cx, cy = 400.0, 400.0, 320.0, 240.0
+X, Y, Z = 1.0, 0.5, 2.0
+u = fx*X/Z + cx
+v = fy*Y/Z + cy
+print(u, v, u-518, v-343)</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：仅将 Z 改为 4，投影像素是多少？
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《相机：三维点为什么变成二维像素》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>三维点除以深度再乘焦距、加主点，就得到像素；深度越大越靠近画面中心；单目相机无法单独确定尺度。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
 <label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
 <div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
-<details><summary>选读一手资料</summary><p><a href="https://libeigen.gitlab.io/eigen/docs-nightly/GettingStarted.html">Eigen 官方：Getting started</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0014-lesson.html">14 · 项目一：真正同时估计位置和地标</a></span><span>下一课<br><a href="0016-lesson.html">16 · ROS 与 TF：数据流必须有时间和坐标</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
+<details><summary>选读一手资料</summary><p><a href="https://docs.opencv.org/4.13.0/d9/d0c/group__calib3d.html">OpenCV 官方：相机标定与三维重建</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0014-lesson.html">14 · 位姿与变换链：先看清是“谁到谁”</a></span><span>下一课<br><a href="0016-lesson.html">16 · IMU：从角速度、加速度到运动预测</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

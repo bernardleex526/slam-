@@ -1,25 +1,69 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>世界模型：学习行动后会发生什么 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
-<body data-lesson="0022"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">E · 通向学习模型 / LESSON 22</div><h1>世界模型：学习行动后会发生什么</h1><p>训练最小动作条件预测模型，区分状态估计、预测、规划与强化学习。</p><p class="subtle">先修：<a href="0008-lesson.html">08 · 卡尔曼滤波：把运动预测和测量合起来</a>；<a href="0020-lesson.html">20 · 机器学习：把写规则变成用数据拟合规则</a>；<a href="0021-lesson.html">21 · VLN：把一句话落到可到达的地方</a></p></header>
-<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
-<h2>从实际问题走到公式</h2><p>SLAM 估计当前运动与环境；<b>世界模型</b>在行动条件下预测后续状态或观测。比如“向前发一个单位指令，下一步会到哪里？”几何地图可以成为输入，但静态地图本身不等于动作条件预测模型。</p>
-<div class="formula">s下一步=s+θa；训练目标 Σ[(s+θa)−s实测下一步]²</div>
-<p>s 是位置，a 是动作，θ 是实际每单位动作能走多少米。本课合成训练数据满足实际位移约 0.8a，拟合 θ 后，用它预测多个候选动作序列，比较终点离目标有多远。这是可学习动力学的极小例子，不是训练 Dreamer，也不生成视频。</p>
-<p>例如从 s=0 去目标 1.6，候选 [1,1]：模型 θ=1 预测终点 2，θ=0.8 预测 1.6。代价可以写为终点误差平方，再加碰撞或动作代价。<b>滚动规划</b>只执行选中序列的第一步，拿新观测更新状态后重新计划，避免盲目执行整段预测。</p>
-<p>实际系统的状态常看不全，叫<b>部分可观测</b>。可从历史图像和动作形成内部表示 z，即潜在状态，再预测 z下一步。潜在状态未必是米制坐标，不能未经标定直接当作 SLAM 位置。模型可能预测观测、奖励与终止概率，具体结构因方法而异。</p>
-<p><b>强化学习</b>通过行动得到奖励来学习策略 π，即给定信息如何选动作。累计回报可写为 r₀+γr₁+γ²r₂+…，γ 为 0 到 1 的折扣系数，表达远期奖励权重。Dreamer 系列在学习的模型中想象轨迹以训练行为；这与本课枚举少量动作序列是不同的规划/学习机制。</p>
-<p>世界模型容易多步累积误差：θ 比真实值大 0.05，连续 10 次 a=1，即使无其他误差，也会偏 0.5 米。模型在训练中从没见过墙，可能预测穿墙；规划器还可能专挑模型错误的动作。需要独立多步预测评估、真实或仿真闭环评估，以及对未知情况的保守处理。</p>
-<p>SLAM、VLN、世界模型的一个组合是：估计位姿与地图 → 从语言确定目标 → 模型预测候选行动后果 → 控制器执行 → 新观测校正。它们相互补充；学完名字并不能跳过标定、数据与评估。</p>
-<h2>改一个条件，观察因果</h2><p>先写下你的预测，再动滑块。图下会展开当前数字的计算过程。</p><section class="lab" data-lab="world" aria-label="互动实验"><div class="lab-controls"><label>模型 θ（米/单位动作）<input type="range" name="theta" min="0.4" max="1.2" step="0.01" value="1"></label><label>连续动作步数<input type="range" name="n" min="1" max="10" step="1" value="2"></label></div><svg viewBox="0 0 420 150" role="img" aria-label="模型预测与真实位置的横条比较，条长按同一比例绘制"><text x="10" y="30">预测</text><rect class="prediction" x="90" y="12" width="40" height="28" fill="#8a4b22"/><text x="10" y="90">真实</text><rect class="truth" x="90" y="72" width="32" height="28" fill="#17604d"/><text x="90" y="135">每20图像单位 = 1米</text></svg><output aria-live="polite"></output></section><h2>把公式落实到每行代码</h2><pre><code>actions = [1.0, 2.0, -1.0]
-displacements = [0.8, 1.6, -0.8]
-theta = sum(a*d for a, d in zip(actions, displacements)) / sum(a*a for a in actions)
-position = 0.0
-for action in [1.0, 1.0]:
-    position += theta*action
-print(round(theta, 4), round(position, 4))</code></pre><p>theta 的闭式解来自第 7 课对平方损失求导并置零；分母要求动作不全为零。输出 0.8 1.6。完整训练/留出测试/计划比较运行 labs/world_model.py。</p>
-<h2>先独立作答，再打开提示</h2><p>模型只看视频，不接受动作输入，能直接比较“左转”和“右转”的后果吗？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
-<details><summary>提示：只给下一步</summary><p>模型需要知道你打算执行哪个动作。</p></details><details><summary>核对解答与常见错因</summary><p>不能仅凭这样的接口完成动作条件比较；视频预测可能有其他用途，但用于规划必须表达不同动作如何影响未来。</p><p>若还无法解释，回到先修：<a href="0008-lesson.html">08 · 卡尔曼滤波：把运动预测和测量合起来</a>；<a href="0020-lesson.html">20 · 机器学习：把写规则变成用数据拟合规则</a>；<a href="0021-lesson.html">21 · VLN：把一句话落到可到达的地方</a>。闭上答案，换一组数字重算。</p></details>
-<div class="numeric panel"><label for="q-22">θ=0.8，连续两次a=1，从0出发预测终点？</label><input id="q-22" type="number" step="any" inputmode="decimal"><button type="button" data-check="1.6" data-explain="累加两次0.8。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>训练只在干燥地板上，湿滑地板每步只走 0.5。两步 a=1 预测误差？旧模型预测 1.6，实际 1.0，误差 0.6。需检测分布变化、更新模型，并缩短开放式预测而使用反馈。</p></details>
-<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>C++③：Eigen 与 CMake：把矩阵搬进一个小工程 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0022"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">D · 工程编程（C++） / LESSON 22</div><h1>C++③：Eigen 与 CMake：把矩阵搬进一个小工程</h1><p>能用 Eigen 写出<a href="0007-lesson.html">第 07 课</a>的旋转，用 CMake 编译一个小工程，并能先写维度再读矩阵表达式。</p><p class="subtle">先修：<a href="0021-lesson.html">21 · C++②：函数、引用与 const：数据是复制还是共用</a>；<a href="0014-lesson.html">14 · 位姿与变换链：先看清是“谁到谁”</a></p><p class="subtle">预计用时：2–3 次 × 40 分钟。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（2 个）：Eigen、CMake。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>Eigen 像一台专业计算器，矩阵乘法一个 * 号就搞定；CMake 像装修队的施工图，告诉编译器“用哪些文件、到哪里找库、最后装出什么”。ROS 的 catkin_make 就是在 CMake 上又包了一层。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>一步步讲清楚</h2><p>前面用 Python 手写三重循环做矩阵乘法，是为了看清每一步。真实工程用 <b>Eigen</b> 这个 C++ 线性代数库，FAST-LIO2 里几乎每个公式都是 Eigen 表达式。</p>
+<h3>第一步：Eigen 的几个基本类型</h3>
+<p><code>Eigen::Matrix2d</code> 是 2×2 的 double 矩阵，<code>Eigen::Vector2d</code> 是 2 个 double 的<b>列向量</b>；三维对应 <code>Matrix3d</code>、<code>Vector3d</code>，4×4 齐次矩阵是 <code>Matrix4d</code>。<code>R &lt;&lt; 0, -1, 1, 0;</code> 按<b>行</b>依次填数，这里的 &lt;&lt; 是 Eigen 定义的“填充”，不是输出。<code>R * p</code> 就是矩阵乘向量，<code>R.transpose()</code> 是转置。</p>
+<h3>第二步：先写维度，再读表达式</h3>
+<p>读到 <code>H * delta</code> 这样的式子，先在纸上标维度：H 是 N×6、delta 是 6×1，结果就是 N×1，表示“每个观测的预测变化”。如果标出来是 6×1，多半是你把雅可比的方向看反了。Eigen 在维度不匹配时，编译期或运行时会报错，报错信息很长，找其中的 <code>YOU_MIXED_MATRICES_OF_DIFFERENT_SIZES</code> 之类大写提示。</p>
+<h3>第三步：用 CMake 组织工程</h3>
+<p>单文件可以直接 g++，但 Eigen 要告诉编译器头文件在哪里，文件一多就需要 <b>CMake</b>。一个最小的 <code>CMakeLists.txt</code>：</p>
+<pre><code>cmake_minimum_required(VERSION 3.10)
+project(eigen_demo)
+set(CMAKE_CXX_STANDARD 17)
+find_package(Eigen3 REQUIRED)
+add_executable(eigen_demo main.cpp)
+target_link_libraries(eigen_demo Eigen3::Eigen)</code></pre>
+<p>逐行意思：要求的 CMake 版本；工程名；C++ 版本；<b>找到</b> Eigen（找不到就停下报错）；用 main.cpp 生成程序 eigen_demo；让这个程序使用 Eigen。</p>
+<h3>第四步：标准的编译四连</h3>
+<pre><code>sudo apt install cmake libeigen3-dev   # 只需一次
+cd labs/cpp/eigen_demo
+mkdir -p build &amp;&amp; cd build
+cmake ..
+make
+./eigen_demo</code></pre>
+<p><code>cmake ..</code> 读取上一级的 CMakeLists.txt，生成编译计划；<code>make</code> 真正编译。把编译产物放在 build 文件夹里，删掉它就能“从头再编”。你以后在 ROS 里执行的 <code>catkin_make</code>，本质上就是对整个工作空间做 cmake + make。</p>
+<p>常见报错：<code>Could not find a package configuration file provided by "Eigen3"</code>：没装 libeigen3-dev，或 CMake 找不到它。部署 FAST-LIO2 时遇到 <code>provided by "livox_ros_driver"</code>，原因属于同一类：依赖没装好，或者没有 source 依赖的工作空间。</p>
+<h2>文件：labs/cpp/eigen_demo/main.cpp（按上面四步编译）</h2><p class="subtle">C++：需要在 Linux 中编译后运行，命令见上文。</p><pre><code>#include &lt;Eigen/Dense&gt;
+#include &lt;iostream&gt;
+
+int main() {
+    Eigen::Matrix2d R;
+    R &lt;&lt; 0, -1,
+         1,  0;                          // 绕 z 转 90°，按行填写
+    Eigen::Vector2d p(1, 0), t(2, 1);
+    Eigen::Vector2d world = R * p + t;   // 第 07 课的 pᵂ = R pᴮ + t
+    Eigen::Vector2d back = R.transpose() * (world - t);
+    std::cout &lt;&lt; world.transpose() &lt;&lt; &quot;\n&quot;;
+    std::cout &lt;&lt; back.transpose() &lt;&lt; &quot;\n&quot;;
+    return 0;
+}</code></pre><p>输出 <code>2 2</code> 和 <code>1 0</code>。第一行与<a href="0007-lesson.html">第 07 课</a>手算的 (2,2) 一致；第二行用 Rᵀ(pᵂ−t) 做逆变换，回到了原来的 (1,0)。.transpose() 只是为了横着打印，world 本身仍是 2×1 列向量。这个“正变换后再逆变换、看能不能回去”的检查，是验证坐标代码最便宜的办法。</p>
+<h2>先独立作答，再打开提示</h2><p>3×2 矩阵可以乘 2×1 向量吗？结果是几行几列？2×3 矩阵乘 2×1 向量呢？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>看相邻的两个数字是否相等。</p></details><details><summary>核对解答与常见错因</summary><p>3×2 乘 2×1 可以，结果 3×1；2×3 乘 2×1 不行，中间的 3 和 2 对不上，Eigen 会报错。不要因为“元素个数差不多”就以为能乘。</p><p>若还无法解释，回到先修：<a href="0021-lesson.html">21 · C++②：函数、引用与 const：数据是复制还是共用</a>；<a href="0014-lesson.html">14 · 位姿与变换链：先看清是“谁到谁”</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-22">3×2 矩阵乘 2×1 向量，结果有多少行？</label><input id="q-22" type="number" step="any" inputmode="decimal"><button type="button" data-check="3" data-explain="结果是3×1。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>把 p 改成 (0, 2)，先手算再编译运行。应输出 <code>0 1</code> 和 <code>0 2</code>。若输出和手算不同，按顺序检查：矩阵是否按行填写、变换方向是否写反、是否忘了重新 make。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《C++③：Eigen 与 CMake：把矩阵搬进一个小工程》。本课目标：能用 Eigen 写出第 07 课的旋转，用 CMake 编译一个小工程，并能先写维度再读矩阵表达式。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 换个写法出题：先预测再编译</summary><pre><code>下面是课里的 C++ 代码。请出 2 道“改一处代码，先预测输出或编译报错”的练习，只给题目不给答案。等我写出预测，再告诉我怎样编译运行来核对。
+
+#include &lt;Eigen/Dense&gt;
+#include &lt;iostream&gt;
+
+int main() {
+    Eigen::Matrix2d R;
+    R &lt;&lt; 0, -1,
+         1,  0;                          // 绕 z 转 90°，按行填写
+    Eigen::Vector2d p(1, 0), t(2, 1);
+    Eigen::Vector2d world = R * p + t;   // 第 07 课的 pᵂ = R pᴮ + t
+    Eigen::Vector2d back = R.transpose() * (world - t);
+    std::cout &lt;&lt; world.transpose() &lt;&lt; &quot;\n&quot;;
+    std::cout &lt;&lt; back.transpose() &lt;&lt; &quot;\n&quot;;
+    return 0;
+}</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：3×2 矩阵可以乘 2×1 向量吗？结果是几行几列？2×3 矩阵乘 2×1 向量呢？
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《C++③：Eigen 与 CMake：把矩阵搬进一个小工程》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>⑤ 本课专用</summary><pre><code>下面是一段 Eigen 代码。请不要解释语法细节，只帮我做一件事：给每个变量标注维度（几行几列）、单位和坐标系，如果从代码里无法确定，就写“需要查定义”。
+（粘贴代码）</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>Eigen 让矩阵运算写成一行，读表达式前先标维度；CMake 管理“用什么文件、找什么库”，catkin_make 就是 CMake 的扩展。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
 <label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
 <div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
-<details><summary>选读一手资料</summary><p><a href="https://worldmodels.github.io/">Ha 与 Schmidhuber：World Models</a>；<a href="https://arxiv.org/abs/2301.04104">Hafner 等：DreamerV3</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0021-lesson.html">21 · VLN：把一句话落到可到达的地方</a></span><span>下一课<br><a href="0023-lesson.html">23 · 能力验收：用作品判断下一步该学什么</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
+<details><summary>选读一手资料</summary><p><a href="https://libeigen.gitlab.io/eigen/docs-nightly/GettingStarted.html">Eigen 官方：Getting started</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0021-lesson.html">21 · C++②：函数、引用与 const：数据是复制还是共用</a></span><span>下一课<br><a href="0023-lesson.html">23 · ROS 与 TF：数据流必须有时间和坐标</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

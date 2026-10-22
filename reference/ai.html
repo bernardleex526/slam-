@@ -1,0 +1,29 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI 陪练手册 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="home"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><h1>AI 陪练手册</h1><p>这套课默认你会用 AI 帮忙调试。这一页把“怎样用 AI 学得更快，而不是学得更少”写成固定规则和可复制的模板。每课底部也有针对该课的提示词。</p>
+<section class="panel"><h2>一条总原则</h2><p><b>先自己做，再让 AI 追问、出题、审查；AI 给出的数字一律核对，命令一律问清会改什么。</b>AI 生成的代码，你讲不清的那一行，就不能留在你的项目里。</p></section>
+<h2>四种角色</h2><div class="table-wrap"><table><tr><th>角色</th><th>什么时候用</th><th>你必须先做的事</th></tr>
+<tr><td>追问教练</td><td>学完一节，想确认是否真懂</td><td>先写下自己的解答</td></tr>
+<tr><td>出题人</td><td>想多练几道“改一个数”的题</td><td>每题先写预测，再运行</td></tr>
+<tr><td>代码审查员</td><td>读不懂 AI 或开源项目的代码</td><td>先给自己能懂的行写注释，只问不懂的行</td></tr>
+<tr><td>报错翻译</td><td>部署或运行报错</td><td>收集环境、命令、完整日志，按分层顺序自己先查一遍</td></tr></table></div>
+<h2>三条红线</h2><ol><li><b>核对</b>：数字手算或运行；命令先问“会修改哪些文件、能否撤销”。AI 常把 ROS 1 和 ROS 2 命令混在一起，求助时一定写明“ROS 1 Noetic”。</li><li><b>保密</b>：不粘贴密码、密钥、Token、公司内部代码和数据。</li><li><b>可解释</b>：提交任何代码前，你要能给每一行写注释。讲不清就继续问，或者删掉。</li></ol>
+<h2>通用提示词</h2><details class="prompt"><summary>追问我（学完一节后）</summary><pre><code>我在学《课程标题》。本课目标：（粘贴页首目标）
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>解释 AI 或开源代码（逐行审查）</summary><pre><code>下面这段代码我只看懂了一部分。我已经在看懂的行后面写了中文注释，没写注释的行请你逐行解释：输入是什么、输出是什么、单位和坐标系是什么。不要改写代码，也不要扩展功能。
+（粘贴代码）</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>报错求助（部署与运行）</summary><pre><code>环境：（例：Docker osrf/ros:noetic-desktop-full，Ubuntu 20.04，ROS 1 Noetic；FAST_LIO 提交号 xxxx）
+我在做：（哪一课、哪一步）
+运行的命令：（原样粘贴）
+完整输出：（从命令开始到报错结束，全部粘贴）
+我已经检查过：（rosversion -d、rospack find、rostopic hz 等的结果）
+这是 ROS 1，请不要给 ros2 或 colcon 命令。先告诉我最可能的 1 个原因和验证方法，等我验证后再说下一步。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>Bug 复盘（解决之后）</summary><pre><code>请把下面的排查过程整理成一条 Bug 案例：现象（原文报错）、根因、验证方法、修复步骤、以后怎么预防。只用我提供的信息，缺的字段写“待补充”，不要猜。
+（粘贴过程）</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>费曼复述（隔天复习）</summary><pre><code>我会凭记忆讲解昨天学的《课程标题》。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断提问，最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details><h2>怎样判断 AI 的回答靠不靠谱</h2><ul><li>它给的数字能否用课里的公式手算出来？</li><li>它给的命令属于哪一代 ROS？有没有 sudo、rm、修改系统文件？</li><li>它解释的原因能否用一个小实验验证？例如“话题名不一致”可以用 rostopic list 立刻确认。</li><li>它是否同时让你改了好几处？一次只改一处，才能知道是哪一处起了作用。</li></ul>
+<h2>Bug 案例库模板</h2><p>复制到 <code>learning-records/bug-cases.md</code>，每解决一个问题写一条。攒到 10 条，你就有了自己的排错手册（保留自旧教材的做法）。</p>
+<pre><code>## 2026-xx-xx 标题（用现象命名，例如“rviz 空白但不报错”）
+- 所在课程/步骤：
+- 环境与版本：
+- 现象（原文报错）：
+- 复现步骤：
+- 根因：
+- 我是怎么验证的：
+- 修复：
+- 以后怎么预防：
+- AI 帮了什么 / AI 说错了什么：</code></pre><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

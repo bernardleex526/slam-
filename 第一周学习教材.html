@@ -171,12 +171,13 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </style>
 </head>
 <body>
-<aside id="zero-foundation-entry" style="max-width:46rem;margin:20px auto;padding:18px;background:#e4efe8;border:1px solid #8ca99c;font:16px/1.8 system-ui"><b>这里是原版进阶资料。</b> <a href="index.html">返回新的零基础学习入口</a><br>建议先完成：<a href="lessons/0004-lesson.html">04 · 矩阵与旋转：展开后就是乘法和加法</a>；<a href="lessons/0012-lesson.html">12 · 点云配准：先找对应，再修正位姿</a>；<a href="lessons/0015-lesson.html">15 · C++ 与 Eigen：把已经理解的数学搬过去</a>；<a href="lessons/0017-lesson.html">17 · 读 FAST-LIO2：沿一帧数据走完整个系统</a>。<br>原周进度不再作为新课程期限；本页工程片段需按实际软件版本核对。</aside>
+<aside id="zero-foundation-entry" style="max-width:46rem;margin:20px auto;padding:18px;border:1px solid #8ca99c;font:16px/1.8 system-ui;background:#e4efe8"><b>这里是原版进阶资料，不是零基础入门。</b> 原文中“零基础”“三个月成为导航算法工程师”的说法不成立：本页默认你会初中数学、能读简单 C++，并按每周约 15 小时推进。<br>请先完成：<a href="lessons/0007-lesson.html">07 · 矩阵与旋转：展开后就是乘法和加法</a>；<a href="lessons/0017-lesson.html">17 · 点云配准：先找对应，再修正位姿</a>；<a href="lessons/0020-lesson.html">20 · C++①：从 Python 到 C++：类型、分号和编译</a>；<a href="lessons/0022-lesson.html">22 · C++③：Eigen 与 CMake：把矩阵搬进一个小工程</a>；<a href="lessons/0025-lesson.html">25 · 部署②：编译 FAST-LIO2 并回放公开录包</a>；<a href="lessons/0027-lesson.html">27 · 读 FAST-LIO2：沿一帧数据走完整个系统</a>。<br>进度以新课程“隔天闭卷能重做”为准，不以周号为准；本页工程片段需按实际软件版本核对。 <a href="index.html">返回新课程首页</a></aside><aside id="ros-version-warning" style="max-width:46rem;margin:20px auto;padding:18px;border:1px solid #8ca99c;font:16px/1.8 system-ui;background:#fbeee0;border-color:#c9925c"><b>ROS 版本提醒：</b>本页的 ROS 示例命令是 <b>ROS 2</b>（Jazzy：ros2、colcon、launch.py）。课程部署的 FAST-LIO2 官方 main 分支是 <b>ROS 1</b>（Noetic：roslaunch、catkin_make、rosbag），两套命令不能在同一环境中混用，也不能把 ROS 1 的 README 改几个命令当作 ROS 2 移植。命令对照表见 <a href="lessons/0023-lesson.html">23 · ROS 与 TF：数据流必须有时间和坐标</a>，部署步骤见 <a href="lessons/0024-lesson.html">24 · 部署①：用 Docker 准备 ROS 1 Noetic 环境</a>。</aside>
+
 <div class="wrap">
 <header class="hero">
 <h1>第一周学习教材：线性代数 + Eigen + FAST-LIO2</h1>
-<p>四足机器狗导航算法工程师 · 三个月学习计划</p>
-<p>零基础自包含版 · 手机阅读 · 单文件离线可用</p>
+<p>四足机器狗导航方向 · 原十二周进阶资料（参考节奏，不承诺期限或职级）</p>
+<p>原版进阶资料（需先修新课程） · 手机阅读 · 单文件离线可用</p>
 </header>
 <nav class="nav">
 <a class="on" href="第一周学习教材.html">W1</a>
@@ -196,14 +197,14 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <summary>📑 目录（点击收起）</summary>
 <div id="toc-placeholder"></div>
 </details>
-<h1 id="eigen-fast-lio2">第一周学习教材：线性代数 + Eigen + FAST-LIO2（零基础版）</h1>
+<h1 id="eigen-fast-lio2">第一周学习教材：线性代数 + Eigen + FAST-LIO2（原版进阶）</h1>
 <blockquote>
 <p>定位：四足机器狗（云深处）导航算法工程师
 周期：第 1 周（共 12 周）· 工作日 1.5~2h + 周六 4~5h 实验 + 周日 1~2h 复盘
 本周目标：<strong>看懂机器狗是怎么"认路"的数学原理；会写一点 Eigen 代码；画出 FAST-LIO2 的整体流程。</strong>
 本周交付：<code>eigen_practice</code> 工程（git 全程提交）+ FAST-LIO2 数据流图 + 一页笔记</p>
 </blockquote>
-<p><strong>这本教材是写给"零基础"的你</strong>：只要你会初中数学（知道坐标、函数、sin/cos 是什么），能看懂简单 C++（变量、for 循环），就能读得懂。所有概念都从"这是什么、为什么需要"讲起，全程用大白话和比喻。</p>
+<p><strong>修订说明：本页并非零基础材料</strong>（原文写“这本教材是写给零基础的你”，实际要求见页首）：只要你会初中数学（知道坐标、函数、sin/cos 是什么），能看懂简单 C++（变量、for 循环），就能读得懂。所有概念都从"这是什么、为什么需要"讲起，全程用大白话和比喻。</p>
 <p><strong>本教材自包含</strong>：不需要看任何视频或教程，所有要学的知识都写在书里。外部资料（3B1B 视频、《C++ Primer》、Eigen 文档、FAST-LIO2 源码）只在你想加深理解时作为补充。</p>
 <hr />
 <h1 id="0-10">第 0 章 开课前必读（10 分钟）</h1>
@@ -1714,9 +1715,9 @@ std<span style="color: #666">::</span>cout<span style="color: #BBB"> </span><spa
 </tbody>
 </table>
 <hr />
-<p><em>教材说明：本教材自包含、零基础友好。外部资源（3B1B 视频、《C++ Primer》、Eigen 文档、FAST-LIO2 源码）只在想加深时使用。源码讲解基于 FAST-LIO2 主线版本，具体字段/行号以你 clone 的版本为准。每天学习结束后按清单文末"每日学习检测协议"让 AI 追问验证。</em></p>
+<p><em>教材说明（已修订）：本页不是零基础材料，请先完成页首列出的新课程。外部资源（3B1B 视频、《C++ Primer》、Eigen 文档、FAST-LIO2 源码）只在想加深时使用。源码讲解基于 FAST-LIO2 主线版本，具体字段/行号以你 clone 的版本为准。每天学习结束后按清单文末"每日学习检测协议"让 AI 追问验证。</em></p>
 <footer>
-<p>四足机器狗导航算法 · 三个月学习计划 · 第 1 周教材</p>
+<p>四足机器狗导航方向 · 原十二周进阶资料 · 第 1 周教材</p>
 <p>每天学习结束后，按清单文末「每日学习检测协议」让 AI 追问验证</p>
 </footer>
 </div>

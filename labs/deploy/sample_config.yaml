@@ -1,0 +1,6 @@
+# 教学用示例：模仿 FAST_LIO config/avia.yaml 的相关字段，故意把 imu_topic 写错。
+common:
+    lid_topic:  "/livox/lidar"
+    imu_topic:  "/imu/data"
+preprocess:
+    lidar_type: 1                # 1 Livox, 2 Velodyne, 3 Ouster

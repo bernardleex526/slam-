@@ -1,0 +1,12 @@
+path:        demo_avia.bag
+version:     2.0
+duration:    2:00s (120s)
+start:       Jan 01 2021 00:00:00.00 (1609459200.00)
+end:         Jan 01 2021 00:02:00.00 (1609459320.00)
+size:        1.1 GB
+messages:    25200
+compression: none [1200/1200 chunks]
+types:       livox_ros_driver/CustomMsg [e4d6829bdfe657cb6c21a746c86b21a6]
+             sensor_msgs/Imu            [6a62c6daae103f4ff57a132d6f95cec2]
+topics:      /livox/imu     24000 msgs    : sensor_msgs/Imu
+             /livox/lidar    1200 msgs    : livox_ros_driver/CustomMsg

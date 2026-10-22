@@ -1,0 +1,37 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VLN：把一句话落到可到达的地方 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0031"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">E · 通向学习模型 / LESSON 31</div><h1>VLN：把一句话落到可到达的地方</h1><p>区分视觉语言理解、目标落地、导航执行和成功判断，建立可评估基线。</p><p class="subtle">先修：<a href="0015-lesson.html">15 · 相机：三维点为什么变成二维像素</a>；<a href="0029-lesson.html">29 · 导航：地图、路径和控制不是同一个问题</a>；<a href="0030-lesson.html">30 · 机器学习：把写规则变成用数据拟合规则</a></p><p class="subtle">预计用时：2–3 次 × 40 分钟。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（3 个）：VLN / VLM、grounding 落地、SPL。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>有人对你说“去沙发左边那扇红门”。你得先在眼前找到沙发和红门（理解），确认是哪扇（落地），规划能走过去的路线（导航），走到后判断“是不是到了”（停止）。VLN 系统要把这四步全做对。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p><b>VLN</b> 是视觉语言导航：系统依据看到的环境和语言指令行动，例如“穿过门，在沙发左边停下”。这不仅是把句子转为坐标：门在哪里、哪张沙发、左边以谁为参考、是否已经到达，都需要观测与历史。</p>
+<p>可解释的模块方案是：相机图像 → 物体/场景识别 → 结合深度与位姿形成语义地图 → 指令解析为候选目标与约束 → 规划可行路径 → 执行并重新观察 → 判断停止。也有直接从观测和指令预测动作的策略；它不一定显式调用 SLAM。两种路线都要面对错误和评估。</p>
+<p><b>语义地图</b>是在位置之外附上“门、桌子”等意义；<b>落地 grounding</b>是把语言中的对象或关系对应到当前环境实体。检测器框出“门”还不够：一个像素框并不直接给世界坐标，必须结合深度、相机内参、外参和时间。</p>
+<p>数值例：某门中心像素 u=520，主点 cₓ=320，焦距 fₓ=400，深度 Z=2 米，则相机 X=(520−320)×2/400=1 米。再用<a href="0014-lesson.html">第 14 课</a>变换到地图。若没有深度，可以维护候选射线并继续观察，不能凭像素编造距离。</p>
+<p>先做规则基线：图中起点 S 通往 A、B；A 通往红门 R，B 通往蓝门 D；指令“去红门”通过人工标签选择 R，广度优先搜索给出 S→A→R。这是语义目标接口实验，使用的是人工真值标签，不涉及视觉识别、自由语言或学习。</p>
+<p>再做真实 VLN 时，替换人工标签，保存每步图像、语言、候选、选择、动作和停止原因；先按 R2R 原任务约定理解数据格式与离散导航，再区分连续运动和真实机器人部署。按未见过的场景划分训练与测试，避免背路线。报告成功率、路径效率和错误停止；成功距离阈值、步数限制与可用传感器必须公开。</p>
+<div class="formula">单次 SPL = S·L/max(P,L)</div>
+<p>S 是成功时 1、失败时 0，L 是最短可行路径长度，P 是实际路径长度；数据集取各任务平均。成功、L=4、P=6 时得 2/3。SPL 是通用导航效率指标，不足以单独评价是否遵从整条语言路线；还需按具体基准报告指令路径一致性等指标。</p>
+<h2>把公式落实到每行代码</h2><p class="subtle">Python：可直接运行。先写下预测，再运行核对。</p><pre><code># 人工语义标签的基线；不是视觉或语言模型
+labels = {&quot;R&quot;: &quot;red door&quot;, &quot;D&quot;: &quot;blue door&quot;}
+goal = next(node for node, label in labels.items() if label == &quot;red door&quot;)
+success, shortest, actual = 1, 4.0, 6.0
+spl = success * shortest / max(actual, shortest)
+print(goal, round(spl, 4))</code></pre><p>next 取第一个匹配候选，若无匹配会抛错，所以工程代码应处理无候选或多个候选。输出 R 0.6667。实际项目的缺失标签处理见 navigation.py。</p>
+<h2>先独立作答，再打开提示</h2><p>走了最短路径但停错门，L=4、P=4，SPL 是多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>先确定成功指示 S。</p></details><details><summary>核对解答与常见错因</summary><p>S=0，SPL=0；路径短不能补偿任务失败。</p><p>若还无法解释，回到先修：<a href="0015-lesson.html">15 · 相机：三维点为什么变成二维像素</a>；<a href="0029-lesson.html">29 · 导航：地图、路径和控制不是同一个问题</a>；<a href="0030-lesson.html">30 · 机器学习：把写规则变成用数据拟合规则</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-31">失败任务，最短4米，实际4米，SPL是多少？</label><input id="q-31" type="number" step="any" inputmode="decimal"><button type="button" data-check="0" data-explain="成功指示为0。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>看到两扇红门，该直接选第一扇吗？应利用指令空间关系、观测历史与可达性缩小候选；仍含糊时请求澄清或继续观察。基线要记录歧义失败，不能把未定义行为算成功。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《VLN：把一句话落到可到达的地方》。本课目标：区分视觉语言理解、目标落地、导航执行和成功判断，建立可评估基线。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 换个数出题：先预测再运行</summary><pre><code>下面是课里的代码。请出 2 道“改一个数字，先预测输出”的练习，只给题目不给答案。等我写出预测，再告诉我怎样自己运行来核对。
+
+# 人工语义标签的基线；不是视觉或语言模型
+labels = {&quot;R&quot;: &quot;red door&quot;, &quot;D&quot;: &quot;blue door&quot;}
+goal = next(node for node, label in labels.items() if label == &quot;red door&quot;)
+success, shortest, actual = 1, 4.0, 6.0
+spl = success * shortest / max(actual, shortest)
+print(goal, round(spl, 4))</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：走了最短路径但停错门，L=4、P=4，SPL 是多少？
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《VLN：把一句话落到可到达的地方》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>VLN = 视觉语言理解 + 目标落地 + 导航执行 + 停止判断；像素要结合深度和位姿才变成地图坐标；SPL 同时看成功与路径效率。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://arxiv.org/abs/1711.07280">Anderson 等：Vision-and-Language Navigation</a>；<a href="https://arxiv.org/abs/1807.06757">Anderson 等：On Evaluation of Embodied Navigation Agents</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0030-lesson.html">30 · 机器学习：把写规则变成用数据拟合规则</a></span><span>下一课<br><a href="0032-lesson.html">32 · 世界模型：学习行动后会发生什么</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

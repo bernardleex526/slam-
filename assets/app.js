@@ -1,6 +1,14 @@
 'use strict';
 (() => {
   const KEY = 'slam-learning-v1';
+  // 2026-10 课程由 23 课扩为 33 课，课号改变。旧记录（版本 1）按此表迁到新课号，只迁一次。
+  const OLD_TO_NEW = {'0001':'0002','0002':'0003','0003':'0006','0004':'0007','0005':'0008','0006':'0009','0007':'0010','0008':'0012','0009':'0013','0010':'0015','0011':'0016','0012':'0017','0013':'0018','0014':'0019','0015':'0020','0016':'0023','0017':'0027','0018':'0028','0019':'0029','0020':'0030','0021':'0031','0022':'0032','0023':'0033'};
+  const LAYOUT = KEY + ':layout';
+  function migrate(old) {
+    const result = {};
+    for (const [id, values] of Object.entries(old)) result[OLD_TO_NEW[id] || id] = values;
+    return result;
+  }
   let records = {};
   let storageOK = true;
   function readRecords() {
@@ -21,7 +29,22 @@
     }
     return result;
   }
-  try { records = readRecords(); } catch (_) { storageOK = false; }
+  try {
+    records = readRecords();
+    if (localStorage.getItem(LAYOUT) !== '2') {
+      const moved = migrate(records);
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key?.startsWith(KEY + ':') && key !== LAYOUT && localStorage.removeItem) localStorage.removeItem(key);
+      }
+      localStorage.setItem(KEY, '{}');
+      for (const [id, values] of Object.entries(moved)) {
+        for (const [field, value] of Object.entries(values)) if (typeof value === 'string') localStorage.setItem(`${KEY}:${id}:${field}`, value);
+      }
+      localStorage.setItem(LAYOUT, '2');
+      records = readRecords();
+    }
+  } catch (_) { storageOK = false; }
   if (!records || typeof records !== 'object' || Array.isArray(records)) records = {};
   const lessonID = document.body.dataset.lesson;
   const status = document.getElementById('save-status');
@@ -54,7 +77,7 @@
   updateCards();
   document.querySelectorAll('[data-export]').forEach(button => button.addEventListener('click', () => {
     if (storageOK) { try { records = readRecords(); } catch (_) { storageOK = false; } }
-    const blob = new Blob([JSON.stringify({version: 1, exported: new Date().toISOString(), records}, null, 2)], {type:'application/json'});
+    const blob = new Blob([JSON.stringify({version: 2, exported: new Date().toISOString(), records}, null, 2)], {type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'learning-export-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -65,9 +88,11 @@
       const file = event.target.files[0]; if (!file) return;
       if (file.size > 2000000) throw new Error('文件过大');
       const data = JSON.parse(await file.text());
-      if (data.version !== 1 || !data.records || typeof data.records !== 'object' || Array.isArray(data.records)) throw new Error('格式不符');
+      if ((data.version !== 1 && data.version !== 2) || !data.records || typeof data.records !== 'object' || Array.isArray(data.records)) throw new Error('格式不符');
       const clean = {};
-      for (const [id, values] of Object.entries(data.records)) {
+      // 版本 1 是 23 课时代导出的文件，课号先迁到新编号。
+      const incoming = data.version === 1 ? migrate(data.records) : data.records;
+      for (const [id, values] of Object.entries(incoming)) {
         if (!/^(\d{4}|home)$/.test(id) || !values || typeof values !== 'object') continue;
         clean[id] = {};
         for (const name of ['answer','reason','state','updated','review']) {
@@ -79,6 +104,13 @@
       feedback.textContent = storageOK ? '已导入；同课采用导入字段，其他记录保留。' : '已在本页载入，但浏览器无法持久保存；请离开前导出。';
     } catch (err) { feedback.textContent = '未导入：'+err.message+'。请选择本教材导出的 JSON。'; }
   });
+  document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', async () => {
+    const source = button.previousElementSibling;
+    const text = source ? source.textContent : '';
+    try { await navigator.clipboard.writeText(text); button.textContent = '已复制'; }
+    catch (err) { button.textContent = '请手动选中复制'; }
+    setTimeout(() => { button.textContent = '复制提示词'; }, 2000);
+  }));
   document.querySelectorAll('[data-filter]').forEach(input => input.addEventListener('input', () => {
     const term = input.value.trim().toLowerCase();
     document.querySelectorAll(input.dataset.filter).forEach(item => { item.hidden = !item.textContent.toLowerCase().includes(term); });

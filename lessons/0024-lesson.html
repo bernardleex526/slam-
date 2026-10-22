@@ -1,0 +1,52 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>部署①：用 Docker 准备 ROS 1 Noetic 环境 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0024"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">D · 部署、系统与评估 / LESSON 24</div><h1>部署①：用 Docker 准备 ROS 1 Noetic 环境</h1><p>能构建课程提供的 Docker 镜像、进入容器、确认 ROS 1 版本，并说清镜像、容器、挂载三者的关系。</p><p class="subtle">先修：<a href="0023-lesson.html">23 · ROS 与 TF：数据流必须有时间和坐标</a></p><p class="subtle">预计用时：1–2 小时（大部分时间在下载）。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（2 个）：镜像 image / 容器 container、挂载 mount。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>镜像像一张装好系统的“光盘”，容器是用这张光盘装出来、正在运行的电脑，挂载是在这台电脑和你的真实电脑之间开了一个共享文件夹。电脑装坏了可以重装，共享文件夹里的东西还在。</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>一步步讲清楚</h2><p>这一课开始用你最擅长的方式学：<b>先把真实系统跑起来</b>，再回头读懂它。我们复现的是 FAST-LIO2 官方仓库，它的 main 分支是 <b>ROS 1</b> 工程（catkin、roslaunch、rosbag）。上游另有独立的 ROS2 分支，命令和构建方式不同，本课不混用。</p>
+<h3>为什么用 Docker，为什么是 Noetic</h3>
+<p>ROS 1 最后一个版本 Noetic 只支持 Ubuntu 20.04。你的电脑如果是 Ubuntu 22.04/24.04 或 Windows，无法直接 apt 安装它。Docker 容器里装一个 Ubuntu 20.04 + Noetic，<b>不会弄乱你的系统</b>，装坏了删掉重来即可。注意：Noetic 已于 2025 年 5 月停止官方维护，用它复现论文、学习完全可以，新项目不应基于它。</p>
+<h3>第一步：装好 Docker 并自检</h3>
+<p>Ubuntu：按 Docker 官方文档“Install Docker Engine on Ubuntu”安装。Windows：安装 WSL2 和 Docker Desktop，在 WSL2 的 Ubuntu 终端里操作。然后运行：</p>
+<pre><code>docker run hello-world</code></pre>
+<p><b>检查点</b>：看到 <code>Hello from Docker!</code>。若提示 <code>permission denied ... docker.sock</code>，执行 <code>sudo usermod -aG docker $USER</code>，<b>注销重新登录</b>后再试。</p>
+<p><b>国内网络提示</b>：Docker Hub、GitHub、Google Drive 都可能很慢或无法访问。需要配置你所在网络可用的镜像加速或代理。可以让 AI 帮你写 <code>/etc/docker/daemon.json</code>，但要问清每一行的作用，并且只用你信任的来源。</p>
+<h3>第二步：构建课程镜像</h3>
+<pre><code>cd 课程仓库目录
+docker build -t slam-noetic labs/deploy</code></pre>
+<p><code>-t slam-noetic</code> 给镜像起名，最后的 <code>labs/deploy</code> 是 Dockerfile 所在文件夹。先打开 <code>labs/deploy/Dockerfile</code> 读一遍注释：它基于官方 <code>osrf/ros:noetic-desktop-full</code>，安装 Eigen、PCL，并编译 Livox-SDK。<b>检查点</b>：最后出现 <code>Successfully tagged slam-noetic:latest</code> 或 <code>naming to docker.io/library/slam-noetic</code>。</p>
+<h3>第三步：创建并进入容器</h3>
+<pre><code>bash labs/deploy/run.sh</code></pre>
+<p>脚本会在宿主机建立 <code>~/slam_ws</code>，挂载到容器的 <code>/root/slam_ws</code>；课程仓库以只读方式挂载到 <code>/root/course</code>。以后再运行同一条命令，会进入<b>同一个</b>容器，编译结果都还在。提示符变成 <code>root@...:/root/slam_ws#</code>，说明你已经在容器里了。</p>
+<h3>第四步：确认环境</h3>
+<p>在容器里运行下方命令。三项都通过，环境就准备好了。另开终端时，在宿主机执行 <code>docker exec -it slam-noetic bash</code>（或再运行一次 run.sh）。</p>
+<div class="table-wrap"><table><tr><th>现象</th><th>原因</th><th>处理</th></tr>
+<tr><td><code>docker: command not found</code></td><td>Docker 没装或不在 PATH</td><td>按官方文档安装；WSL2 要在 Docker Desktop 里开启 WSL 集成</td></tr>
+<tr><td>构建卡在 git clone 或下载</td><td>网络</td><td>配置代理或镜像后重新 build，已完成的步骤会被缓存</td></tr>
+<tr><td><code>Conflict. The container name "/slam-noetic" is already in use</code></td><td>容器已存在</td><td>直接再运行 run.sh，它会进入已有容器</td></tr>
+<tr><td>rviz 报 <code>could not connect to display</code></td><td>容器拿不到宿主机屏幕</td><td>部署③第 6 条；不影响编译和回放</td></tr></table></div>
+<h2>照着做：在容器里确认环境</h2><p class="subtle">终端命令：在对应环境（本课为 Docker 容器内的 ROS 1 Noetic）逐条执行，每条都对照检查点。</p><pre><code># 在容器里逐条运行，并对照右侧期望
+rosversion -d                         # 期望：noetic
+echo $ROS_DISTRO                      # 期望：noetic
+ls /root/slam_ws                      # 期望：catkin_ws  data  ws_livox
+ls /usr/local/lib | grep -i livox     # 期望：liblivox_sdk_static.a
+roscore                               # 期望：started core service [/rosout]；Ctrl+C 退出</code></pre><p>rosversion -d 输出 noetic，说明加载的是 ROS 1；如果什么都不输出，是当前终端没有 source /opt/ros/noetic/setup.bash（课程镜像已写进 .bashrc，新开的 bash 会自动加载）。roscore 是 ROS 1 的“总机”，所有节点要先找它登记；ROS 2 没有 roscore，这是区分两代 ROS 的最快办法。</p>
+<h2>先独立作答，再打开提示</h2><p>在宿主机的 <code>~/slam_ws/data</code> 里放一个文件 a.bag，它在容器里的完整路径是什么？在容器里删除它，宿主机上还在吗？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>run.sh 里写的是 <code>-v "$WS":/root/slam_ws</code>，冒号左边是宿主机，右边是容器。</p></details><details><summary>核对解答与常见错因</summary><p>容器里是 <code>/root/slam_ws/data/a.bag</code>。挂载是同一份文件的两个入口，在容器里删除，宿主机上也没了。所以重要的录包要另外备份；反过来，删掉容器不会删除挂载目录里的文件。</p><p>若还无法解释，回到先修：<a href="0023-lesson.html">23 · ROS 与 TF：数据流必须有时间和坐标</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-24">宿主机挂载目录里有 3 个文件，在容器内删除其中 1 个，宿主机目录还剩几个？</label><input id="q-24" type="number" step="any" inputmode="decimal"><button type="button" data-check="2" data-explain="挂载是共享同一份文件，不是复制。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>你想彻底重装环境：执行 <code>docker rm -f slam-noetic</code> 后再运行 run.sh。哪些东西会丢，哪些不会？容器里在挂载目录以外装的软件会丢；<code>~/slam_ws</code> 里的源码、编译结果和录包都在。镜像 slam-noetic 也还在，不需要重新 build。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《部署①：用 Docker 准备 ROS 1 Noetic 环境》。本课目标：能构建课程提供的 Docker 镜像、进入容器、确认 ROS 1 版本，并说清镜像、容器、挂载三者的关系。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 逐条考我命令：做什么、成功看什么、失败查什么</summary><pre><code>下面是课里的终端命令（ROS 1 Noetic 环境，不要引入 ROS 2 命令）。请一次问我一条：这条命令做什么、成功时应看到什么、失败时先查什么。等我回答再继续。
+
+# 在容器里逐条运行，并对照右侧期望
+rosversion -d                         # 期望：noetic
+echo $ROS_DISTRO                      # 期望：noetic
+ls /root/slam_ws                      # 期望：catkin_ws  data  ws_livox
+ls /usr/local/lib | grep -i livox     # 期望：liblivox_sdk_static.a
+roscore                               # 期望：started core service [/rosout]；Ctrl+C 退出</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：在宿主机的 ~/slam_ws/data 里放一个文件 a.bag，它在容器里的完整路径是什么？在容器里删除它，宿主机上还在吗？
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《部署①：用 Docker 准备 ROS 1 Noetic 环境》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>⑤ 本课专用</summary><pre><code>【命令解释】下面是我要运行的 Docker 命令。请逐个参数解释它的作用、会不会修改我宿主机上的文件、出错时怎么撤销。不要给我改写后的命令，先让我理解原命令。
+（粘贴 labs/deploy/run.sh 里的 docker run 命令）</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>镜像是光盘，容器是装出来的电脑，挂载是共享文件夹；FAST-LIO2 官方 main 分支是 ROS 1，用 Noetic 容器复现，不和 ROS 2 命令混用。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
+<div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
+<details><summary>选读一手资料</summary><p><a href="https://github.com/hku-mars/FAST_LIO">HKU-MARS：FAST_LIO 上游仓库</a>；<a href="https://docs.docker.com/engine/install/ubuntu/">Docker 官方：安装 Docker Engine</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0023-lesson.html">23 · ROS 与 TF：数据流必须有时间和坐标</a></span><span>下一课<br><a href="0025-lesson.html">25 · 部署②：编译 FAST-LIO2 并回放公开录包</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>

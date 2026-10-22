@@ -1,6 +1,6 @@
 # 一手资料
 
-核验日期：2026-09-13。
+核验日期：2026-10。
 
 ## Knowledge
 
@@ -58,13 +58,16 @@
 - [Ha 与 Schmidhuber：World Models](https://worldmodels.github.io/)
   早期学习世界模型的原论文与演示。
 
+- [Docker 官方：安装 Docker Engine](https://docs.docker.com/engine/install/ubuntu/)
+  部署课使用的容器工具；Windows 用户先装 WSL2 与 Docker Desktop。
+
 - [Hafner 等：DreamerV3](https://arxiv.org/abs/2301.04104)
   学习世界模型与想象行为训练；本课程标量实验不是论文复现。
 
 ## Wisdom
 
-未要求加入社区；不以外部问答代替课内解释。
+未要求加入社区；不以外部问答代替课内解释。AI 只作为陪练使用，规则见 reference/ai.html。
 
 ## Gaps 与边界
 
-浏览器和 Python 教学实验已单独验证；真实 FAST-LIO2、ROS、VLN 基准及 Dreamer 训练没有在本环境运行。学习者设备、每周时间与独立编程能力仍未知。高级课提供概念桥梁与工程验收，不宣称完整复现论文。
+浏览器、Python 标准库实验与 C++/Eigen 示例已在本环境验证；部署课的 Dockerfile 与脚本依据 FAST_LIO 官方 README、config/avia.yaml 与源码中的话题名编写，但本环境无法运行 Docker、ROS 与真实录包，首次使用请按检查点逐步核对。学习者设备、每周时间与独立编程能力仍未知。高级课提供概念桥梁与工程验收，不宣称完整复现论文。

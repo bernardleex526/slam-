@@ -1,24 +1,49 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>矩阵与旋转：展开后就是乘法和加法 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
-<body data-lesson="0004"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">A · 找回基础 / LESSON 04</div><h1>矩阵与旋转：展开后就是乘法和加法</h1><p>手算二维坐标变换，把矩阵一行对应到代码一行。</p><p class="subtle">先修：<a href="0003-lesson.html">03 · 坐标和向量：数字必须带上参考系</a></p></header>
-<div class="flow" aria-label="学习步骤"><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>公式</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
-<h2>从实际问题走到公式</h2><p>机器人位置在地图 (2,1)，朝向比地图 x 轴逆时针转了 90°。传感器看到一个点在自身前方 1 米。这个点在地图哪里？先把“前方”转成地图方向，再加机器人的位置：答案 (2,2)。</p>
-<p>角度描述转了多少。绕一圈是 360°，也写成 2π 弧度，π 约等于 3.14159。角度乘 π/180 得到弧度，程序的三角函数通常接收弧度。<b>cos θ</b> 和 <b>sin θ</b> 分别给出单位箭头旋转 θ 后的 x、y 分量。θ=0 时是 (1,0)，90° 时是 (0,1)。</p>
-<div class="formula">R = [[cos θ, −sin θ], [sin θ, cos θ]]<br>pᴡ = R pᴮ + t = (c·pₓ−s·pᵧ+tₓ, s·pₓ+c·pᵧ+tᵧ)</div>
-<p><code>R</code> 是 2 行 2 列的矩阵；<code>pᴮ</code> 是机器人坐标下的 2×1 列向量；<code>pᴡ</code> 是地图下的坐标；<code>t</code> 是机器人原点在地图的位置；c、s 分别是 cos θ、sin θ。上标 W、B 是坐标系标签，不是乘方。矩阵乘向量时，每一行与向量对应元素相乘后相加。</p>
-<p>90° 时 R=[[0,−1],[1,0]]，R(1,0)=(0,1)，再加 (2,1) 得 (2,2)。矩阵的第一列告诉你原来的 x 单位箭头去了哪里，第二列告诉你 y 单位箭头去了哪里。2×2 乘 2×1 才能得到 2×1；中间的维度必须一致。</p>
-<p>逆变换要先减去平移，再反向旋转：pᴮ=Rᵀ(pᴡ−t)。<code>Rᵀ</code> 把行列交换，称为转置；对于旋转矩阵，它也是逆矩阵，即撤销操作。一般矩阵的转置不等于逆。把 (2,2) 减 (2,1) 得 (0,1)，反转 90° 回到 (1,0)。</p>
-<h2>改一个条件，观察因果</h2><p>先写下你的预测，再动滑块。图下会展开当前数字的计算过程。</p><section class="lab" data-lab="transform" aria-label="互动实验"><div class="lab-controls"><label>朝向 θ（度）<input type="range" name="angle" min="-180" max="180" step="5" value="90"></label><label>点的机器人 x（米）<input type="range" name="px" min="-2" max="2" step="0.1" value="1"></label><label>点的机器人 y（米）<input type="range" name="py" min="-2" max="2" step="0.1" value="0"></label></div><svg viewBox="0 0 480 330" role="img" aria-label="地图中的点随机器人朝向改变；箭头表示机器人前方"><path d="M20 200H460 M180 20V310" stroke="#bbb"/><text x="460" y="190">x</text><text x="190" y="25">y</text><circle cx="240" cy="170" r="6" fill="#17604d"/><line class="direction" x1="240" y1="170" x2="240" y2="135" stroke="#17604d" stroke-width="5"/><circle class="point" cx="240" cy="140" r="9" fill="#286bac"/><text x="250" y="190">机器人 (2,1)</text><text x="155" y="220">(0,0)</text></svg><output aria-live="polite"></output></section><h2>把公式落实到每行代码</h2><pre><code>import math
-theta = math.radians(90)
-c, s = math.cos(theta), math.sin(theta)
-px, py = 1.0, 0.0
-tx, ty = 2.0, 1.0
-wx = c*px - s*py + tx
-wy = s*px + c*py + ty
-print(round(wx, 6), round(wy, 6))</code></pre><p>radians 把度转弧度；第 6 行对应矩阵第一行，第 7 行对应第二行。输出 2.0 2.0。程序没有神秘的“旋转命令”，只是执行刚才展开的四次乘法。</p>
-<h2>先独立作答，再打开提示</h2><p>同一位姿，机器人看到点 (0,2)。地图坐标是多少？</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
-<details><summary>提示：只给下一步</summary><p>90° 旋转把 (0,2) 变成 (−2,0)。</p></details><details><summary>核对解答与常见错因</summary><p>(−2,0)+(2,1)=(0,1)。若得到 (2,3)，你只加了平移，漏掉旋转。</p><p>若还无法解释，回到先修：<a href="0003-lesson.html">03 · 坐标和向量：数字必须带上参考系</a>。闭上答案，换一组数字重算。</p></details>
-<div class="numeric panel"><label for="q-4">θ=90°，p=(0,2)，t=(2,1)，变换后的 x 分量？</label><input id="q-4" type="number" step="any" inputmode="decimal"><button type="button" data-check="0" data-explain="先旋转得到(−2,0)，再加平移。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>先平移再旋转是否一样？R(p+t) 与 Rp+t 相差 Rt−t，一般不同；用 p=(1,0),t=(2,1),θ=90° 得 (−1,3) 与 (2,2)。</p></details>
-<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Python②：列表和循环：一次处理很多测量 · SLAM 学习实验室</title><link rel="stylesheet" href="../assets/style.css"><script src="../assets/app.js" defer></script></head>
+<body data-lesson="0004"><a class="skip" href="#main">跳到正文</a><nav class="top" aria-label="主导航"><a href="../index.html">SLAM 学习实验室</a><a href="../reference/glossary.html">术语与符号</a><a href="../reference/labs.html">实验手册</a><a href="../reference/ai.html">AI 陪练</a><a href="../reference/sources.html">一手资料</a></nav><main id="main" class="shell reading"><header class="hero"><div class="eyebrow">A · 找回基础（数学与编程） / LESSON 04</div><h1>Python②：列表和循环：一次处理很多测量</h1><p>能用列表保存多次测量，用 for 循环逐个处理，用 if 跳过可疑数据，并会画追踪表。</p><p class="subtle">先修：<a href="0003-lesson.html">03 · Python①：变量、数字和第一次运行</a></p><p class="subtle">预计用时：2 次 × 30 分钟。一次学不完就分开，第二天先闭卷重做上一段。</p><p class="subtle">本课新词（2 个）：列表 list / 索引 index、循环 loop / 缩进。随时可查 <a href="../reference/glossary.html">术语页</a>。</p></header>
+<section class="panel"><h2>先打个比方</h2><p>列表像一排编了号的快递柜，编号从 0 开始；for 循环像快递员按顺序把每个柜子打开一次，对里面的东西做同样的事。if 就是快递员检查：“这个包裹破了，先放一边。”</p><p class="subtle">比喻只帮你建立直觉；下面用数字、公式和代码把它说准确。</p></section>
+<div class="flow" aria-label="学习步骤"><span>比方</span><b>→</b><span>具体问题</span><b>→</b><span>手算</span><b>→</b><span>代码</span><b>→</b><span>解释</span></div>
+<h2>从实际问题走到公式</h2><p>传感器不会只测一次。激光雷达每秒给出几十万个点，IMU 每秒上百条数据。程序必须能“对每个数据做同样的事”。</p>
+<h3>列表：按顺序装很多个数</h3>
+<p><code>measurements = [2.9, 3.0, 3.1]</code> 是一个列表。<code>measurements[0]</code> 取第一个（2.9），<code>measurements[2]</code> 取第三个（3.1），<code>len(measurements)</code> 是个数 3。编号从 0 开始，所以最后一个是 <code>[len−1]</code>；写 <code>measurements[3]</code> 会报 <code>IndexError: list index out of range</code>。</p>
+<h3>for 循环：对每个元素做同一件事</h3>
+<p><code>for z in measurements:</code> 的意思是：依次让 z 等于 2.9、3.0、3.1，每次都执行一遍下面<b>缩进</b>的几行。Python 靠缩进（行首 4 个空格）判断哪些行属于循环。缩进不一致会报 <code>IndentationError</code>。</p>
+<h3>累加：最常用的循环套路</h3>
+<p>求和要先准备一个“空篮子” <code>total = 0.0</code>，循环里每次 <code>total = total + z</code>（可简写为 <code>total += z</code>）。循环结束后 total 就是总和。求平均就是总和除以个数。几乎所有 SLAM 代码里的“对每个点算残差再求和”都是这个套路。</p>
+<h3>if：挑出可疑数据</h3>
+<p><code>if z &gt; 5.0:</code> 后面缩进的行只在条件成立时执行。<code>continue</code> 表示“这一个不要了，直接处理下一个”。<code>append</code> 把一个元素加到列表末尾。</p>
+<h3>追踪表：不运行也能预测输出</h3>
+<p>下方代码的追踪表：</p>
+<div class="table-wrap"><table><tr><th>第几轮</th><th>z</th><th>z&gt;5.0？</th><th>kept 之后</th></tr>
+<tr><td>1</td><td>2.9</td><td>否</td><td>[2.9]</td></tr><tr><td>2</td><td>3.0</td><td>否</td><td>[2.9, 3.0]</td></tr><tr><td>3</td><td>3.1</td><td>否</td><td>[2.9, 3.0, 3.1]</td></tr><tr><td>4</td><td>9.0</td><td>是，打印后跳过</td><td>不变</td></tr></table></div>
+<p>画追踪表很慢，但只要练熟 5 次，你读 AI 生成的循环代码就能看出它在干什么。</p>
+<h2>把公式落实到每行代码</h2><p class="subtle">Python：可直接运行。先写下预测，再运行核对。</p><pre><code>measurements = [2.9, 3.0, 3.1, 9.0]
+kept = []
+for z in measurements:
+    if z &gt; 5.0:
+        print(&quot;跳过可疑测量&quot;, z)
+        continue
+    kept.append(z)
+average = sum(kept) / len(kept)
+print(kept, round(average, 2))</code></pre><p>先显示 <code>跳过可疑测量 9.0</code>，再显示 <code>[2.9, 3.0, 3.1] 3.0</code>。sum 是 Python 自带的求和，效果等于自己写累加循环。注意：5.0 这个门槛是我们<b>人为</b>定的，它假设墙不会突然远到 9 米；真实系统里这类门槛都要说明依据，不能随手改。</p>
+<h2>先独立作答，再打开提示</h2><p>把 if 那三行整段删掉，再运行。average 会变成多少？先手算再运行。</p><label for="answer">你的过程、单位与理由</label><textarea id="answer" data-save="answer" placeholder="不要只写结论：说明已知什么、求什么、每一步为什么这样算。"></textarea>
+<details><summary>提示：只给下一步</summary><p>四个数都会进入 kept。</p></details><details><summary>核对解答与常见错因</summary><p>(2.9+3.0+3.1+9.0)/4 = 18/4 = 4.5。一个错误测量就把平均值从 3.0 拉到 4.5，这就是<a href="0011-lesson.html">第 11 课</a>“离群点”要解决的问题。</p><p>若还无法解释，回到先修：<a href="0003-lesson.html">03 · Python①：变量、数字和第一次运行</a>。闭上答案，换一组数字重算。</p></details>
+<div class="numeric panel"><label for="q-4">total=0；对 [2, 3, 5] 中每个 z 执行 total += z。最后 total 是多少？</label><input id="q-4" type="number" step="any" inputmode="decimal"><button type="button" data-check="10" data-explain="每轮把 z 加进 total：0→2→5→10。">检查数值</button><output aria-live="polite"></output></div><details><summary>改变条件的迁移练习与解析</summary><p>仿写练习：有一组以厘米为单位的测距 <code>[290, 300, 310]</code>，写一个循环，把每个值换算成米并存进新列表，最后打印。应得到 <code>[2.9, 3.0, 3.1]</code>。写不出来时，先写出追踪表的第一行，再写代码。</p></details>
+<section class="panel" id="ai"><h2>AI 陪练：让它追问你，而不是替你做</h2><p>先自己写完上面的解答，再打开 AI。它给出的数字要手算或运行核对，命令要先问清会改动什么。完整规则见 <a href="../reference/ai.html">AI 陪练手册</a>。</p><details class="prompt"><summary>① 追问我：检查是不是真懂</summary><pre><code>我在学 SLAM 入门课《Python②：列表和循环：一次处理很多测量》。本课目标：能用列表保存多次测量，用 for 循环逐个处理，用 if 跳过可疑数据，并会画追踪表。
+请做我的追问教练：一次只问一个问题，共 3 题，依次考直觉、手算、“改一个条件会怎样”。等我回答后先指出对错和原因，再问下一题。不要提前给答案，不要一次讲一大段。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>② 换个数出题：先预测再运行</summary><pre><code>下面是课里的代码。请出 2 道“改一个数字，先预测输出”的练习，只给题目不给答案。等我写出预测，再告诉我怎样自己运行来核对。
+
+measurements = [2.9, 3.0, 3.1, 9.0]
+kept = []
+for z in measurements:
+    if z &gt; 5.0:
+        print(&quot;跳过可疑测量&quot;, z)
+        continue
+    kept.append(z)
+average = sum(kept) / len(kept)
+print(kept, round(average, 2))</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>③ 审查我的解答</summary><pre><code>题目：把 if 那三行整段删掉，再运行。average 会变成多少？先手算再运行。
+我的解答：（在这里粘贴你的过程和理由）
+请只指出哪一步的单位、符号、坐标系或逻辑有问题，用提问引导我自己改，不要直接给出完整答案。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>④ 讲给 AI 听：费曼复述</summary><pre><code>我会用自己的话讲解《Python②：列表和循环：一次处理很多测量》的核心内容。请扮演完全不懂的初学者，在我讲得含糊、跳步或用了没解释的术语时打断我提问。最后列出我讲错的地方。不要替我讲。</code></pre><button type="button" data-copy>复制提示词</button></details><details class="prompt"><summary>⑤ 本课专用</summary><pre><code>请出 3 道 Python 循环的“预测输出”题，每道不超过 6 行，覆盖 append、continue 和累加。只给代码不给答案。我会先交一张追踪表，你再核对哪一轮出错。</code></pre><button type="button" data-copy>复制提示词</button></details></section>
+<section class="panel"><h2>一句话总结</h2><p><b>列表装很多个数，for 对每个数做同样的事，累加要先准备 total=0；读循环就画追踪表。</b></p><p class="subtle">合上页面，用自己的话说一遍；说不出来，回到上面卡住的那一段。</p></section>
+<h2>留下理解证据</h2><p>用自己的话说：这个方法解决什么问题？公式或命令中的量从哪里来？改一个条件，结果为什么变化？把没理解的具体步骤、AI 说错的地方都写下来。</p><textarea aria-label="本课解释与疑问" data-save="reason"></textarea>
 <label>学习状态（自评，不是自动认证）<select data-save="state"><option>尚未记录</option><option>需要补课</option><option>能跟着算</option><option>能独立解释与迁移</option><option>隔天闭卷复做通过</option></select></label><label>复习记录<textarea data-save="review" placeholder="隔天、约一周后、约一月后重做；写日期、是否看答案、哪里又忘了。"></textarea></label>
 <div class="toolbar"><button data-export type="button">导出学习记录</button></div><p id="save-status" class="subtle" role="status"></p>
-<details><summary>选读一手资料</summary><p><a href="https://libeigen.gitlab.io/eigen/docs-nightly/GettingStarted.html">Eigen 官方：Getting started</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0003-lesson.html">03 · 坐标和向量：数字必须带上参考系</a></span><span>下一课<br><a href="0005-lesson.html">05 · 变化率、导数与雅可比：改一点会怎样</a></span></nav><footer>离线教材 · 2026-09-13 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
+<details><summary>选读一手资料</summary><p><a href="https://docs.python.org/3/tutorial/introduction.html">Python 官方：数字与程序基础</a></p><p>本课数值例子是教学构造。外部链接用于核对和深入，不是完成本课练习的前置要求。网页可能更新；真实系统复现应额外锁定软件提交与环境。</p></details><nav class="bottom-nav" aria-label="课程翻页"><span>上一课<br><a href="0003-lesson.html">03 · Python①：变量、数字和第一次运行</a></span><span>下一课<br><a href="0005-lesson.html">05 · Python③：函数与调试：把重复写成规则，把报错变成线索</a></span></nav><footer>离线教材 · 2026-10 修订 · 先预测，再计算，再运行，最后解释。学习目标：能独立建模、实现与诊断，继续走向 VLN 和世界模型。</footer></main></body></html>
